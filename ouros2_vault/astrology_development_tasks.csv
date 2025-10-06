@@ -1,0 +1,94 @@
+TaskID,Phase,Priority,Component,Type,Description,Dependencies,EstimatedHours,AssignedTo,Status,AcceptanceCriteria,Files,StateRequired,PropsInterface
+FOUND-001,Foundation,1,App,Setup,Create root App component with navigation setup,"None",4,TBD,Completed,"Navigation between screens works, tab bar displays correctly","App.js, navigation/index.js","None","NavigationProps"
+FOUND-002,Foundation,1,TabNavigation,Component,Build bottom tab navigation bar,FOUND-001,6,TBD,Completed,"5 tabs (Home,Chart,Readings,Journal,Profile), badges show, active state works","components/TabNavigation.tsx","AppState.activeTab","TabNavigationProps"
+FOUND-003,Foundation,1,HeaderBar,Component,Create reusable header component,FOUND-001,4,TBD,Completed,"Title displays, back button works, actions render correctly","components/HeaderBar.tsx","None","HeaderBarProps"
+FOUND-004,Foundation,1,LoadingSpinner,Component,Build loading state component,"None",2,TBD,Completed,"Spinner renders, overlay works, text displays","components/LoadingSpinner.tsx","None","LoadingSpinnerProps"
+FOUND-005,Foundation,1,Button,Component,Create primary button component,"None",3,TBD,Completed,"All variants render, disabled state works, loading state shows","components/Button.tsx","None","ButtonProps"
+FOUND-006,Foundation,1,StateSetup,Setup,Configure Zustand store structure,"None",8,TBD,Completed,"All state slices defined, persistence works, TypeScript types complete","store/index.ts, store/slices/*.ts","AppState","N/A"
+
+AUTH-001,Authentication,2,AuthStore,Store,Create authentication state slice,FOUND-006,6,TBD,Completed,"Login/logout actions work, token persistence, session refresh","store/slices/authSlice.ts","AuthState","N/A"
+AUTH-002,Authentication,2,LoginScreen,Screen,Build login screen UI,AUTH-001,8,TBD,Completed,"Form validation, error display, navigation to register","screens/LoginScreen.tsx","AuthState","LoginScreenProps"
+AUTH-003,Authentication,2,RegisterScreen,Screen,Create user registration screen,AUTH-001,8,TBD,Completed,"Account creation works, validation, email verification flow","screens/RegisterScreen.tsx","AuthState","RegisterScreenProps"
+AUTH-004,Authentication,2,LoginForm,Component,Create login form component,FOUND-005,4,TBD,Completed,"Email/password inputs, validation, submit handling","components/TextInput.tsx","None","TextInputProps"
+AUTH-005,Authentication,2,AuthHandlers,Handler,Implement auth API handlers,AUTH-001,6,TBD,Completed,"API calls work, error handling, token management","handlers/auth.ts","AuthState","N/A"
+
+USER-001,UserManagement,2,UserStore,Store,Create user profile state slice,AUTH-001,4,TBD,Completed,"Profile updates, birth data storage, preferences management","store/slices/userSlice.ts","UserState","N/A"
+USER-002,UserManagement,2,OnboardingScreen,Screen,Build onboarding flow screen,USER-001,12,TBD,Completed,"Birth data collection, validation, timezone handling","screens/OnboardingScreen.tsx, screens/BirthDataScreen.tsx, screens/BirthDateTimeScreen.tsx, screens/SplashScreen.tsx","UserState","OnboardingScreenProps"
+USER-003,UserManagement,2,BirthDataForm,Component,Create birth data input form,USER-001,10,TBD,Completed,"Date/time/location inputs, validation, timezone conversion","screens/BirthDateTimeScreen.tsx","UserState","BirthDataFormProps"
+USER-004,UserManagement,2,LocationPicker,Component,Build location search component,USER-003,8,TBD,Completed,"Autocomplete search, recent locations, timezone detection","components/LocationPicker.tsx","None","LocationPickerProps"
+USER-005,UserManagement,2,ProfileScreen,Screen,Create user profile management screen,USER-001,6,TBD,Completed,"Profile editing, preferences, account settings","screens/ProfileScreen.tsx","UserState","ProfileScreenProps"
+
+CHART-001,ChartSystem,3,ChartStore,Store,Create chart calculation state slice,USER-001,6,TBD,Completed,"Chart generation, transit updates, selection state","store/slices/chartSlice.ts","ChartState","N/A"
+CHART-002,ChartSystem,3,ChartCalculation,Util,Implement Swiss Ephemeris chart calculations,CHART-001,16,TBD,Completed,"Accurate planetary positions, house calculations, aspect detection","utils/swisseph/natalChart.ts, utils/swisseph/client.ts, handlers/chartGeneration.ts","None","N/A"
+CHART-003,ChartSystem,3,NatalChartScreen,Screen,Build natal chart display screen,CHART-001,10,TBD,Completed,"Chart display, interaction, interpretation text","screens/NatalChartScreen.tsx","ChartState","NatalChartScreenProps"
+CHART-004,ChartSystem,3,ChartWheel,Component,Create interactive chart wheel component,CHART-002,20,TBD,NotStarted,"SVG chart rendering, planet selection, house interaction","components/ChartWheel.tsx","ChartState","ChartWheelProps"
+CHART-005,ChartSystem,3,AspectGrid,Component,Build planetary aspects table,CHART-002,8,TBD,NotStarted,"Aspect display, filtering, selection highlighting","components/AspectGrid.tsx","ChartState","AspectGridProps"
+CHART-006,ChartSystem,3,PlanetaryPositions,Component,Create planets list component,CHART-002,6,TBD,NotStarted,"Planet positions, sign display, house information","components/PlanetaryPositions.tsx","ChartState","PlanetaryPositionsProps"
+
+HORO-001,Horoscope,4,HoroscopeScreen,Screen,Build daily horoscope screen,CHART-001,8,TBD,NotStarted,"Daily reading display, transit integration, personalization","screens/HoroscopeScreen.js","ReadingState","HoroscopeScreenProps"
+HORO-002,Horoscope,4,TransitCalculation,Util,Implement current transit calculations,CHART-002,10,TBD,NotStarted,"Real-time planetary positions, transit aspects","utils/transitCalculation.js","None","N/A"
+HORO-003,Horoscope,4,HoroscopeGenerator,Handler,Create personalized horoscope generation,HORO-002,12,TBD,NotStarted,"AI integration, personalization, fallback content","handlers/horoscope.js","ReadingState","N/A"
+
+CONT-001,ContentLibrary,4,ContentStore,Store,Create content library state slice,"None",4,TBD,NotStarted,"Library loading, version management, validation","store/slices/content.js","ContentState","N/A"
+CONT-002,ContentLibrary,4,TarotLibrary,Data,Create complete tarot card database,"None",16,TBD,Completed,"78 cards, meanings, keywords, correspondences","data/tarot/tarotCards.ts","None","N/A"
+CONT-003,ContentLibrary,4,HexagramLibrary,Data,Create I Ching hexagram database,"None",12,TBD,NotStarted,"64 hexagrams, classical texts, interpretations","data/hexagramLibrary.js","None","N/A"
+CONT-004,ContentLibrary,4,ContentManager,Handler,Implement content loading and validation,CONT-001,8,TBD,NotStarted,"Content integrity, updates, fallback handling","handlers/content.js","ContentState","N/A"
+
+IMG-001,ImageSystem,4,ImageStore,Store,Create image asset state slice,CONT-001,6,TBD,NotStarted,"Deck management, cache control, loading states","store/slices/image.js","ImageState","N/A"
+IMG-002,ImageSystem,4,ImageAssetManager,Component,Build image loading and caching system,IMG-001,16,TBD,NotStarted,"Multi-resolution support, offline caching, fallbacks","components/ImageAssetManager.js","ImageState","ImageAssetManagerProps"
+IMG-003,ImageSystem,4,TarotCardImages,Assets,Implement tarot card image storage,IMG-001,12,TBD,Completed,"SVG card images integrated","data/tarot/tarotImages.ts","None","N/A"
+IMG-004,ImageSystem,4,DeckSelector,Component,Create deck selection component,IMG-001,8,TBD,NotStarted,"Deck switching, download progress, preview","components/DeckSelector.js","ImageState","DeckSelectorProps"
+
+AI-001,AIInterpretation,5,AIStore,Store,Create AI interpretation state slice,CONT-001,4,TBD,NotStarted,"AI responses, caching, fallback management","store/slices/ai.js","AIState","N/A"
+AI-002,AIInterpretation,5,PromptTemplates,Util,Create AI prompt templates,AI-001,10,TBD,Completed,"Tarot prompts with personalization context","utils/tarotPromptTemplate.ts","None","N/A"
+AI-003,AIInterpretation,5,AIInterpretationEngine,Handler,Implement LLM API integration,AI-001,12,TBD,Completed,"Anthropic API integration in tarot handler","handlers/tarotReading.ts","AIState","N/A"
+AI-004,AIInterpretation,5,InterpretationCache,Util,Build AI response caching system,AI-001,8,TBD,NotStarted,"Response caching, context hashing, cache invalidation","utils/interpretationCache.js","AIState","N/A"
+
+QUAN-001,QuantumRandom,5,QuantumAPI,Util,Integrate quantum random number generator,"None",8,TBD,Completed,"API integration with fallback to crypto random","utils/quantumRandom.ts","None","N/A"
+QUAN-002,QuantumRandom,5,QuantumGenerator,Component,Create quantum number generation UI,QUAN-001,6,TBD,NotStarted,"Generation visualization, progress indication, error handling","components/QuantumGenerator.js","DivinationState","QuantumGeneratorProps"
+
+DIV-001,DivinationFlow,6,DivinationStore,Store,Create divination session state slice,AI-001,8,TBD,NotStarted,"Session management, flow control, data persistence","store/slices/divination.js","DivinationState","N/A"
+DIV-002,DivinationFlow,6,IntentionSetter,Component,Build intention setting component,DIV-001,6,TBD,Completed,"Intention input with validation","components/tarot/IntentionInput.tsx","DivinationState","IntentionSetterProps"
+
+TAR-001,TarotSystem,6,TarotScreen,Screen,Build tarot reading screen,DIV-001,12,TBD,Completed,"Complete tarot flow, spread selection, interpretation","screens/TarotScreen.tsx","DivinationState","TarotScreenProps"
+TAR-002,TarotSystem,6,TarotCard,Component,Create tarot card display component,IMG-001,10,TBD,Completed,"Card rendering, orientation, interaction, fallbacks","components/tarot/TarotCard.tsx","ImageState","TarotCardProps"
+TAR-003,TarotSystem,6,TarotSpread,Component,Build tarot spread layout component,TAR-002,14,TBD,Completed,"Responsive sizing, spread positioning with rotation support","components/tarot/TarotSpread.tsx","DivinationState","TarotSpreadProps"
+TAR-004,TarotSystem,6,CardDrawAnimation,Component,Create card drawing animation,TAR-002,8,TBD,Completed,"Quantum loading and card reveal animations","components/tarot/QuantumCardReveal.tsx, components/tarot/QuantumLoadingScreen.tsx","DivinationState","CardDrawAnimationProps"
+TAR-005,TarotSystem,6,SpreadLibrary,Data,Create tarot spread definitions,TAR-003,6,TBD,Completed,"Celtic Cross, 3-card, single card spreads with positioning","data/tarot/spreads.ts","None","N/A"
+
+ICH-001,IChingSystem,7,ICHingScreen,Screen,Build I Ching consultation screen,DIV-001,10,TBD,NotStarted,"Complete I Ching flow, hexagram display, interpretation","screens/ICHingScreen.js","DivinationState","ICHingScreenProps"
+ICH-002,IChingSystem,7,HexagramDisplay,Component,Create hexagram visualization component,CONT-003,8,TBD,NotStarted,"Hexagram rendering, line interaction, trigram display","components/HexagramDisplay.js","DivinationState","HexagramDisplayProps"
+ICH-003,IChingSystem,7,CoinCastAnimation,Component,Build coin casting animation,QUAN-002,6,TBD,NotStarted,"Coin animation, quantum integration, line formation","components/CoinCastAnimation.js","DivinationState","CoinCastAnimationProps"
+ICH-004,IChingSystem,7,HexagramGenerator,Util,Implement hexagram generation logic,QUAN-001,8,TBD,NotStarted,"Quantum coin casting, changing lines, hexagram lookup","utils/hexagramGenerator.js","None","N/A"
+
+READ-001,ReadingSystem,7,ReadingStore,Store,Create reading history state slice,DIV-001,6,TBD,NotStarted,"Reading storage, favorites, search, pagination","store/slices/reading.js","ReadingState","N/A"
+READ-002,ReadingSystem,7,ReadingCard,Component,Build reading display component,READ-001,8,TBD,NotStarted,"Reading formatting, actions, sharing, expansion","components/ReadingCard.js","ReadingState","ReadingCardProps"
+READ-003,ReadingSystem,7,InterpretationText,Component,Create interpretation display component,AI-001,6,TBD,NotStarted,"Text formatting, AI indicators, regeneration","components/InterpretationText.js","AIState","InterpretationTextProps"
+READ-004,ReadingSystem,7,HistoryScreen,Screen,Build reading history screen,READ-001,10,TBD,Completed,"Reading list, filtering, search, pagination","screens/ReadingsScreen.tsx","ReadingState","HistoryScreenProps"
+READ-005,ReadingSystem,7,HistoryList,Component,Create reading history list component,READ-002,8,TBD,NotStarted,"Chronological display, grouping, infinite scroll","components/HistoryList.js","ReadingState","HistoryListProps"
+
+JOUR-001,JournalSystem,8,JournalStore,Store,Create journal state slice,READ-001,4,TBD,NotStarted,"Entry management, mood tracking, search","store/slices/journal.js","JournalState","N/A"
+JOUR-002,JournalSystem,8,JournalScreen,Screen,Build journal management screen,JOUR-001,8,TBD,Completed,"Entry list, creation, editing, mood overview","screens/JournalScreen.tsx","JournalState","JournalScreenProps"
+JOUR-003,JournalSystem,8,JournalEditor,Component,Create rich text journal editor,JOUR-001,12,TBD,NotStarted,"Rich text editing, autosave, reading links","components/JournalEditor.js","JournalState","JournalEditorProps"
+JOUR-004,JournalSystem,8,MoodSelector,Component,Build mood and energy selector,JOUR-001,6,TBD,NotStarted,"Mood scale, energy scale, visual feedback","components/MoodSelector.js","JournalState","MoodSelectorProps"
+JOUR-005,JournalSystem,8,JournalPrompt,Component,Create post-reading journal prompt,READ-002,4,TBD,NotStarted,"Quick entry creation, reading context, guidance","components/JournalPrompt.js","JournalState","JournalPromptProps"
+
+SYN-001,SynastrySystem,9,SocialStore,Store,Create social connections state slice,USER-001,6,TBD,NotStarted,"Partner management, invitations, privacy settings","store/slices/social.js","SocialState","N/A"
+SYN-002,SynastrySystem,9,SynastryScreen,Screen,Build relationship compatibility screen,SYN-001,12,TBD,NotStarted,"Compatibility display, partner selection, sharing","screens/SynastryScreen.js","SocialState","SynastryScreenProps"
+SYN-003,SynastrySystem,9,ConnectionsScreen,Screen,Create partner management screen,SYN-001,8,TBD,NotStarted,"Partner list, invitations, privacy controls","screens/ConnectionsScreen.js","SocialState","ConnectionsScreenProps"
+SYN-004,SynastrySystem,9,CompatibilityMeter,Component,Build compatibility visualization,CHART-002,8,TBD,NotStarted,"Compatibility scoring, aspect analysis, visual display","components/CompatibilityMeter.js","SocialState","CompatibilityMeterProps"
+
+SYNC-001,DataSync,10,SyncManager,Handler,Implement offline/online data synchronization,READ-001,16,TBD,NotStarted,"Conflict resolution, queue management, error handling","handlers/syncManager.js","AppState","N/A"
+SYNC-002,DataSync,10,OfflineQueue,Util,Create offline action queueing system,SYNC-001,8,TBD,NotStarted,"Action queuing, retry logic, storage management","utils/offlineQueue.js","AppState","N/A"
+SYNC-003,DataSync,10,SupabaseIntegration,Handler,Implement Supabase database integration,SYNC-001,12,TBD,NotStarted,"Database schema, API calls, real-time subscriptions","handlers/supabase.js","AppState","N/A"
+
+HOME-001,HomeScreen,11,HomeScreen,Screen,Build main dashboard screen,READ-001,10,TBD,Completed,"Daily insights, quick actions, recent readings","screens/HomeScreen.tsx","Multiple","HomeScreenProps"
+HOME-002,HomeScreen,11,DashboardCards,Component,Create dashboard widget components,HOME-001,8,TBD,NotStarted,"Today's horoscope, quick tarot, mood check","components/DashboardCards.js","Multiple","DashboardCardsProps"
+
+PERF-001,Performance,12,LazyLoading,Optimization,Implement component lazy loading,FOUND-001,6,TBD,NotStarted,"Code splitting, route-based lazy loading","utils/lazyLoading.js","None","N/A"
+PERF-002,Performance,12,ImageOptimization,Optimization,Optimize image loading and caching,IMG-002,8,TBD,NotStarted,"Progressive loading, compression, CDN integration","utils/imageOptimization.js","ImageState","N/A"
+PERF-003,Performance,12,StateOptimization,Optimization,Optimize state selector performance,FOUND-006,6,TBD,NotStarted,"Memoized selectors, subscription optimization","store/selectors.js","AppState","N/A"
+
+TEST-001,Testing,13,TestUtils,Testing,Create testing utilities and mocks,FOUND-006,8,TBD,NotStarted,"Mock factories, test helpers, state providers","tests/utils.js","None","N/A"
+TEST-002,Testing,13,ComponentTests,Testing,Write component unit tests,ALL,20,TBD,NotStarted,"95% component coverage, prop validation, interaction tests","tests/components/","None","N/A"
+TEST-003,Testing,13,IntegrationTests,Testing,Create integration tests for key flows,ALL,16,TBD,NotStarted,"Reading flows, authentication, sync","tests/integration/","None","N/A"

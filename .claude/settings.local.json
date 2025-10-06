@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx create-expo-app:*)",
+      "Bash(npm init:*)",
+      "Bash(npm install:*)",
+      "Bash(dir)",
+      "Bash(dir:*)",
+      "Bash(npx expo start:*)",
+      "Bash(timeout:*)",
+      "Bash(npx expo install:*)",
+      "Bash(findstr:*)",
+      "Bash(test:*)",
+      "Bash(npx expo prebuild:*)",
+      "Bash(curl:*)",
+      "Bash(del D:AppsBuildouros2srcstylestheme.ts)",
+      "WebSearch",
+      "WebFetch(domain:github.com)",
+      "Read(//d/**)",
+      "Bash(git init:*)",
+      "Bash(git remote add:*)",
+      "Bash(git fetch:*)",
+      "Bash(git add:*)",
+      "Bash(del nul)",
+      "Bash(rm:*)",
+      "Bash(git commit:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

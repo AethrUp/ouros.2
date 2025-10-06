@@ -1,0 +1,161 @@
+// SVG Imports
+import 00FoolSvg from '../../../assets/tarot/rider-waite/00-fool.svg';
+import 01MagicianSvg from '../../../assets/tarot/rider-waite/01-magician.svg';
+import 02HighPriestessSvg from '../../../assets/tarot/rider-waite/02-high-priestess.svg';
+import 03EmpressSvg from '../../../assets/tarot/rider-waite/03-empress.svg';
+import 04EmperorSvg from '../../../assets/tarot/rider-waite/04-emperor.svg';
+import 05HierophantSvg from '../../../assets/tarot/rider-waite/05-hierophant.svg';
+import 06LoversSvg from '../../../assets/tarot/rider-waite/06-lovers.svg';
+import 07ChariotSvg from '../../../assets/tarot/rider-waite/07-chariot.svg';
+import 08StrengthSvg from '../../../assets/tarot/rider-waite/08-strength.svg';
+import 09HermitSvg from '../../../assets/tarot/rider-waite/09-hermit.svg';
+import 10WheelOfFortuneSvg from '../../../assets/tarot/rider-waite/10-wheel-of-fortune.svg';
+import 11JusticeSvg from '../../../assets/tarot/rider-waite/11-justice.svg';
+import 12HangedManSvg from '../../../assets/tarot/rider-waite/12-hanged-man.svg';
+import 13DeathSvg from '../../../assets/tarot/rider-waite/13-death.svg';
+import 14TemperanceSvg from '../../../assets/tarot/rider-waite/14-temperance.svg';
+import 15DevilSvg from '../../../assets/tarot/rider-waite/15-devil.svg';
+import 16TowerSvg from '../../../assets/tarot/rider-waite/16-tower.svg';
+import 17StarSvg from '../../../assets/tarot/rider-waite/17-star.svg';
+import 18MoonSvg from '../../../assets/tarot/rider-waite/18-moon.svg';
+import 19SunSvg from '../../../assets/tarot/rider-waite/19-sun.svg';
+import 20JudgementSvg from '../../../assets/tarot/rider-waite/20-judgement.svg';
+import 21WorldSvg from '../../../assets/tarot/rider-waite/21-world.svg';
+import Cups10Svg from '../../../assets/tarot/rider-waite/cups-10.svg';
+import Cups2Svg from '../../../assets/tarot/rider-waite/cups-2.svg';
+import Cups3Svg from '../../../assets/tarot/rider-waite/cups-3.svg';
+import Cups4Svg from '../../../assets/tarot/rider-waite/cups-4.svg';
+import Cups5Svg from '../../../assets/tarot/rider-waite/cups-5.svg';
+import Cups6Svg from '../../../assets/tarot/rider-waite/cups-6.svg';
+import Cups7Svg from '../../../assets/tarot/rider-waite/cups-7.svg';
+import Cups8Svg from '../../../assets/tarot/rider-waite/cups-8.svg';
+import Cups9Svg from '../../../assets/tarot/rider-waite/cups-9.svg';
+import CupsAceSvg from '../../../assets/tarot/rider-waite/cups-ace.svg';
+import CupsKingSvg from '../../../assets/tarot/rider-waite/cups-king.svg';
+import CupsKnightSvg from '../../../assets/tarot/rider-waite/cups-knight.svg';
+import CupsPageSvg from '../../../assets/tarot/rider-waite/cups-page.svg';
+import CupsQueenSvg from '../../../assets/tarot/rider-waite/cups-queen.svg';
+import Pentacles10Svg from '../../../assets/tarot/rider-waite/pentacles-10.svg';
+import Pentacles2Svg from '../../../assets/tarot/rider-waite/pentacles-2.svg';
+import Pentacles3Svg from '../../../assets/tarot/rider-waite/pentacles-3.svg';
+import Pentacles4Svg from '../../../assets/tarot/rider-waite/pentacles-4.svg';
+import Pentacles5Svg from '../../../assets/tarot/rider-waite/pentacles-5.svg';
+import Pentacles6Svg from '../../../assets/tarot/rider-waite/pentacles-6.svg';
+import Pentacles7Svg from '../../../assets/tarot/rider-waite/pentacles-7.svg';
+import Pentacles8Svg from '../../../assets/tarot/rider-waite/pentacles-8.svg';
+import Pentacles9Svg from '../../../assets/tarot/rider-waite/pentacles-9.svg';
+import PentaclesAceSvg from '../../../assets/tarot/rider-waite/pentacles-ace.svg';
+import PentaclesKingSvg from '../../../assets/tarot/rider-waite/pentacles-king.svg';
+import PentaclesKnightSvg from '../../../assets/tarot/rider-waite/pentacles-knight.svg';
+import PentaclesPageSvg from '../../../assets/tarot/rider-waite/pentacles-page.svg';
+import PentaclesQueenSvg from '../../../assets/tarot/rider-waite/pentacles-queen.svg';
+import Swords10Svg from '../../../assets/tarot/rider-waite/swords-10.svg';
+import Swords2Svg from '../../../assets/tarot/rider-waite/swords-2.svg';
+import Swords3Svg from '../../../assets/tarot/rider-waite/swords-3.svg';
+import Swords4Svg from '../../../assets/tarot/rider-waite/swords-4.svg';
+import Swords5Svg from '../../../assets/tarot/rider-waite/swords-5.svg';
+import Swords6Svg from '../../../assets/tarot/rider-waite/swords-6.svg';
+import Swords7Svg from '../../../assets/tarot/rider-waite/swords-7.svg';
+import Swords8Svg from '../../../assets/tarot/rider-waite/swords-8.svg';
+import Swords9Svg from '../../../assets/tarot/rider-waite/swords-9.svg';
+import SwordsAceSvg from '../../../assets/tarot/rider-waite/swords-ace.svg';
+import SwordsKingSvg from '../../../assets/tarot/rider-waite/swords-king.svg';
+import SwordsKnightSvg from '../../../assets/tarot/rider-waite/swords-knight.svg';
+import SwordsPageSvg from '../../../assets/tarot/rider-waite/swords-page.svg';
+import SwordsQueenSvg from '../../../assets/tarot/rider-waite/swords-queen.svg';
+import Wands10Svg from '../../../assets/tarot/rider-waite/wands-10.svg';
+import Wands2Svg from '../../../assets/tarot/rider-waite/wands-2.svg';
+import Wands3Svg from '../../../assets/tarot/rider-waite/wands-3.svg';
+import Wands4Svg from '../../../assets/tarot/rider-waite/wands-4.svg';
+import Wands5Svg from '../../../assets/tarot/rider-waite/wands-5.svg';
+import Wands6Svg from '../../../assets/tarot/rider-waite/wands-6.svg';
+import Wands7Svg from '../../../assets/tarot/rider-waite/wands-7.svg';
+import Wands8Svg from '../../../assets/tarot/rider-waite/wands-8.svg';
+import Wands9Svg from '../../../assets/tarot/rider-waite/wands-9.svg';
+import WandsAceSvg from '../../../assets/tarot/rider-waite/wands-ace.svg';
+import WandsKingSvg from '../../../assets/tarot/rider-waite/wands-king.svg';
+import WandsKnightSvg from '../../../assets/tarot/rider-waite/wands-knight.svg';
+import WandsPageSvg from '../../../assets/tarot/rider-waite/wands-page.svg';
+import WandsQueenSvg from '../../../assets/tarot/rider-waite/wands-queen.svg';
+
+// SVG Map for easy lookup
+const SVG_MAP = {
+  '00-fool': 00FoolSvg,
+  '01-magician': 01MagicianSvg,
+  '02-high-priestess': 02HighPriestessSvg,
+  '03-empress': 03EmpressSvg,
+  '04-emperor': 04EmperorSvg,
+  '05-hierophant': 05HierophantSvg,
+  '06-lovers': 06LoversSvg,
+  '07-chariot': 07ChariotSvg,
+  '08-strength': 08StrengthSvg,
+  '09-hermit': 09HermitSvg,
+  '10-wheel-of-fortune': 10WheelOfFortuneSvg,
+  '11-justice': 11JusticeSvg,
+  '12-hanged-man': 12HangedManSvg,
+  '13-death': 13DeathSvg,
+  '14-temperance': 14TemperanceSvg,
+  '15-devil': 15DevilSvg,
+  '16-tower': 16TowerSvg,
+  '17-star': 17StarSvg,
+  '18-moon': 18MoonSvg,
+  '19-sun': 19SunSvg,
+  '20-judgement': 20JudgementSvg,
+  '21-world': 21WorldSvg,
+  'cups-10': Cups10Svg,
+  'cups-2': Cups2Svg,
+  'cups-3': Cups3Svg,
+  'cups-4': Cups4Svg,
+  'cups-5': Cups5Svg,
+  'cups-6': Cups6Svg,
+  'cups-7': Cups7Svg,
+  'cups-8': Cups8Svg,
+  'cups-9': Cups9Svg,
+  'cups-ace': CupsAceSvg,
+  'cups-king': CupsKingSvg,
+  'cups-knight': CupsKnightSvg,
+  'cups-page': CupsPageSvg,
+  'cups-queen': CupsQueenSvg,
+  'pentacles-10': Pentacles10Svg,
+  'pentacles-2': Pentacles2Svg,
+  'pentacles-3': Pentacles3Svg,
+  'pentacles-4': Pentacles4Svg,
+  'pentacles-5': Pentacles5Svg,
+  'pentacles-6': Pentacles6Svg,
+  'pentacles-7': Pentacles7Svg,
+  'pentacles-8': Pentacles8Svg,
+  'pentacles-9': Pentacles9Svg,
+  'pentacles-ace': PentaclesAceSvg,
+  'pentacles-king': PentaclesKingSvg,
+  'pentacles-knight': PentaclesKnightSvg,
+  'pentacles-page': PentaclesPageSvg,
+  'pentacles-queen': PentaclesQueenSvg,
+  'swords-10': Swords10Svg,
+  'swords-2': Swords2Svg,
+  'swords-3': Swords3Svg,
+  'swords-4': Swords4Svg,
+  'swords-5': Swords5Svg,
+  'swords-6': Swords6Svg,
+  'swords-7': Swords7Svg,
+  'swords-8': Swords8Svg,
+  'swords-9': Swords9Svg,
+  'swords-ace': SwordsAceSvg,
+  'swords-king': SwordsKingSvg,
+  'swords-knight': SwordsKnightSvg,
+  'swords-page': SwordsPageSvg,
+  'swords-queen': SwordsQueenSvg,
+  'wands-10': Wands10Svg,
+  'wands-2': Wands2Svg,
+  'wands-3': Wands3Svg,
+  'wands-4': Wands4Svg,
+  'wands-5': Wands5Svg,
+  'wands-6': Wands6Svg,
+  'wands-7': Wands7Svg,
+  'wands-8': Wands8Svg,
+  'wands-9': Wands9Svg,
+  'wands-ace': WandsAceSvg,
+  'wands-king': WandsKingSvg,
+  'wands-knight': WandsKnightSvg,
+  'wands-page': WandsPageSvg,
+  'wands-queen': WandsQueenSvg,
+};
