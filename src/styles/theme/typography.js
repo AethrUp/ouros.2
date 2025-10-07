@@ -34,15 +34,15 @@ export const typography = {
   // Body text
   body: {
     fontFamily: 'Inter_400Regular',
-    fontSize: 12,
-    fontWeight: '400', 
+    fontSize: 14,
+    fontWeight: '400',
     color: '#FFFFFF',
   },
   
   // Secondary text variant
   bodySecondary: {
     fontFamily: 'Inter_400Regular',
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: '400',
     color: '#85798D',
   },

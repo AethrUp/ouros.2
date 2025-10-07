@@ -125,7 +125,7 @@ export const createIChingSlice: StateCreator<IChingSlice> = (set, get) => ({
       set({
         isLoadingCoinTosses: false,
         ichingError: error instanceof Error ? error.message : 'Failed to fetch coin tosses',
-        ichingSessionStep: 'question', // Go back to question
+        ichingSessionStep: 'loading', // Stay on loading to show error
         preFetchedCoinTosses: null,
       });
     }

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -31,32 +31,61 @@ const categoryIcons: Record<string, keyof typeof Ionicons.glyphMap> = {
 };
 
 export const HomeScreen: React.FC<NavigationProps> = ({ navigation }) => {
+  const isMountedRef = useRef(true);
+
   const {
     profile,
     birthData,
     natalChart,
     dailyHoroscope,
     isLoadingDailyReading,
+    isGeneratingHoroscope,
     dailyReadingError,
     setDailyHoroscope,
     setLoadingDailyReading,
     setDailyReadingError,
     setGenerationMetadata,
+    setGeneratingHoroscope,
   } = useAppStore();
+
+  // Reset flag on mount and cleanup on unmount
+  useEffect(() => {
+    isMountedRef.current = true;
+
+    // Reset any stuck flag from previous session
+    if (isGeneratingHoroscope) {
+      console.log('🔄 Resetting stuck isGeneratingHoroscope flag');
+      setGeneratingHoroscope(false);
+    }
+
+    return () => {
+      isMountedRef.current = false;
+      // Cleanup: reset flag on unmount to prevent stuck state
+      setGeneratingHoroscope(false);
+      setLoadingDailyReading(false);
+    };
+  }, []);
 
   // Load horoscope on mount
   useEffect(() => {
     loadHoroscope();
   }, []);
 
-  const loadHoroscope = async () => {
+  const loadHoroscope = async (forceRegenerate = false) => {
     if (!natalChart || !profile || !birthData) {
       console.log('⏸️ Waiting for natal chart and profile data...');
       return;
     }
 
+    // Guard against concurrent generation
+    if (isGeneratingHoroscope) {
+      console.log('⏸️ Horoscope generation already in progress...');
+      return;
+    }
+
     try {
       setLoadingDailyReading(true);
+      setGeneratingHoroscope(true);
 
       const userProfile = {
         ...profile,
@@ -66,22 +95,30 @@ export const HomeScreen: React.FC<NavigationProps> = ({ navigation }) => {
         selectedCategories: profile.selectedCategories || [],
       };
 
-      const result = await getDailyHoroscope(natalChart, userProfile, dailyHoroscope);
+      const result = await getDailyHoroscope(natalChart, userProfile, dailyHoroscope, { forceRegenerate });
 
       if (result.success && result.horoscope) {
-        setDailyHoroscope(result.horoscope);
+        if (isMountedRef.current) {
+          setDailyHoroscope(result.horoscope);
 
-        if (result.metadata) {
-          setGenerationMetadata(result.metadata);
+          if (result.metadata) {
+            setGenerationMetadata(result.metadata);
+          }
         }
       } else {
-        setDailyReadingError(result.error || 'Failed to generate horoscope');
+        if (isMountedRef.current) {
+          setDailyReadingError(result.error || 'Failed to generate horoscope');
+        }
       }
     } catch (error: any) {
       console.error('Error loading horoscope:', error);
-      setDailyReadingError(error.message);
+      if (isMountedRef.current) {
+        setDailyReadingError(error.message);
+      }
     } finally {
+      // Always reset flags, even if unmounted, to prevent stuck state
       setLoadingDailyReading(false);
+      setGeneratingHoroscope(false);
     }
   };
 
@@ -146,7 +183,7 @@ export const HomeScreen: React.FC<NavigationProps> = ({ navigation }) => {
         title="OUROS"
         rightActions={[
           {
-            icon: 'settings-outline',
+            icon: 'person-circle-outline',
             onPress: () => navigation.navigate('Profile'),
           },
         ]}
@@ -172,7 +209,7 @@ export const HomeScreen: React.FC<NavigationProps> = ({ navigation }) => {
           <View style={styles.errorCard}>
             <Ionicons name="warning-outline" size={32} color={colors.text.secondary} />
             <Text style={styles.errorText}>{dailyReadingError}</Text>
-            <TouchableOpacity style={styles.retryButton} onPress={loadHoroscope}>
+            <TouchableOpacity style={styles.retryButton} onPress={() => loadHoroscope(true)}>
               <Text style={styles.retryButtonText}>Try Again</Text>
             </TouchableOpacity>
           </View>
@@ -188,23 +225,8 @@ export const HomeScreen: React.FC<NavigationProps> = ({ navigation }) => {
                 {dailyHoroscope.preview?.summary}
               </Text>
 
-              {/* Cosmic Weather Preview */}
-              {dailyHoroscope.preview?.weather && (
-                <View style={styles.weatherPreview}>
-                  <View style={styles.weatherItem}>
-                    <Text style={styles.weatherSymbol}>☽</Text>
-                    <Text style={styles.weatherText} numberOfLines={1}>
-                      {typeof dailyHoroscope.preview.weather.moon === 'string'
-                        ? dailyHoroscope.preview.weather.moon
-                        : 'Moon influence'}
-                    </Text>
-                  </View>
-                </View>
-              )}
-
               <View style={styles.readMoreContainer}>
                 <Text style={styles.readMoreText}>READ FULL HOROSCOPE</Text>
-                <Ionicons name="arrow-forward" size={16} color={colors.text.primary} />
               </View>
             </TouchableOpacity>
 
@@ -218,7 +240,7 @@ export const HomeScreen: React.FC<NavigationProps> = ({ navigation }) => {
           <Text style={styles.sectionTitle}>EXPLORE</Text>
           <TouchableOpacity
             style={styles.actionCard}
-            onPress={() => navigation.navigate('NatalChart')}
+            onPress={() => navigation.navigate('journal', { screen: 'chart' })}
           >
             <Ionicons name="planet-outline" size={24} color={colors.text.primary} />
             <Text style={styles.actionTitle}>Natal Chart</Text>
@@ -227,7 +249,7 @@ export const HomeScreen: React.FC<NavigationProps> = ({ navigation }) => {
 
           <TouchableOpacity
             style={styles.actionCard}
-            onPress={() => navigation.navigate('Journal')}
+            onPress={() => navigation.navigate('journal')}
           >
             <Ionicons name="book-outline" size={24} color={colors.text.primary} />
             <Text style={styles.actionTitle}>Journal</Text>
@@ -320,39 +342,19 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     marginBottom: spacing.md,
   },
-  weatherPreview: {
-    marginTop: spacing.sm,
-    paddingTop: spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: colors.border + '30',
-  },
-  weatherItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: spacing.xs,
-  },
-  weatherSymbol: {
-    marginRight: spacing.sm,
-    color: colors.text.primary,
-  },
-  weatherText: {
-    ...typography.body,
-    color: colors.text.secondary,
-    flex: 1,
-  },
   readMoreContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-end',
     marginTop: spacing.md,
-    paddingTop: spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: colors.border + '30',
   },
   readMoreText: {
     ...typography.caption,
     letterSpacing: 1,
-    marginRight: spacing.xs,
+    backgroundColor: colors.text.primary,
+    color: colors.background.primary,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: 8,
   },
   categoriesSection: {
     marginBottom: spacing.lg,

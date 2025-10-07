@@ -34,6 +34,7 @@ const categoryIcons: Record<string, keyof typeof Ionicons.glyphMap> = {
 const DailyHoroscopeScreen = () => {
   const navigation = useNavigation();
   const scrollViewRef = useRef<ScrollView>(null);
+  const isMountedRef = useRef(true);
   const [activeTab, setActiveTab] = useState(0);
   const [sectionPositions, setSectionPositions] = useState<Record<string, number>>({});
   const [isNavigating, setIsNavigating] = useState(false);
@@ -47,26 +48,48 @@ const DailyHoroscopeScreen = () => {
     dailyHoroscope,
     cosmicWeather,
     isLoadingDailyReading,
+    isGeneratingHoroscope,
     dailyReadingError,
     setDailyHoroscope,
     setLoadingDailyReading,
     setDailyReadingError,
     setGenerationMetadata,
+    setGeneratingHoroscope,
   } = useAppStore();
 
-  // Load horoscope on mount
+  // Reset flag on mount and cleanup on unmount
   useEffect(() => {
-    loadHoroscope();
+    isMountedRef.current = true;
+
+    // Reset any stuck flag from previous session
+    if (isGeneratingHoroscope) {
+      console.log('🔄 Resetting stuck isGeneratingHoroscope flag');
+      setGeneratingHoroscope(false);
+    }
+
+    return () => {
+      isMountedRef.current = false;
+      // Cleanup: reset flag on unmount to prevent stuck state
+      setGeneratingHoroscope(false);
+      setLoadingDailyReading(false);
+    };
   }, []);
 
-  const loadHoroscope = async () => {
+  const loadHoroscope = async (forceRegenerate = false) => {
     if (!natalChart || !profile || !birthData) {
       console.log('⏸️ Waiting for natal chart and profile data...');
       return;
     }
 
+    // Guard against concurrent generation
+    if (isGeneratingHoroscope) {
+      console.log('⏸️ Horoscope generation already in progress...');
+      return;
+    }
+
     try {
       setLoadingDailyReading(true);
+      setGeneratingHoroscope(true);
 
       const userProfile = {
         ...profile,
@@ -76,28 +99,36 @@ const DailyHoroscopeScreen = () => {
         selectedCategories: profile.selectedCategories || [],
       };
 
-      const result = await getDailyHoroscope(natalChart, userProfile, dailyHoroscope);
+      const result = await getDailyHoroscope(natalChart, userProfile, dailyHoroscope, { forceRegenerate });
 
       if (result.success && result.horoscope) {
-        setDailyHoroscope(result.horoscope);
+        if (isMountedRef.current) {
+          setDailyHoroscope(result.horoscope);
 
-        if (result.metadata) {
-          setGenerationMetadata(result.metadata);
-        }
+          if (result.metadata) {
+            setGenerationMetadata(result.metadata);
+          }
 
-        if (result.fromCache) {
-          console.log('✅ Using cached horoscope');
-        } else {
-          console.log('✅ Generated new horoscope');
+          if (result.fromCache) {
+            console.log('✅ Using cached horoscope');
+          } else {
+            console.log('✅ Generated new horoscope');
+          }
         }
       } else {
-        setDailyReadingError(result.error || 'Failed to generate horoscope');
+        if (isMountedRef.current) {
+          setDailyReadingError(result.error || 'Failed to generate horoscope');
+        }
       }
     } catch (error: any) {
       console.error('Error loading horoscope:', error);
-      setDailyReadingError(error.message);
+      if (isMountedRef.current) {
+        setDailyReadingError(error.message);
+      }
     } finally {
+      // Always reset flags, even if unmounted, to prevent stuck state
       setLoadingDailyReading(false);
+      setGeneratingHoroscope(false);
     }
   };
 
@@ -198,7 +229,7 @@ const DailyHoroscopeScreen = () => {
           <Ionicons name="warning-outline" size={48} color={colors.text.secondary} />
           <Text style={styles.errorTitle}>Unable to Generate Horoscope</Text>
           <Text style={styles.errorText}>{dailyReadingError}</Text>
-          <TouchableOpacity style={styles.retryButton} onPress={loadHoroscope}>
+          <TouchableOpacity style={styles.retryButton} onPress={() => loadHoroscope(true)}>
             <Text style={styles.retryButtonText}>Try Again</Text>
           </TouchableOpacity>
         </View>
@@ -579,7 +610,7 @@ const DailyHoroscopeScreen = () => {
           <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
         <Text style={styles.dateText}>{getCurrentDate()}</Text>
-        <TouchableOpacity onPress={loadHoroscope} style={styles.refreshButton}>
+        <TouchableOpacity onPress={() => loadHoroscope(true)} style={styles.refreshButton}>
           <Ionicons name="refresh" size={20} color={colors.text.primary} />
         </TouchableOpacity>
       </View>

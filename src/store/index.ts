@@ -8,9 +8,10 @@ import { createChartSlice, ChartSlice } from './slices/chartSlice';
 import { createReadingSlice, ReadingSlice } from './slices/readingSlice';
 import { createTarotSlice, TarotSlice } from './slices/tarotSlice';
 import { createIChingSlice, IChingSlice } from './slices/ichingSlice';
+import { createJournalSlice, JournalSlice } from './slices/journalSlice';
 
 // Combined store type
-export type AppStore = AppSlice & AuthSlice & UserSlice & ChartSlice & ReadingSlice & TarotSlice & IChingSlice;
+export type AppStore = AppSlice & AuthSlice & UserSlice & ChartSlice & ReadingSlice & TarotSlice & IChingSlice & JournalSlice;
 
 // Create the store with persistence
 export const useAppStore = create<AppStore>()(
@@ -23,6 +24,7 @@ export const useAppStore = create<AppStore>()(
       ...createReadingSlice(...args),
       ...createTarotSlice(...args),
       ...createIChingSlice(...args),
+      ...createJournalSlice(...args),
     }),
     {
       name: 'ouros2-storage',
@@ -51,6 +53,8 @@ export const useAppStore = create<AppStore>()(
         readings: state.readings,
         // Persist I Ching readings history (not session state)
         ichingReadings: state.ichingReadings,
+        // Persist journal entries (not current entry state)
+        journalEntries: state.journalEntries,
       }),
     }
   )

@@ -238,6 +238,14 @@ export const IChingScreen: React.FC<NavigationProps> = ({ navigation }) => {
         );
 
       case 'interpretation':
+        return (
+          <View style={{ flex: 1 }}>
+            <QuantumLoadingScreen
+              message="Consulting the ancient wisdom..."
+            />
+          </View>
+        );
+
       case 'complete':
         return primaryHexagram ? (
           <InterpretationView
@@ -296,7 +304,7 @@ const QuestionInputView: React.FC<QuestionInputViewProps> = ({
           <TextInput
             style={styles.questionInput}
             placeholder="What do I need to know about..."
-            placeholderTextColor={colors.text.secondary}
+            placeholderTextColor="rgba(255, 255, 255, 0.5)"
             value={question}
             onChangeText={onQuestionChange}
             multiline
@@ -337,13 +345,14 @@ const styles = StyleSheet.create({
   },
   questionTitle: {
     ...typography.h1,
-    textAlign: 'center',
+    textAlign: 'left',
+    color: '#F6D99F',
     marginBottom: spacing.xs,
   },
   questionSubtitle: {
     ...typography.body,
-    textAlign: 'center',
-    color: colors.text.secondary,
+    textAlign: 'left',
+    color: colors.text.primary,
     marginBottom: spacing.xl,
     lineHeight: 22,
   },
@@ -355,8 +364,7 @@ const styles = StyleSheet.create({
     minHeight: 120,
     textAlignVertical: 'top',
     color: colors.text.primary,
-    borderWidth: 1,
-    borderColor: colors.border.primary,
+    borderWidth: 0,
   },
   characterCount: {
     ...typography.caption,
@@ -366,7 +374,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
   },
   submitButton: {
-    backgroundColor: colors.button.primary,
+    backgroundColor: '#FFFFFF',
     paddingVertical: 14,
     paddingHorizontal: 24,
     borderRadius: 8,
@@ -383,9 +391,11 @@ const styles = StyleSheet.create({
   },
   submitButtonText: {
     ...typography.button,
-    color: colors.button.text,
+    color: colors.background.primary,
     fontSize: 16,
     fontWeight: '600',
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
   },
   errorButton: {
     position: 'absolute',

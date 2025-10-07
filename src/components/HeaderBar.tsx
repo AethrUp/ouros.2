@@ -122,25 +122,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.md,
   },
   leftSection: {
-    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-start',
   },
   centerSection: {
-    flex: 2,
-    alignItems: 'center',
+    flex: 1,
+    alignItems: 'flex-start',
     justifyContent: 'center',
+    marginLeft: theme.spacing.md,
   },
   rightSection: {
-    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-end',
   },
   title: {
-    fontSize: theme.fontSize.lg,
-    fontWeight: theme.fontWeight.semibold,
+    fontSize: theme.fontSize.xl,
+    fontFamily: 'PTSerif_400Regular',
     color: theme.colors.text.primary,
   },
   actionButton: {

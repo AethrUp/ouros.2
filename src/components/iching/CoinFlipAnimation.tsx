@@ -19,20 +19,23 @@ interface CoinProps {
   isHeads: boolean;
   delay?: number;
   animate: boolean;
+  animationVersion: number;
   onComplete?: () => void;
 }
 
 /**
  * Single Coin Component with flip animation
  */
-const AnimatedCoin: React.FC<CoinProps> = ({ isHeads, delay = 0, animate, onComplete }) => {
+const AnimatedCoin: React.FC<CoinProps> = ({ isHeads, delay = 0, animate, animationVersion, onComplete }) => {
   const rotation = useSharedValue(0);
   const translateY = useSharedValue(0);
-  const opacity = useSharedValue(0);
+  const opacity = useSharedValue(1);
 
   useEffect(() => {
     if (animate) {
-      opacity.value = withTiming(1, { duration: 200 });
+      // Reset to starting position
+      rotation.value = 0;
+      translateY.value = 0;
 
       // Coin toss animation
       rotation.value = withDelay(
@@ -67,7 +70,7 @@ const AnimatedCoin: React.FC<CoinProps> = ({ isHeads, delay = 0, animate, onComp
         setTimeout(() => onComplete(), delay + 1200);
       }
     }
-  }, [animate, isHeads, delay]);
+  }, [animate, animationVersion, isHeads, delay]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [
@@ -104,6 +107,7 @@ export const ThreeCoinToss: React.FC<ThreeCoinTossProps> = ({
   animate,
 }) => {
   const [completedCoins, setCompletedCoins] = React.useState(0);
+  const [animationKey, setAnimationKey] = React.useState(0);
 
   const handleCoinComplete = () => {
     setCompletedCoins((prev) => {
@@ -115,12 +119,13 @@ export const ThreeCoinToss: React.FC<ThreeCoinTossProps> = ({
     });
   };
 
-  // Reset counter when animation starts
+  // Reset counter and trigger new animation when results change
   useEffect(() => {
     if (animate) {
       setCompletedCoins(0);
+      setAnimationKey(prev => prev + 1);
     }
-  }, [animate]);
+  }, [animate, results]);
 
   return (
     <View style={styles.container}>
@@ -130,6 +135,7 @@ export const ThreeCoinToss: React.FC<ThreeCoinTossProps> = ({
             <AnimatedCoin
               isHeads={isHeads}
               animate={animate}
+              animationVersion={animationKey}
               delay={index * 50} // Slight stagger: 0ms, 50ms, 100ms
               onComplete={handleCoinComplete} // All coins call handleCoinComplete
             />

@@ -14,6 +14,7 @@ export interface ReadingSlice extends ReadingState {
   setDailyReadingError: (error: string | null) => void;
   setGenerationMetadata: (metadata: HoroscopeGenerationMetadata) => void;
   clearDailyReading: () => void;
+  setGeneratingHoroscope: (generating: boolean) => void;
 }
 
 export const createReadingSlice: StateCreator<ReadingSlice> = (set, get) => ({
@@ -21,6 +22,7 @@ export const createReadingSlice: StateCreator<ReadingSlice> = (set, get) => ({
   dailyHoroscope: null,
   cosmicWeather: null,
   isLoadingDailyReading: false,
+  isGeneratingHoroscope: false,
   dailyReadingError: null,
   lastHoroscopeDate: null,
   lastGenerationMetadata: null,
@@ -52,6 +54,11 @@ export const createReadingSlice: StateCreator<ReadingSlice> = (set, get) => ({
   setGenerationMetadata: (metadata) =>
     set({
       lastGenerationMetadata: metadata,
+    }),
+
+  setGeneratingHoroscope: (generating) =>
+    set({
+      isGeneratingHoroscope: generating,
     }),
 
   clearDailyReading: () =>

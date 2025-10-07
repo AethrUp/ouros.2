@@ -79,3 +79,4 @@ export * from './user';
 export * from './chart';
 export * from './reading';
 export * from './tarot';
+export * from './journal';

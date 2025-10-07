@@ -31,13 +31,10 @@ export const CoinCastingView: React.FC<CoinCastingViewProps> = ({
   const [completedLines, setCompletedLines] = useState<HexagramLine[]>([]);
   const [currentCoinToss, setCurrentCoinToss] = useState<CoinToss | null>(null);
   const [isAnimating, setIsAnimating] = useState(false);
-  const [showCastButton, setShowCastButton] = useState(true);
-  const [showContinueButton, setShowContinueButton] = useState(false);
 
   // Handle cast button press
   const handleCast = useCallback(async () => {
     try {
-      setShowCastButton(false);
       setIsAnimating(true);
 
       let coinToss: CoinToss;
@@ -64,7 +61,6 @@ export const CoinCastingView: React.FC<CoinCastingViewProps> = ({
       console.error('Failed to cast line:', error);
       Alert.alert('Error', 'Failed to cast line. Please try again.');
       setIsAnimating(false);
-      setShowCastButton(true);
     }
   }, [currentLinePosition, preFetchedCoinTosses]);
 
@@ -95,21 +91,13 @@ export const CoinCastingView: React.FC<CoinCastingViewProps> = ({
         onComplete(updatedLines);
       }, 1000);
     } else {
-      // Show continue button
+      // Prepare for next cast
       setTimeout(() => {
         setIsAnimating(false);
-        setShowContinueButton(true);
+        setCurrentLinePosition((prev) => prev + 1);
       }, 800);
     }
   }, [currentCoinToss, currentLinePosition, completedLines, onComplete]);
-
-  // Handle continue to next line
-  const handleContinue = useCallback(() => {
-    setShowContinueButton(false);
-    setCurrentLinePosition((prev) => prev + 1);
-    setCurrentCoinToss(null);
-    setShowCastButton(true);
-  }, []);
 
   // Handle cancel with confirmation
   const handleCancel = useCallback(() => {
@@ -156,7 +144,6 @@ export const CoinCastingView: React.FC<CoinCastingViewProps> = ({
       <View style={styles.tossArea}>
         {currentCoinToss && (
           <ThreeCoinToss
-            key={`toss-${currentLinePosition}`}
             results={currentCoinToss.coins}
             onTossComplete={handleTossComplete}
             animate={isAnimating}
@@ -165,21 +152,15 @@ export const CoinCastingView: React.FC<CoinCastingViewProps> = ({
       </View>
 
       {/* Cast Button */}
-      {showCastButton && currentLinePosition <= 6 && (
+      {!isAnimating && currentLinePosition <= 6 && (
         <View style={styles.buttonSection}>
-          <Text style={styles.lineProgressText}>Line {currentLinePosition} of 6</Text>
+          <Text style={styles.lineProgressText}>
+            {completedLines.length > 0 ? `Line ${currentLinePosition - 1} Complete` : `Line ${currentLinePosition} of 6`}
+          </Text>
           <TouchableOpacity style={styles.castButton} onPress={handleCast} activeOpacity={0.8}>
-            <Text style={styles.castButtonText}>CAST COINS</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-
-      {/* Continue Button */}
-      {showContinueButton && (
-        <View style={styles.buttonSection}>
-          <Text style={styles.lineResultText}>Line {currentLinePosition} Complete</Text>
-          <TouchableOpacity style={styles.continueButton} onPress={handleContinue} activeOpacity={0.8}>
-            <Text style={styles.continueButtonText}>CONTINUE</Text>
+            <Text style={styles.castButtonText}>
+              {completedLines.length > 0 ? 'CAST AGAIN' : 'CAST COINS'}
+            </Text>
           </TouchableOpacity>
         </View>
       )}
@@ -261,14 +242,6 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
-  lineResultText: {
-    ...typography.body,
-    fontSize: 14,
-    color: colors.text.accent,
-    marginBottom: spacing.sm,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
   castButton: {
     backgroundColor: colors.button.primary,
     paddingVertical: 12,
@@ -281,24 +254,6 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   castButtonText: {
-    ...typography.button,
-    color: colors.button.text,
-    fontSize: 16,
-    fontWeight: '600',
-    letterSpacing: 1.2,
-  },
-  continueButton: {
-    backgroundColor: colors.button.primary,
-    paddingVertical: 12,
-    paddingHorizontal: 32,
-    borderRadius: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 4,
-  },
-  continueButtonText: {
     ...typography.button,
     color: colors.button.text,
     fontSize: 16,

@@ -147,6 +147,7 @@ export interface ReadingState {
 
   // Loading states
   isLoadingDailyReading: boolean;
+  isGeneratingHoroscope: boolean;
   dailyReadingError: string | null;
 
   // Metadata
