@@ -214,7 +214,7 @@ export const IChingScreen: React.FC<NavigationProps> = ({ navigation }) => {
         return (
           <View style={{ flex: 1 }}>
             <QuantumLoadingScreen
-              message={ichingError || "Drawing coins from the quantum realm..."}
+              message={ichingError || "Casting coins..."}
             />
             {ichingError && (
               <TouchableOpacity

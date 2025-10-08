@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, Keyboard, TouchableWithoutFeedback } from 'react-native';
+import { HeaderBar } from '../HeaderBar';
 import { theme } from '../../styles/theme';
 
 interface IntentionInputProps {
@@ -15,51 +16,68 @@ export const IntentionInput: React.FC<IntentionInputProps> = ({
   onNext,
   spreadName,
 }) => {
-  return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={0}
-    >
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <View style={styles.innerContainer}>
-          <Text style={styles.title}>Tarot</Text>
+  const scrollViewRef = useRef<ScrollView>(null);
+  const inputRef = useRef<TextInput>(null);
+  const [showFullText, setShowFullText] = useState(false);
 
-          <ScrollView
-            style={styles.scrollView}
-            contentContainerStyle={styles.scrollContent}
-            keyboardShouldPersistTaps="handled"
-          >
-            <Text style={styles.instructionTitle}>Some instructions</Text>
+  const handleInputFocus = () => {
+    setTimeout(() => {
+      scrollViewRef.current?.scrollToEnd({ animated: true });
+    }, 100);
+  };
+
+  return (
+    <View style={styles.container}>
+      <HeaderBar title="TAROT" />
+
+      <KeyboardAvoidingView
+        style={styles.keyboardView}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+      >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <View style={styles.innerContainer}>
+            <ScrollView
+              ref={scrollViewRef}
+              style={styles.scrollView}
+              contentContainerStyle={styles.scrollContent}
+              keyboardShouldPersistTaps="handled"
+            >
+            <Text style={styles.instructionTitle}>Set Your Intention</Text>
             <Text style={styles.instructionText}>
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit. In ut cursus risus, scelerisque faucibus ipsum.
-              Phasellus sodales bibendum nisi, in dictum ante tincidunt id. Aliquam erat volutpat. Duis ac diam nec v
+              Take a moment to center yourself with a few deep breaths before writing your intention. Frame your question as a request for guidance rather than a demand for predictions.{showFullText && " Instead of asking \"Will this happen?\" try \"What do I need to know about this situation?\" or \"How can I approach this challenge?\" Focus on what you can learn or how you can grow, rather than trying to control outcomes. Be specific about the area of your life you're seeking guidance on, whether it's relationships, career, personal growth, or a particular decision you're facing. Your intention should feel authentic to you and address what you genuinely want to understand."}
             </Text>
+            <TouchableOpacity onPress={() => setShowFullText(!showFullText)}>
+              <Text style={styles.moreButton}>{showFullText ? 'LESS' : 'MORE'}</Text>
+            </TouchableOpacity>
 
             <TextInput
+              ref={inputRef}
               style={styles.input}
               placeholder="SET YOUR INTENTION"
               placeholderTextColor={theme.colors.text.secondary}
               value={value}
               onChangeText={onChange}
+              onFocus={handleInputFocus}
               multiline
               numberOfLines={6}
               textAlignVertical="top"
               returnKeyType="done"
               blurOnSubmit={true}
             />
-          </ScrollView>
+            </ScrollView>
 
-          <TouchableOpacity
-            style={styles.nextButton}
-            onPress={onNext}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.nextButtonText}>NEXT</Text>
-          </TouchableOpacity>
-        </View>
-      </TouchableWithoutFeedback>
-    </KeyboardAvoidingView>
+            <TouchableOpacity
+              style={styles.nextButton}
+              onPress={onNext}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.nextButtonText}>NEXT</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
+    </View>
   );
 };
 
@@ -68,30 +86,25 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: theme.colors.background.primary,
   },
-  innerContainer: {
+  keyboardView: {
     flex: 1,
   },
-  title: {
-    fontSize: 32,
-    fontWeight: '400',
-    color: theme.colors.text.primary,
-    fontFamily: 'Libre Baskerville',
-    paddingHorizontal: theme.spacing.lg,
-    paddingTop: theme.spacing.xl,
-    paddingBottom: theme.spacing.lg,
+  innerContainer: {
+    flex: 1,
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
     paddingHorizontal: theme.spacing.lg,
+    paddingTop: theme.spacing.lg,
     paddingBottom: theme.spacing.lg,
   },
   instructionTitle: {
     fontSize: 20,
     fontWeight: '400',
-    color: '#D4AF37', // Gold color
-    fontFamily: 'Libre Baskerville',
+    color: '#F6D99F',
+    fontFamily: 'PTSerif_400Regular',
     marginBottom: theme.spacing.sm,
   },
   instructionText: {
@@ -99,7 +112,14 @@ const styles = StyleSheet.create({
     color: theme.colors.text.primary,
     fontFamily: 'Inter',
     lineHeight: 20,
-    marginBottom: theme.spacing.xl,
+    marginBottom: theme.spacing.xs,
+  },
+  moreButton: {
+    fontSize: 14,
+    color: '#F6D99F',
+    fontFamily: 'Inter',
+    marginTop: theme.spacing.sm,
+    marginBottom: theme.spacing.lg,
   },
   input: {
     backgroundColor: theme.colors.background.secondary,
@@ -108,20 +128,20 @@ const styles = StyleSheet.create({
     color: theme.colors.text.primary,
     fontSize: 14,
     fontFamily: 'Inter',
-    minHeight: 150,
-    borderWidth: 1,
-    borderColor: theme.colors.background.card,
+    minHeight: 120,
+    borderWidth: 0,
+    marginBottom: theme.spacing.xl,
   },
   nextButton: {
     backgroundColor: theme.colors.textInverse || '#FFFFFF',
     marginHorizontal: theme.spacing.lg,
     marginBottom: theme.spacing.xl,
-    paddingVertical: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
     borderRadius: theme.borderRadius.md,
     alignItems: 'center',
   },
   nextButtonText: {
-    fontSize: theme.fontSize.md,
+    fontSize: theme.fontSize.sm,
     fontWeight: theme.fontWeight.semibold,
     color: theme.colors.background.primary,
     letterSpacing: 1.2,

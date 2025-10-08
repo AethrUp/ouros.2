@@ -139,7 +139,7 @@ export const createTarotSlice: StateCreator<TarotSlice> = (set, get) => ({
       return;
     }
 
-    set({ isGeneratingInterpretation: true, tarotError: null });
+    set({ isGeneratingInterpretation: true, sessionStep: 'interpretation', tarotError: null });
 
     try {
       // Import handler dynamically

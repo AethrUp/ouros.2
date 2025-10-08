@@ -75,7 +75,6 @@ const styles = StyleSheet.create({
   optionTitle: {
     ...typography.h2,
     marginBottom: spacing.sm,
-    letterSpacing: 1.5,
     textTransform: 'none',
   },
   optionDescription: {

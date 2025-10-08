@@ -13,12 +13,26 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "DAILY_READING_DATA_STRUCTURE.md",
+                "file": "tarot_interpretation_prompt.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "DAILY_READING_DATA_STRUCTURE"
+              "title": "tarot_interpretation_prompt"
+            }
+          },
+          {
+            "id": "a9d601dc18bffb5f",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "iching-json-migration-plan.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "iching-json-migration-plan"
             }
           },
           {
@@ -91,7 +105,8 @@
               "title": "astrology_component_apis"
             }
           }
-        ]
+        ],
+        "currentTab": 1
       }
     ],
     "direction": "vertical"
@@ -240,28 +255,31 @@
       "table-editor-obsidian:Advanced Tables Toolbar": false
     }
   },
-  "active": "c100eb6c3bb8d55f",
+  "active": "a9d601dc18bffb5f",
   "lastOpenFiles": [
+    "iching Prompt.md",
+    "iching-json-migration-plan.md.tmp.9008.1759932120182",
+    "iching-json-migration-plan.md.tmp.9008.1759932104938",
+    "iching-json-migration-plan.md.tmp.9008.1759932095445",
+    "iching-json-migration-plan.md.tmp.9008.1759932084965",
+    "iching-json-migration-plan.md.tmp.9008.1759932057055",
+    "iching-json-migration-plan.md.tmp.9008.1759932046015",
+    "iching-json-migration-plan.md.tmp.9008.1759932020055",
+    "iching-json-migration-plan.md",
+    "iching-json-migration-plan.md.tmp.9008.1759931993267",
+    "tarot_interpretation_prompt.md",
+    "iching-interpretation-prompt.md",
+    "DAILY_READING_DATA_STRUCTURE.md",
+    "iching-interpretation-prompt.md.tmp.9008.1759929305206",
     "astrology_app_architecture.md",
     "astrology_component_apis.md",
     "Marketing/I Feel Disconnected from My Purpose.md",
     "astrology_development_tasks.csv.tmp.15884.1759691456729",
-    "astrology_development_tasks.csv.tmp.15884.1759691455659",
-    "astrology_development_tasks.csv.tmp.15884.1759691454698",
-    "astrology_development_tasks.csv.tmp.15884.1759691390854",
-    "astrology_development_tasks.csv.tmp.15884.1759691389695",
-    "astrology_development_tasks.csv.tmp.15884.1759691388526",
-    "astrology_development_tasks.csv.tmp.15884.1759691387417",
-    "astrology_development_tasks.csv.tmp.15884.1759691386302",
-    "astrology_development_tasks.csv.tmp.15884.1759691385368",
-    "astrology_development_tasks.csv.tmp.15884.1759691364738",
-    "tarot_interpretation_prompt.md",
     "Marketing/high-level benefits.md",
     "Marketing/Highlight Points.md",
     "Marketing/Am I Making the Right Choice.md",
     "Marketing/Avatar.md",
     "tarot_implementation_plan.md",
-    "DAILY_READING_DATA_STRUCTURE.md",
     "astrology_state_management.md",
     "Tasks.md"
   ]

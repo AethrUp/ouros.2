@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { DrawnCard, SpreadLayout } from '../../types/tarot';
 import { TarotCard as TarotCardComponent } from './TarotCard';
+import { HeaderBar } from '../HeaderBar';
 import { theme } from '../../styles/theme';
 
 const { width, height } = Dimensions.get('window');
@@ -157,21 +158,21 @@ export const QuantumCardReveal: React.FC<QuantumCardRevealProps> = ({
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Tarot</Text>
+      <HeaderBar title="TAROT" />
 
-      {/* Progress indicator */}
-      <View style={styles.progressContainer}>
-        <Text style={styles.progressText}>
-          Card {currentCardIndex + 1} of {drawnCards.length}
-        </Text>
-        <View style={styles.progressBar}>
+      {/* Card progress indicators */}
+      <View style={styles.cardProgressContainer}>
+        {drawnCards.map((_, index) => (
           <View
+            key={index}
             style={[
-              styles.progressFill,
-              { width: `${((currentCardIndex + 1) / drawnCards.length) * 100}%` },
+              styles.cardProgressBox,
+              {
+                opacity: revealedPositions.includes(index) || index === currentCardIndex ? 1 : 0.5,
+              },
             ]}
           />
-        </View>
+        ))}
       </View>
 
       {/* Main card area */}
@@ -284,34 +285,20 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: theme.colors.background.primary,
   },
-  title: {
-    fontSize: 32,
-    fontWeight: '400',
-    color: theme.colors.text.primary,
-    fontFamily: 'Libre Baskerville',
+  cardProgressContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 8,
     paddingHorizontal: theme.spacing.lg,
-    paddingTop: theme.spacing.xl,
-    paddingBottom: theme.spacing.md,
+    paddingVertical: theme.spacing.md,
+    marginBottom: theme.spacing.lg,
   },
-  progressContainer: {
-    paddingHorizontal: theme.spacing.lg,
-    marginBottom: theme.spacing.xl,
-  },
-  progressText: {
-    fontSize: 14,
-    color: theme.colors.text.secondary,
-    fontFamily: 'Inter',
-    marginBottom: theme.spacing.sm,
-  },
-  progressBar: {
-    height: 4,
-    backgroundColor: theme.colors.background.secondary,
+  cardProgressBox: {
+    width: 40,
+    height: 8,
+    backgroundColor: '#FFFFFF',
     borderRadius: 2,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    backgroundColor: '#D4AF37', // Gold
   },
   cardArea: {
     position: 'absolute',

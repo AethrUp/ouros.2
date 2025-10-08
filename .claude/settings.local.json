@@ -23,7 +23,13 @@
       "Bash(git add:*)",
       "Bash(del nul)",
       "Bash(rm:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "WebFetch(domain:www.anthropic.com)",
+      "WebFetch(domain:claude.com)",
+      "Bash(npx ts-node:*)",
+      "Bash(node:*)",
+      "Bash(del \"D:\\AppsBuild\\ouros2\\check-hexagrams.js\")"
     ],
     "deny": [],
     "ask": []

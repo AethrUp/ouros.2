@@ -50,7 +50,7 @@ Fully implemented daily horoscope generation system with:
 - `generateDailyHoroscope()` - Orchestrates: transits → prompt → AI → structure
 - `getDailyHoroscope()` - Smart caching (24h validity)
 
-**AI Model:** Claude 3.5 Sonnet (claude-3-5-sonnet-20241022)
+**AI Model:** Claude Sonnet 4.5 (claude-sonnet-4-5-20250929)
 
 ### 4. UI Screen
 **File Created:**

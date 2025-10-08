@@ -7,7 +7,7 @@ interface QuantumLoadingScreenProps {
 }
 
 export const QuantumLoadingScreen: React.FC<QuantumLoadingScreenProps> = ({
-  message = 'Consulting the quantum realm...',
+  message = 'Loading...',
 }) => {
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const rotateAnim = useRef(new Animated.Value(0)).current;
@@ -58,7 +58,6 @@ export const QuantumLoadingScreen: React.FC<QuantumLoadingScreenProps> = ({
       </Animated.View>
 
       <Text style={styles.message}>{message}</Text>
-      <Text style={styles.subMessage}>Generating quantum random numbers...</Text>
     </View>
   );
 };

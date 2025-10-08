@@ -31,9 +31,6 @@ const HexagramLineDisplay: React.FC<HexagramLineDisplayProps> = ({ line, positio
     <View style={styles.hexagramLine}>
       {hasLine ? (
         <View style={styles.lineContent}>
-          {/* Line Number */}
-          <Text style={styles.lineNumber}>{position}</Text>
-
           {/* Line Visual */}
           <View style={styles.lineVisual}>
             {isYang ? (
@@ -58,9 +55,6 @@ const HexagramLineDisplay: React.FC<HexagramLineDisplayProps> = ({ line, positio
         </View>
       ) : (
         <View style={[styles.lineContent, { opacity: 0.2 }]}>
-          {/* Line Number */}
-          <Text style={styles.lineNumber}>{position}</Text>
-
           {/* Empty line placeholder */}
           <View style={styles.lineVisual}>
             <View style={styles.yangLine} />
@@ -98,8 +92,8 @@ export const HexagramDisplay: React.FC<HexagramDisplayProps> = ({ lines = [], ma
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: spacing.sm,
     alignItems: 'center',
   },
   hexagramLines: {
@@ -107,7 +101,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   hexagramLine: {
-    marginVertical: 6,
+    marginVertical: 4,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -115,29 +109,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    width: 200,
+    width: 100,
     position: 'relative',
   },
-  lineNumber: {
-    position: 'absolute',
-    left: -35,
-    ...typography.caption,
-    color: colors.text.secondary,
-    width: 20,
-    textAlign: 'center',
-    fontSize: 12,
-  },
   lineVisual: {
-    width: 180,
+    width: 100,
   },
   yangLine: {
-    height: 10,
+    height: 8,
     backgroundColor: colors.text.primary,
     borderRadius: 2,
   },
   yinLine: {
     flexDirection: 'row',
-    height: 10,
+    height: 8,
     width: '100%',
   },
   yinSegment: {
@@ -146,7 +131,7 @@ const styles = StyleSheet.create({
     borderRadius: 2,
   },
   yinGap: {
-    width: 20,
+    width: 16,
     backgroundColor: 'transparent',
   },
   changingLine: {

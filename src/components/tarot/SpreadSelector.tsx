@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SpreadLayout } from '../../types/tarot';
+import { HeaderBar } from '../HeaderBar';
 import { theme } from '../../styles/theme';
 
 interface SpreadSelectorProps {
@@ -19,7 +20,7 @@ const SPREAD_ICONS: Record<string, any> = {
 export const SpreadSelector: React.FC<SpreadSelectorProps> = ({ spreads, onSelect }) => {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Tarot</Text>
+      <HeaderBar title="TAROT" />
 
       <ScrollView
         style={styles.spreadList}
@@ -48,10 +49,6 @@ export const SpreadSelector: React.FC<SpreadSelectorProps> = ({ spreads, onSelec
           </TouchableOpacity>
         ))}
       </ScrollView>
-
-      <TouchableOpacity style={styles.getReadingButton}>
-        <Text style={styles.getReadingButtonText}>GET READING</Text>
-      </TouchableOpacity>
     </View>
   );
 };
@@ -61,20 +58,12 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: theme.colors.background.primary,
   },
-  title: {
-    fontSize: 32,
-    fontWeight: '400',
-    color: theme.colors.text.primary,
-    fontFamily: 'Libre Baskerville',
-    paddingHorizontal: theme.spacing.lg,
-    paddingTop: theme.spacing.xl,
-    paddingBottom: theme.spacing.lg,
-  },
   spreadList: {
     flex: 1,
   },
   spreadListContent: {
     paddingHorizontal: theme.spacing.lg,
+    paddingTop: theme.spacing.lg,
     paddingBottom: theme.spacing.xl,
     gap: theme.spacing.md,
   },
@@ -98,8 +87,8 @@ const styles = StyleSheet.create({
   spreadName: {
     fontSize: 18,
     fontWeight: '400',
-    color: '#D4AF37', // Gold color as seen in screenshot
-    fontFamily: 'Libre Baskerville',
+    color: '#F6D99F',
+    fontFamily: 'PTSerif_400Regular',
     marginBottom: theme.spacing.xs,
   },
   spreadDescription: {
@@ -107,20 +96,5 @@ const styles = StyleSheet.create({
     color: theme.colors.text.primary,
     fontFamily: 'Inter',
     lineHeight: 20,
-  },
-  getReadingButton: {
-    backgroundColor: theme.colors.textInverse || '#FFFFFF',
-    marginHorizontal: theme.spacing.lg,
-    marginBottom: theme.spacing.xl,
-    paddingVertical: theme.spacing.md,
-    borderRadius: theme.borderRadius.md,
-    alignItems: 'center',
-  },
-  getReadingButtonText: {
-    fontSize: theme.fontSize.md,
-    fontWeight: theme.fontWeight.semibold,
-    color: theme.colors.background.primary,
-    letterSpacing: 1.2,
-    fontFamily: 'Inter',
   },
 });

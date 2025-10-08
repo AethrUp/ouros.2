@@ -3,13 +3,14 @@
  * Manages line-by-line coin casting with animation and hexagram building
  */
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { HexagramDisplay } from './HexagramDisplay';
 import { ThreeCoinToss } from './CoinFlipAnimation';
 import { HexagramLine, CoinToss } from '../../types/iching';
 import { castLineWithCoins } from '../../utils/ichingCasting';
 import { colors, typography, spacing } from '../../styles';
+import { HeaderBar } from '../HeaderBar';
 
 interface CoinCastingViewProps {
   question: string;
@@ -89,7 +90,7 @@ export const CoinCastingView: React.FC<CoinCastingViewProps> = ({
       setIsAnimating(false);
       setTimeout(() => {
         onComplete(updatedLines);
-      }, 1000);
+      }, 1800);
     } else {
       // Prepare for next cast
       setTimeout(() => {
@@ -122,18 +123,7 @@ export const CoinCastingView: React.FC<CoinCastingViewProps> = ({
 
   return (
     <View style={styles.container}>
-      {/* Header with Question */}
-      <View style={styles.header}>
-        <Text style={styles.title}>Cast Your Hexagram</Text>
-        {question.trim() && (
-          <View style={styles.questionContainer}>
-            <Text style={styles.questionLabel}>Your Question:</Text>
-            <Text style={styles.questionText} numberOfLines={2}>
-              {question.trim()}
-            </Text>
-          </View>
-        )}
-      </View>
+      <HeaderBar title="I CHING" />
 
       {/* Hexagram Display */}
       <View style={styles.hexagramSection}>
@@ -152,24 +142,22 @@ export const CoinCastingView: React.FC<CoinCastingViewProps> = ({
       </View>
 
       {/* Cast Button */}
-      {!isAnimating && currentLinePosition <= 6 && (
+      {currentLinePosition <= 6 && (
         <View style={styles.buttonSection}>
-          <Text style={styles.lineProgressText}>
-            {completedLines.length > 0 ? `Line ${currentLinePosition - 1} Complete` : `Line ${currentLinePosition} of 6`}
-          </Text>
-          <TouchableOpacity style={styles.castButton} onPress={handleCast} activeOpacity={0.8}>
+          <TouchableOpacity
+            style={[
+              styles.castButton,
+              isAnimating && styles.castButtonDisabled,
+            ]}
+            onPress={handleCast}
+            activeOpacity={0.8}
+            disabled={isAnimating}
+          >
             <Text style={styles.castButtonText}>
               {completedLines.length > 0 ? 'CAST AGAIN' : 'CAST COINS'}
             </Text>
           </TouchableOpacity>
         </View>
-      )}
-
-      {/* Cancel Button */}
-      {onCancel && currentLinePosition < 6 && (
-        <TouchableOpacity style={styles.cancelButton} onPress={handleCancel} activeOpacity={0.7}>
-          <Text style={styles.cancelButtonText}>×</Text>
-        </TouchableOpacity>
       )}
 
       {/* Completion Message */}
@@ -188,38 +176,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background.primary,
   },
-  header: {
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.lg,
-    paddingBottom: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border.primary,
-  },
-  title: {
-    ...typography.h2,
-    textAlign: 'center',
-    marginBottom: spacing.sm,
-  },
-  questionContainer: {
-    marginTop: spacing.sm,
-    backgroundColor: 'rgba(129, 184, 181, 0.08)',
-    borderRadius: 8,
-    padding: spacing.sm,
-  },
-  questionLabel: {
-    ...typography.caption,
-    color: colors.text.accent,
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-    marginBottom: 4,
-    fontSize: 11,
-  },
-  questionText: {
-    ...typography.body,
-    fontSize: 14,
-    lineHeight: 20,
-    color: colors.text.primary,
-  },
   hexagramSection: {
     paddingTop: spacing.md,
   },
@@ -234,16 +190,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: spacing.lg,
   },
-  lineProgressText: {
-    ...typography.body,
-    fontSize: 14,
-    color: colors.text.secondary,
-    marginBottom: spacing.sm,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
   castButton: {
-    backgroundColor: colors.button.primary,
+    backgroundColor: '#FFFFFF',
     paddingVertical: 12,
     paddingHorizontal: 32,
     borderRadius: 8,
@@ -253,31 +201,15 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 4,
   },
+  castButtonDisabled: {
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+  },
   castButtonText: {
     ...typography.button,
-    color: colors.button.text,
+    color: colors.background.primary,
     fontSize: 16,
     fontWeight: '600',
     letterSpacing: 1.2,
-  },
-  cancelButton: {
-    position: 'absolute',
-    top: spacing.md,
-    right: spacing.lg,
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: colors.text.primary,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  cancelButtonText: {
-    color: colors.text.primary,
-    fontSize: 20,
-    fontWeight: '300',
-    lineHeight: 20,
   },
   completionContainer: {
     alignItems: 'center',

@@ -57,61 +57,20 @@ export const TarotScreen = ({ navigation }: any) => {
     clearSession();
   };
 
-  // Clear any stuck session state on mount
+  // Handle error states that need cleanup (using useEffect instead of during render)
   useEffect(() => {
-    // If stuck in drawing state but not actually drawing, reset
-    if (sessionStep === 'drawing' && !isDrawing) {
-      console.log('⚠️ Detected stuck drawing state, resetting...');
+    if (sessionStep === 'reveal' && !selectedSpread) {
+      console.error('No spread selected in reveal state');
       clearSession();
     }
-  }, []);
+  }, [sessionStep, selectedSpread, clearSession]);
 
-  // Safety timeout for drawing state - if stuck for more than 10 seconds, reset
   useEffect(() => {
-    if (sessionStep === 'drawing' && isDrawing) {
-      const timeout = setTimeout(() => {
-        console.error('⏱️ Drawing timeout - resetting session');
-        clearSession();
-      }, 10000);
-
-      return () => clearTimeout(timeout);
+    if (sessionStep === 'complete' && (!selectedSpread || !interpretation)) {
+      console.error('Missing spread or interpretation in complete state');
+      clearSession();
     }
-  }, [sessionStep, isDrawing, clearSession]);
-
-  // Debug: Log session state changes (excluding intention updates)
-  useEffect(() => {
-    console.log('🎴 Tarot Session State:', {
-      sessionStep,
-      isDrawing,
-      drawnCardsCount: drawnCards.length,
-      hasInterpretation: !!interpretation,
-    });
-  }, [sessionStep, isDrawing, drawnCards.length, interpretation]);
-
-  // Clear session when navigating away from Tarot screen
-  useFocusEffect(
-    React.useCallback(() => {
-      // Cleanup function runs when screen loses focus
-      return () => {
-        console.log('📱 Tarot screen lost focus - clearing session');
-        clearSession();
-      };
-    }, [clearSession])
-  );
-
-  // Clear session when app goes to background or closes
-  useEffect(() => {
-    const subscription = AppState.addEventListener('change', (nextAppState) => {
-      if (nextAppState === 'background' || nextAppState === 'inactive') {
-        console.log('📱 App going to background - clearing tarot session');
-        clearSession();
-      }
-    });
-
-    return () => {
-      subscription.remove();
-    };
-  }, [clearSession]);
+  }, [sessionStep, selectedSpread, interpretation, clearSession]);
 
   // Render based on session step
   const renderStep = () => {
@@ -138,7 +97,7 @@ export const TarotScreen = ({ navigation }: any) => {
         return (
           <View style={{ flex: 1 }}>
             <QuantumLoadingScreen
-              message={tarotError || "Drawing cards from the quantum realm..."}
+              message={tarotError || "Drawing cards..."}
             />
             {tarotError && (
               <TouchableOpacity
@@ -152,10 +111,13 @@ export const TarotScreen = ({ navigation }: any) => {
         );
 
       case 'reveal':
+        if (!selectedSpread) {
+          return null; // useEffect will handle cleanup
+        }
         return (
           <QuantumCardReveal
             drawnCards={drawnCards}
-            spread={selectedSpread!}
+            spread={selectedSpread}
             onComplete={handleCardsRevealed}
           />
         );
@@ -169,11 +131,11 @@ export const TarotScreen = ({ navigation }: any) => {
           );
         }
         // Fall through to complete if interpretation is ready
-        if (interpretation) {
+        if (interpretation && selectedSpread) {
           return (
             <InterpretationScreen
               drawnCards={drawnCards}
-              spread={selectedSpread!}
+              spread={selectedSpread}
               intention={intention}
               interpretation={interpretation}
               onSave={handleSaveReading}
@@ -188,12 +150,15 @@ export const TarotScreen = ({ navigation }: any) => {
         );
 
       case 'complete':
+        if (!selectedSpread || !interpretation) {
+          return null; // useEffect will handle cleanup
+        }
         return (
           <InterpretationScreen
             drawnCards={drawnCards}
-            spread={selectedSpread!}
+            spread={selectedSpread}
             intention={intention}
-            interpretation={interpretation!}
+            interpretation={interpretation}
             onSave={handleSaveReading}
             onJournal={handleJournal}
           />

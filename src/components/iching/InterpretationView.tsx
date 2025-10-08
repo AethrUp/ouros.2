@@ -6,6 +6,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
+import { Ionicons } from '@expo/vector-icons';
 import { CastedHexagram } from '../../types/iching';
 import { HexagramDisplay } from './HexagramDisplay';
 import { colors, typography, spacing } from '../../styles';
@@ -39,74 +40,65 @@ export const InterpretationView: React.FC<InterpretationViewProps> = ({
   const hasChangingLines = changingLines.length > 0;
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
-      {/* Question */}
-      <Animated.View entering={FadeIn} style={styles.questionSection}>
-        <Text style={styles.sectionLabel}>Your Question</Text>
-        <Text style={styles.questionText}>{question}</Text>
-      </Animated.View>
-
-      {/* Primary Hexagram */}
-      <Animated.View entering={FadeIn.delay(200)} style={styles.hexagramSection}>
-        <Text style={styles.sectionLabel}>
-          {hasChangingLines ? 'Present Hexagram' : 'Your Hexagram'}
-        </Text>
-
-        <View style={styles.hexagramInfo}>
-          <Text style={styles.hexagramNumber}>#{primary.number}</Text>
-          <Text style={styles.hexagramName}>{primary.englishName}</Text>
-          <Text style={styles.hexagramChinese}>
-            {primary.chineseName} {primary.pinyinName}
-          </Text>
+    <View style={styles.container}>
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>I Ching Reading</Text>
+        <View style={styles.headerActions}>
+          {onSave && (
+            <TouchableOpacity style={styles.iconButton} onPress={onSave} activeOpacity={0.7}>
+              <Ionicons name="bookmark-outline" size={24} color={colors.text.primary} />
+            </TouchableOpacity>
+          )}
+          {onJournal && (
+            <TouchableOpacity style={styles.iconButton} onPress={onJournal} activeOpacity={0.7}>
+              <Ionicons name="journal-outline" size={24} color={colors.text.primary} />
+            </TouchableOpacity>
+          )}
         </View>
+      </View>
 
-        <HexagramDisplay lines={primaryHexagram.lines} maxLines={6} />
-
-        {/* Trigrams */}
-        <View style={styles.trigramsContainer}>
-          <View style={styles.trigramInfo}>
-            <Text style={styles.trigramLabel}>Upper</Text>
-            <Text style={styles.trigramName}>{primary.upperTrigram.englishName}</Text>
-            <Text style={styles.trigramSymbol}>{primary.upperTrigram.symbol}</Text>
-          </View>
-          <View style={styles.trigramInfo}>
-            <Text style={styles.trigramLabel}>Lower</Text>
-            <Text style={styles.trigramName}>{primary.lowerTrigram.englishName}</Text>
-            <Text style={styles.trigramSymbol}>{primary.lowerTrigram.symbol}</Text>
-          </View>
-        </View>
-
-        {/* Keywords */}
-        <View style={styles.keywordsContainer}>
-          {primary.keywords.slice(0, 6).map((keyword, index) => (
-            <View key={index} style={styles.keywordPill}>
-              <Text style={styles.keywordText}>{keyword}</Text>
-            </View>
-          ))}
-        </View>
-      </Animated.View>
-
-      {/* Relating Hexagram (if changing lines exist) */}
-      {relatingHexagram && (
-        <Animated.View entering={FadeIn.delay(400)} style={styles.hexagramSection}>
-          <Text style={styles.sectionLabel}>Future Hexagram</Text>
-
-          <View style={styles.hexagramInfo}>
-            <Text style={styles.hexagramNumber}>#{relatingHexagram.hexagram.number}</Text>
-            <Text style={styles.hexagramName}>{relatingHexagram.hexagram.englishName}</Text>
-            <Text style={styles.hexagramChinese}>
-              {relatingHexagram.hexagram.chineseName} {relatingHexagram.hexagram.pinyinName}
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.contentContainer}>
+        {/* Hexagrams Section */}
+        <Animated.View entering={FadeIn.delay(200)} style={styles.hexagramsMainSection}>
+        <View style={styles.hexagramsRow}>
+          {/* Primary Hexagram */}
+          <View style={styles.hexagramColumn}>
+            <Text style={styles.sectionLabel}>
+              {hasChangingLines ? 'Present' : 'Your Hexagram'}
             </Text>
+
+            <View style={styles.hexagramInfo}>
+              <Text style={styles.hexagramNumber}>#{primary.number}</Text>
+              <Text style={styles.hexagramChinese}>
+                {primary.chineseName} {primary.pinyinName}
+              </Text>
+            </View>
+
+            <HexagramDisplay lines={primaryHexagram.lines} maxLines={6} />
+
+            <Text style={styles.hexagramName}>{primary.englishName}</Text>
           </View>
 
-          <HexagramDisplay lines={relatingHexagram.lines} maxLines={6} />
+          {/* Relating Hexagram (if changing lines exist) */}
+          {relatingHexagram && (
+            <View style={styles.hexagramColumn}>
+              <Text style={styles.sectionLabel}>Future</Text>
 
-          <Text style={styles.transformationNote}>
-            This hexagram represents the situation after the changing lines transform, showing the
-            potential outcome or future development.
-          </Text>
-        </Animated.View>
-      )}
+              <View style={styles.hexagramInfo}>
+                <Text style={styles.hexagramNumber}>#{relatingHexagram.hexagram.number}</Text>
+                <Text style={styles.hexagramChinese}>
+                  {relatingHexagram.hexagram.chineseName} {relatingHexagram.hexagram.pinyinName}
+                </Text>
+              </View>
+
+              <HexagramDisplay lines={relatingHexagram.lines} maxLines={6} />
+
+              <Text style={styles.hexagramName}>{relatingHexagram.hexagram.englishName}</Text>
+            </View>
+          )}
+        </View>
+      </Animated.View>
 
       {/* Interpretation */}
       <Animated.View entering={FadeIn.delay(600)} style={styles.interpretationSection}>
@@ -127,42 +119,8 @@ export const InterpretationView: React.FC<InterpretationViewProps> = ({
           </View>
         )}
       </Animated.View>
-
-      {/* Action Buttons */}
-      {!isGenerating && interpretation && (
-        <Animated.View entering={FadeIn.delay(800)} style={styles.actionsContainer}>
-          {onSave && (
-            <TouchableOpacity style={styles.actionButton} onPress={onSave} activeOpacity={0.8}>
-              <Text style={styles.actionButtonText}>Save Reading</Text>
-            </TouchableOpacity>
-          )}
-
-          {onJournal && (
-            <TouchableOpacity
-              style={[styles.actionButton, styles.secondaryButton]}
-              onPress={onJournal}
-              activeOpacity={0.8}
-            >
-              <Text style={[styles.actionButtonText, styles.secondaryButtonText]}>
-                Add to Journal
-              </Text>
-            </TouchableOpacity>
-          )}
-
-          {onNewReading && (
-            <TouchableOpacity
-              style={[styles.actionButton, styles.secondaryButton]}
-              onPress={onNewReading}
-              activeOpacity={0.8}
-            >
-              <Text style={[styles.actionButtonText, styles.secondaryButtonText]}>
-                New Reading
-              </Text>
-            </TouchableOpacity>
-          )}
-        </Animated.View>
-      )}
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 };
 
@@ -171,61 +129,86 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background.primary,
   },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border.primary,
+    backgroundColor: colors.background.primary,
+  },
+  headerTitle: {
+    ...typography.h1,
+    fontSize: 24,
+    color: colors.text.primary,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    gap: spacing.md,
+  },
+  iconButton: {
+    padding: spacing.xs,
+  },
+  scrollView: {
+    flex: 1,
+  },
   contentContainer: {
     paddingBottom: spacing.xl * 2,
   },
-  questionSection: {
+  hexagramsMainSection: {
     padding: spacing.lg,
-    backgroundColor: 'rgba(129, 184, 181, 0.08)',
     borderBottomWidth: 1,
     borderBottomColor: colors.border.primary,
   },
+  hexagramsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    gap: spacing.md,
+  },
+  hexagramColumn: {
+    flex: 1,
+    alignItems: 'center',
+    paddingHorizontal: 2,
+    minWidth: 0, // Allow shrinking below content size
+  },
   sectionLabel: {
     ...typography.caption,
-    color: colors.text.accent,
+    color: 'rgba(255, 255, 255, 0.5)',
     textTransform: 'uppercase',
     letterSpacing: 1,
     marginBottom: spacing.xs,
     fontSize: 11,
   },
-  questionText: {
-    ...typography.body,
-    fontSize: 16,
-    lineHeight: 24,
-    color: colors.text.primary,
-  },
-  hexagramSection: {
-    padding: spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border.primary,
-  },
   hexagramInfo: {
     alignItems: 'center',
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
   },
   hexagramNumber: {
     ...typography.caption,
     color: colors.text.secondary,
-    fontSize: 12,
-    marginBottom: spacing.xs,
+    fontSize: 10,
+    marginBottom: 2,
   },
   hexagramName: {
     ...typography.h2,
-    fontSize: 24,
+    fontSize: 18,
     textAlign: 'center',
-    marginBottom: spacing.xs,
+    marginTop: spacing.sm,
+    flexWrap: 'wrap',
   },
   hexagramChinese: {
     ...typography.body,
-    fontSize: 16,
+    fontSize: 10,
     color: colors.text.secondary,
     textAlign: 'center',
   },
   trigramsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    marginTop: spacing.md,
-    paddingVertical: spacing.md,
+    marginTop: spacing.sm,
+    paddingVertical: spacing.sm,
     borderTopWidth: 1,
     borderTopColor: colors.border.secondary,
   },
@@ -235,43 +218,27 @@ const styles = StyleSheet.create({
   trigramLabel: {
     ...typography.caption,
     color: colors.text.secondary,
-    fontSize: 10,
+    fontSize: 9,
     textTransform: 'uppercase',
-    marginBottom: spacing.xs,
+    marginBottom: 2,
   },
   trigramName: {
     ...typography.body,
-    fontSize: 14,
-    marginBottom: spacing.xs,
+    fontSize: 11,
+    marginBottom: 2,
   },
   trigramSymbol: {
-    fontSize: 24,
+    fontSize: 18,
     color: colors.text.accent,
-  },
-  keywordsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginTop: spacing.md,
-    gap: spacing.xs,
-  },
-  keywordPill: {
-    backgroundColor: 'rgba(129, 184, 181, 0.15)',
-    paddingVertical: 4,
-    paddingHorizontal: 12,
-    borderRadius: 12,
-  },
-  keywordText: {
-    ...typography.caption,
-    fontSize: 11,
-    color: colors.text.primary,
   },
   transformationNote: {
     ...typography.caption,
-    fontSize: 12,
-    lineHeight: 18,
+    fontSize: 10,
+    lineHeight: 14,
     color: colors.text.secondary,
     marginTop: spacing.sm,
     fontStyle: 'italic',
+    textAlign: 'center',
   },
   interpretationSection: {
     padding: spacing.lg,
@@ -296,38 +263,6 @@ const styles = StyleSheet.create({
     ...typography.body,
     fontSize: 15,
     lineHeight: 24,
-    color: colors.text.primary,
-  },
-  actionsContainer: {
-    padding: spacing.lg,
-    gap: spacing.sm,
-  },
-  actionButton: {
-    backgroundColor: colors.button.primary,
-    paddingVertical: 14,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 4,
-  },
-  actionButtonText: {
-    ...typography.button,
-    color: colors.button.text,
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  secondaryButton: {
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: colors.border.primary,
-    shadowOpacity: 0,
-    elevation: 0,
-  },
-  secondaryButtonText: {
     color: colors.text.primary,
   },
 });

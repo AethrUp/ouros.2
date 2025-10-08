@@ -113,8 +113,8 @@ export const generateDailyHoroscope = async (
     const startTime = Date.now();
 
     const message = await anthropic.messages.create({
-      model: 'claude-3-5-sonnet-20241022',
-      max_tokens: 4096,
+      model: 'claude-sonnet-4-5-20250929',
+      max_tokens: 12000,
       messages: [
         {
           role: 'user',
@@ -129,11 +129,28 @@ export const generateDailyHoroscope = async (
     // Step 5: Parse and validate response
     const responseText = message.content[0].type === 'text' ? message.content[0].text : '';
 
+    console.log('🔍 DEBUG: Raw AI response length:', responseText.length);
+    console.log('🔍 DEBUG: First 200 characters:', responseText.substring(0, 200));
+    console.log('🔍 DEBUG: Last 200 characters:', responseText.substring(Math.max(0, responseText.length - 200)));
+    console.log('🔍 DEBUG: Full response:', responseText);
+
     let horoscopeData: any;
     try {
-      horoscopeData = JSON.parse(responseText);
+      // Strip markdown code fences if present
+      let jsonText = responseText.trim();
+
+      // Check if response is wrapped in markdown code fences
+      if (jsonText.startsWith('```')) {
+        // Remove opening fence (```json or ```)
+        jsonText = jsonText.replace(/^```(?:json)?\s*\n?/, '');
+        // Remove closing fence
+        jsonText = jsonText.replace(/\n?```\s*$/, '');
+      }
+
+      horoscopeData = JSON.parse(jsonText);
     } catch (parseError) {
       console.error('❌ Failed to parse AI response as JSON:', parseError);
+      console.error('❌ DEBUG: Full response text that failed to parse:', responseText);
       throw new Error('AI response is not valid JSON');
     }
 

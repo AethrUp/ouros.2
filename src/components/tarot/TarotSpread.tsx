@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
 import { DrawnCard, SpreadLayout } from '../../types/tarot';
 import { TarotCard } from './TarotCard';
+import { theme } from '../../styles/theme';
 
 interface TarotSpreadProps {
   drawnCards: DrawnCard[];
@@ -30,17 +31,18 @@ export const TarotSpread: React.FC<TarotSpreadProps> = ({
   // Calculate card size based on spread
   const getCardSize = (): 'small' | 'medium' | 'large' => {
     if (spread.cardCount === 1) return 'large';
+    if (spread.cardCount === 3) return 'small'; // Use small for 3-card to fit screen
     if (spread.cardCount <= 3) return 'medium';
     return 'small';
   };
 
-  // Get dimensions for card size
+  // Get dimensions for card size - slightly larger for 3-card spread
   const getCardDimensions = () => {
     const size = getCardSize();
     const dimensions = {
-      small: { width: 52, height: 91 },
-      medium: { width: 90, height: 157 },
-      large: { width: 120, height: 210 },
+      small: spread.cardCount === 3 ? { width: 90, height: 157 } : { width: 80, height: 140 },
+      medium: { width: 120, height: 210 },
+      large: { width: 160, height: 280 },
     };
     return dimensions[size];
   };
@@ -61,11 +63,11 @@ export const TarotSpread: React.FC<TarotSpreadProps> = ({
 
     // For multi-card spreads, calculate based on positions
     // We'll use a fixed aspect ratio container that scales to fit screen
-    const padding = 32; // Account for padding
-    const availableWidth = screenWidth - padding;
+    const availableWidth = screenWidth;
 
-    const baseWidth = spread.cardCount <= 3 ? availableWidth : availableWidth;
-    const baseHeight = spread.cardCount <= 3 ? 250 : 450;
+    const baseWidth = availableWidth;
+    // For 3-card spread, need height for card (157 for slightly larger small size) + label (~30) + some spacing
+    const baseHeight = spread.cardCount === 3 ? 210 : spread.cardCount <= 3 ? 250 : 450;
 
     return {
       width: baseWidth,
@@ -77,12 +79,29 @@ export const TarotSpread: React.FC<TarotSpreadProps> = ({
 
   // Render cards at their positions
   const renderCards = () => {
+    const isSimpleSpread = spread.cardCount === 1 || spread.cardCount === 3;
+
     return drawnCards.map((drawnCard, index) => {
       const position = spread.positions[index];
 
-      // Calculate absolute position from normalized coordinates (0-1)
-      const left = position.x * spreadDimensions.width - cardDimensions.width / 2;
-      const top = position.y * spreadDimensions.height - cardDimensions.height / 2;
+      let left: number;
+      let top: number;
+
+      // For 3-card spread, calculate positions based on actual card dimensions
+      if (spread.cardCount === 3) {
+        const edgePadding = 16; // Padding on edges to narrow container
+        const totalCardsWidth = cardDimensions.width * 3;
+        const availableSpace = spreadDimensions.width - totalCardsWidth - (edgePadding * 2);
+        const gap = availableSpace / 2; // 2 gaps between the 3 cards
+
+        // Position cards with equal spacing
+        left = edgePadding + (index * (cardDimensions.width + gap));
+        top = position.y * spreadDimensions.height - cardDimensions.height / 2;
+      } else {
+        // Calculate absolute position from normalized coordinates (0-1)
+        left = position.x * spreadDimensions.width - cardDimensions.width / 2;
+        top = position.y * spreadDimensions.height - cardDimensions.height / 2;
+      }
 
       // Apply rotation if specified in position
       const rotation = position.rotation || 0;
@@ -96,20 +115,24 @@ export const TarotSpread: React.FC<TarotSpreadProps> = ({
               left,
               top,
               width: cardDimensions.width,
-              height: cardDimensions.height,
+              height: cardDimensions.height + (isSimpleSpread ? 30 : 0),
               transform: [{ rotate: `${rotation}deg` }],
             },
           ]}
           onPress={() => onCardPress?.(index)}
-          activeOpacity={0.7}
+          activeOpacity={isSimpleSpread ? 1 : 0.7}
+          disabled={isSimpleSpread}
         >
           <TarotCard
             card={drawnCard.card}
             isRevealed={true}
             orientation={drawnCard.orientation}
             size={cardSize}
-            isSelected={selectedCardIndex === index}
+            isSelected={!isSimpleSpread && selectedCardIndex === index}
           />
+          {isSimpleSpread && (
+            <Text style={styles.cardName}>{drawnCard.card.name}</Text>
+          )}
         </TouchableOpacity>
       );
     });
@@ -135,5 +158,14 @@ const styles = StyleSheet.create({
   },
   cardPosition: {
     position: 'absolute',
+  },
+  cardName: {
+    fontSize: 12,
+    color: theme.colors.text.primary,
+    fontFamily: 'Libre Baskerville',
+    textAlign: 'center',
+    marginTop: 2,
+    textTransform: 'uppercase',
+    width: '100%',
   },
 });

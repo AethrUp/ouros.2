@@ -36,22 +36,22 @@ export const TAROT_SPREADS: SpreadLayout[] = [
         id: 'past',
         name: 'Past',
         meaning: 'Past influences and foundations',
-        x: 0.2,
-        y: 0.5
+        x: 0.25,
+        y: 0.45
       },
       {
         id: 'present',
         name: 'Present',
         meaning: 'Current situation and energies',
         x: 0.5,
-        y: 0.5
+        y: 0.45
       },
       {
         id: 'future',
         name: 'Future',
         meaning: 'Potential outcome and direction',
-        x: 0.8,
-        y: 0.5
+        x: 0.75,
+        y: 0.45
       }
     ]
   },

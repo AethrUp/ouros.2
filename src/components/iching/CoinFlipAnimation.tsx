@@ -30,9 +30,13 @@ const AnimatedCoin: React.FC<CoinProps> = ({ isHeads, delay = 0, animate, animat
   const rotation = useSharedValue(0);
   const translateY = useSharedValue(0);
   const opacity = useSharedValue(1);
+  const [showResult, setShowResult] = React.useState(false);
 
   useEffect(() => {
     if (animate) {
+      // Hide result during animation
+      setShowResult(false);
+
       // Reset to starting position
       rotation.value = 0;
       translateY.value = 0;
@@ -65,10 +69,13 @@ const AnimatedCoin: React.FC<CoinProps> = ({ isHeads, delay = 0, animate, animat
         )
       );
 
-      // Call onComplete after animation finishes
-      if (onComplete) {
-        setTimeout(() => onComplete(), delay + 1200);
-      }
+      // Reveal result and call onComplete after animation finishes
+      setTimeout(() => {
+        setShowResult(true);
+        if (onComplete) {
+          onComplete();
+        }
+      }, delay + 1250);
     }
   }, [animate, animationVersion, isHeads, delay]);
 
@@ -80,9 +87,14 @@ const AnimatedCoin: React.FC<CoinProps> = ({ isHeads, delay = 0, animate, animat
     opacity: opacity.value,
   }));
 
+  // During animation, show neutral color. After animation, show result
+  const coinColor = showResult
+    ? (isHeads ? styles.headsColor : styles.tailsColor)
+    : styles.animatingColor;
+
   return (
     <Animated.View style={[styles.coin, animatedStyle]}>
-      <View style={[styles.coinFace, isHeads ? styles.headsColor : styles.tailsColor]}>
+      <View style={[styles.coinFace, coinColor]}>
         <View style={styles.coinInner}>
           {/* Simple representation - can be replaced with images */}
           <View style={styles.coinSymbol} />
@@ -188,6 +200,9 @@ const styles = StyleSheet.create({
   },
   tailsColor: {
     backgroundColor: '#C0C0C0', // Silver for tails (yin)
+  },
+  animatingColor: {
+    backgroundColor: '#B8860B', // Dark goldenrod - neutral during animation
   },
   coinInner: {
     width: 50,
