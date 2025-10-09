@@ -80,3 +80,4 @@ export * from './chart';
 export * from './reading';
 export * from './tarot';
 export * from './journal';
+export * from './synastry';

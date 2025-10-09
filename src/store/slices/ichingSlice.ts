@@ -6,6 +6,7 @@ import {
   CastedHexagram,
   CastingMethod,
   CoinToss,
+  IChingInterpretation,
 } from '../../types/iching';
 
 export interface IChingSlice {
@@ -18,7 +19,7 @@ export interface IChingSlice {
   question: string;
   primaryHexagram: CastedHexagram | null;
   relatingHexagram: CastedHexagram | null;
-  ichingInterpretation: string | null;
+  ichingInterpretation: string | IChingInterpretation | null;
 
   // Pre-fetched coin tosses (for quantum loading)
   preFetchedCoinTosses: CoinToss[] | null;
@@ -46,7 +47,7 @@ export interface IChingSlice {
   setIChingSessionStep: (step: IChingSessionStep) => void;
   setPrimaryHexagram: (hexagram: CastedHexagram) => void;
   setRelatingHexagram: (hexagram: CastedHexagram | null) => void;
-  setIChingInterpretation: (interpretation: string) => void;
+  setIChingInterpretation: (interpretation: string | IChingInterpretation) => void;
   setIChingError: (error: string | null) => void;
 }
 

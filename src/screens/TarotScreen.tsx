@@ -47,15 +47,53 @@ export const TarotScreen = ({ navigation }: any) => {
 
   const handleJournal = async () => {
     await saveReading();
-    navigation.navigate('Journal', {
-      linkedReadingId: Date.now().toString(),
-      readingType: 'tarot',
-    });
+
+    // Transform current reading to LinkedReading format
+    if (selectedSpread && drawnCards.length > 0 && interpretation) {
+      const linkedReading = {
+        id: Date.now().toString(), // Temporary ID, will be replaced when reading is saved
+        reading_type: 'tarot' as const,
+        title: `${selectedSpread.name} - ${drawnCards.length} cards`,
+        timestamp: new Date().toISOString(),
+        interpretation,
+        intention,
+        metadata: {
+          spread: selectedSpread.name,
+          cardCount: drawnCards.length,
+          cards: drawnCards.map((dc) => ({
+            name: dc.card.name,
+            position: dc.position,
+            orientation: dc.orientation,
+          })),
+        },
+      };
+
+      // Navigate to journal tab, then to entry screen with linked reading
+      navigation.navigate('journal', {
+        screen: 'JournalEntry',
+        params: {
+          linkedReading,
+          entryType: 'tarot',
+        },
+      });
+    }
   };
 
   const handleNewReading = () => {
     clearSession();
+    navigation.navigate('OracleMain');
   };
+
+  // Clear session when navigating away from Tarot screen
+  // Note: Navigation reset is handled at the tab level in TabNavigator
+  useFocusEffect(
+    React.useCallback(() => {
+      return () => {
+        console.log('📱 Tarot screen lost focus - clearing session');
+        clearSession();
+      };
+    }, [clearSession])
+  );
 
   // Handle error states that need cleanup (using useEffect instead of during render)
   useEffect(() => {
@@ -102,7 +140,10 @@ export const TarotScreen = ({ navigation }: any) => {
             {tarotError && (
               <TouchableOpacity
                 style={styles.errorButton}
-                onPress={clearSession}
+                onPress={() => {
+                  clearSession();
+                  navigation.navigate('OracleMain');
+                }}
               >
                 <Text style={styles.errorButtonText}>Go Back</Text>
               </TouchableOpacity>

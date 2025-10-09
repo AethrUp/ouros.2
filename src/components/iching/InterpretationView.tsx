@@ -7,8 +7,10 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
-import { CastedHexagram } from '../../types/iching';
+import { CastedHexagram, IChingInterpretation } from '../../types/iching';
 import { HexagramDisplay } from './HexagramDisplay';
+import { StructuredInterpretationView } from './StructuredInterpretationView';
+import { isStructuredInterpretation } from '../../utils/ichingPromptTemplate';
 import { colors, typography, spacing } from '../../styles';
 import { LoadingSpinner } from '../LoadingSpinner';
 
@@ -16,7 +18,7 @@ interface InterpretationViewProps {
   question: string;
   primaryHexagram: CastedHexagram;
   relatingHexagram?: CastedHexagram | null;
-  interpretation: string | null;
+  interpretation: string | IChingInterpretation | null;
   isGenerating: boolean;
   onSave?: () => void;
   onNewReading?: () => void;
@@ -110,9 +112,15 @@ export const InterpretationView: React.FC<InterpretationViewProps> = ({
             <Text style={styles.loadingText}>Generating interpretation...</Text>
           </View>
         ) : interpretation ? (
-          <View style={styles.interpretationContent}>
-            <Text style={styles.interpretationText}>{interpretation}</Text>
-          </View>
+          isStructuredInterpretation(interpretation) ? (
+            // New structured view
+            <StructuredInterpretationView interpretationData={interpretation} />
+          ) : (
+            // Legacy plain text view
+            <View style={styles.interpretationContent}>
+              <Text style={styles.interpretationText}>{interpretation}</Text>
+            </View>
+          )
         ) : (
           <View style={styles.loadingContainer}>
             <Text style={styles.errorText}>No interpretation available</Text>

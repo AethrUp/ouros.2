@@ -49,6 +49,24 @@ export interface Trigram {
 }
 
 /**
+ * Structured interpretation for I Ching readings
+ */
+export interface IChingInterpretation {
+  interpretation: {
+    overview: string;                    // 2-3 sentence summary of the main message
+    present_situation: string;           // What this hexagram reveals about their current circumstances
+    trigram_dynamics: string;            // How the upper and lower trigrams interact to create meaning
+    changing_lines: string | null;       // Analysis of any changing lines and their significance (or null if none)
+    transformation: string | null;       // If relating hexagram exists, describe the journey from present to future (or null if no relating hexagram)
+    guidance: string;                    // Practical advice and actionable wisdom
+    timing: string;                      // Insights about when to act, when to wait, or natural timing
+    key_insight: string;                 // The most important takeaway for their situation
+  };
+  tone: 'warm' | 'wise' | 'encouraging' | 'cautionary';
+  confidence: 'high' | 'medium' | 'low';
+}
+
+/**
  * A complete I Ching reading
  */
 export interface IChingReading {
@@ -59,7 +77,7 @@ export interface IChingReading {
   castingMethod: CastingMethod;
   primaryHexagram: CastedHexagram;
   relatingHexagram?: CastedHexagram; // Present if there are changing lines
-  interpretation: string;
+  interpretation: string | IChingInterpretation; // Support both legacy string and new structured format
   interpretationSource: InterpretationSource;
   metadata?: {
     generationTime?: number;
@@ -133,7 +151,7 @@ export interface IChingState {
   relatingHexagram: CastedHexagram | null;
 
   // Interpretation
-  interpretation: string;
+  interpretation: string | IChingInterpretation;
   isGeneratingInterpretation: boolean;
   interpretationSource: InterpretationSource;
 

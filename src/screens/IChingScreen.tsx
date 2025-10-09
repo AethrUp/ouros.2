@@ -155,15 +155,40 @@ export const IChingScreen: React.FC<NavigationProps> = ({ navigation }) => {
   // Handle journal
   const handleJournal = async () => {
     await saveIChingReading();
-    navigation.navigate('Journal', {
-      linkedReadingId: Date.now().toString(),
-      readingType: 'iching',
-    });
+
+    // Transform current reading to LinkedReading format
+    if (primaryHexagram && ichingInterpretation) {
+      const linkedReading = {
+        id: Date.now().toString(), // Temporary ID
+        reading_type: 'iching' as const,
+        title: `Hexagram ${primaryHexagram.hexagram.number}: ${primaryHexagram.hexagram.englishName}`,
+        timestamp: new Date().toISOString(),
+        interpretation: typeof ichingInterpretation === 'string'
+          ? ichingInterpretation
+          : JSON.stringify(ichingInterpretation),
+        intention: question,
+        metadata: {
+          primaryHexagram: primaryHexagram.hexagram.number,
+          changingLines: primaryHexagram.changingLines,
+          relatingHexagram: relatingHexagram?.hexagram.number,
+        },
+      };
+
+      // Navigate to journal tab, then to entry screen with linked reading
+      navigation.navigate('journal', {
+        screen: 'JournalEntry',
+        params: {
+          linkedReading,
+          entryType: 'iching',
+        },
+      });
+    }
   };
 
   // Handle new reading
   const handleNewReading = () => {
     clearIChingSession();
+    navigation.navigate('OracleMain');
   };
 
   // Initialize session on mount if needed
@@ -174,6 +199,7 @@ export const IChingScreen: React.FC<NavigationProps> = ({ navigation }) => {
   }, []);
 
   // Clear session when navigating away from I Ching screen
+  // Note: Navigation reset is handled at the tab level in TabNavigator
   useFocusEffect(
     React.useCallback(() => {
       // Cleanup function runs when screen loses focus
@@ -219,7 +245,10 @@ export const IChingScreen: React.FC<NavigationProps> = ({ navigation }) => {
             {ichingError && (
               <TouchableOpacity
                 style={styles.errorButton}
-                onPress={clearIChingSession}
+                onPress={() => {
+                  clearIChingSession();
+                  navigation.navigate('OracleMain');
+                }}
               >
                 <Text style={styles.errorButtonText}>Go Back</Text>
               </TouchableOpacity>

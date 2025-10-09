@@ -1,5 +1,6 @@
 export { HomeScreen } from './HomeScreen';
 export { NatalChartScreen } from './NatalChartScreen';
+export { PlanetDetailScreen } from './PlanetDetailScreen';
 export { ReadingsScreen } from './ReadingsScreen';
 export { JournalScreen } from './JournalScreen';
 export { JournalEntryScreen } from './JournalEntryScreen';
@@ -12,6 +13,10 @@ export { BirthDataScreen } from './BirthDataScreen';
 export { BirthDateTimeScreen } from './BirthDateTimeScreen';
 export { default as DailyHoroscopeScreen } from './DailyHoroscopeScreen';
 export { TarotScreen } from './TarotScreen';
+export { TarotReadingDetailScreen } from './TarotReadingDetailScreen';
 export { IChingScreen } from './IChingScreen';
+export { IChingReadingDetailScreen } from './IChingReadingDetailScreen';
 export { OracleScreen } from './OracleScreen';
 export { FriendsScreen } from './FriendsScreen';
+export { SynastryScreen } from './SynastryScreen';
+export { SavedChartsScreen } from './SavedChartsScreen';

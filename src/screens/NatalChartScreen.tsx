@@ -164,7 +164,10 @@ export const NatalChartScreen: React.FC<NavigationProps> = ({ navigation }) => {
                     {/* Planet cell */}
                     <TouchableOpacity
                       style={styles.planetCell}
-                      onPress={() => selectPlanet(planet.key)}
+                      onPress={() => {
+                        selectPlanet(planet.key);
+                        navigation.navigate('PlanetDetail', { planetKey: planet.key });
+                      }}
                     >
                       <Text style={styles.planetSymbol}>{planet.symbol}</Text>
                       <Text style={styles.planetName}>{planet.name}</Text>

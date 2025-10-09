@@ -8,6 +8,7 @@ import {
   IChingReading,
   CastedHexagram,
   CastingMethod,
+  IChingInterpretation,
 } from '../types/iching';
 import {
   castHexagramWithCoins,
@@ -17,6 +18,7 @@ import {
   constructIChingPrompt,
   constructStaticIChingInterpretation,
   validateIChingResponse,
+  validateIChingInterpretationJSON,
 } from '../utils/ichingPromptTemplate';
 import { supabase } from '../utils/supabase';
 import { useAppStore } from '../store';
@@ -73,7 +75,7 @@ export const generateIChingInterpretation = async (
   question: string,
   primaryHexagram: CastedHexagram,
   relatingHexagram?: CastedHexagram
-): Promise<string> => {
+): Promise<IChingInterpretation> => {
   const store = useAppStore.getState();
   const { birthData, preferences } = store;
 
@@ -123,15 +125,32 @@ export const generateIChingInterpretation = async (
     });
 
     // Extract text from response
-    const interpretation =
+    const responseText =
       response.content[0]?.type === 'text' ? response.content[0].text : '';
 
-    // Validate response
-    const validation = validateIChingResponse(interpretation);
+    if (!responseText) {
+      throw new Error('Empty response from AI');
+    }
+
+    // Parse JSON response
+    let interpretationData: IChingInterpretation;
+    try {
+      // Try to extract JSON if there's text before/after the JSON
+      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+      const jsonString = jsonMatch ? jsonMatch[0] : responseText;
+      interpretationData = JSON.parse(jsonString);
+    } catch (parseError) {
+      console.error('Failed to parse JSON response:', parseError);
+      console.log('Raw response:', responseText.substring(0, 200));
+      throw new Error('Invalid JSON in AI response');
+    }
+
+    // Validate JSON structure
+    const validation = validateIChingInterpretationJSON(interpretationData);
 
     if (!validation.valid) {
-      console.warn('AI response validation failed:', validation.error);
-      throw new Error(validation.error);
+      console.warn('AI response JSON validation failed:', validation.errors);
+      throw new Error(`Invalid interpretation structure: ${validation.errors.join(', ')}`);
     }
 
     console.log('✅ AI interpretation generated successfully');
@@ -141,7 +160,7 @@ export const generateIChingInterpretation = async (
       total: response.usage.input_tokens + response.usage.output_tokens,
     });
 
-    return interpretation;
+    return interpretationData;
   } catch (error) {
     console.error('AI interpretation failed, using static fallback:', error);
 
@@ -164,7 +183,7 @@ export const saveIChingReading = async (data: {
   castingMethod: CastingMethod;
   primaryHexagram: CastedHexagram;
   relatingHexagram?: CastedHexagram;
-  interpretation: string;
+  interpretation: string | IChingInterpretation;
 }): Promise<IChingReading> => {
   const store = useAppStore.getState();
   const userId = store.user?.id;
@@ -176,6 +195,12 @@ export const saveIChingReading = async (data: {
   console.log('💾 Saving I Ching reading to database...');
 
   try {
+    // Serialize interpretation (support both string and structured format)
+    const serializedInterpretation =
+      typeof data.interpretation === 'string'
+        ? data.interpretation
+        : JSON.stringify(data.interpretation);
+
     // Save to Supabase using the unified 'readings' table
     const { data: savedReading, error } = await supabase
       .from('readings')
@@ -184,7 +209,7 @@ export const saveIChingReading = async (data: {
         reading_type: 'iching',
         timestamp: new Date().toISOString(),
         intention: data.question, // Using 'intention' field for the question
-        interpretation: data.interpretation,
+        interpretation: serializedInterpretation,
         metadata: {
           casting_method: data.castingMethod,
           primary_hexagram: {
@@ -252,6 +277,22 @@ export const saveIChingReading = async (data: {
 };
 
 /**
+ * Helper function to try parsing JSON from string
+ */
+const tryParseJSON = (str: string): IChingInterpretation | null => {
+  try {
+    const parsed = JSON.parse(str);
+    // Validate that it's a proper IChingInterpretation structure
+    if (parsed && typeof parsed === 'object' && 'interpretation' in parsed) {
+      return parsed as IChingInterpretation;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+};
+
+/**
  * Load user's I Ching reading history from database
  */
 export const loadIChingHistory = async (): Promise<IChingReading[]> => {
@@ -280,36 +321,47 @@ export const loadIChingHistory = async (): Promise<IChingReading[]> => {
     }
 
     // Transform database records to IChingReading objects
-    const readings: IChingReading[] = (data || []).map((record) => ({
-      id: record.id,
-      userId: record.user_id,
-      createdAt: record.timestamp,
-      question: record.intention || '',
-      castingMethod: record.metadata.casting_method || 'three-coins',
-      primaryHexagram: {
-        hexagram: {
-          number: record.metadata.primary_hexagram.number,
-          chineseName: record.metadata.primary_hexagram.chinese_name,
-          englishName: record.metadata.primary_hexagram.name,
-          // Note: Full hexagram data would need to be reconstituted from the hexagrams data
-        },
-        lines: record.metadata.primary_hexagram.lines || [],
-        changingLines: record.metadata.primary_hexagram.changing_lines || [],
-      } as CastedHexagram,
-      relatingHexagram: record.metadata.relating_hexagram
-        ? ({
-            hexagram: {
-              number: record.metadata.relating_hexagram.number,
-              chineseName: record.metadata.relating_hexagram.chinese_name,
-              englishName: record.metadata.relating_hexagram.name,
-            },
-            lines: [],
-            changingLines: [],
-          } as CastedHexagram)
-        : undefined,
-      interpretation: record.interpretation,
-      interpretationSource: record.metadata.interpretation_source || 'ai',
-    }));
+    const readings: IChingReading[] = (data || []).map((record) => {
+      // Parse interpretation (support both string and JSON)
+      let interpretation: string | IChingInterpretation = record.interpretation;
+      if (typeof record.interpretation === 'string') {
+        const parsed = tryParseJSON(record.interpretation);
+        if (parsed) {
+          interpretation = parsed;
+        }
+      }
+
+      return {
+        id: record.id,
+        userId: record.user_id,
+        createdAt: record.timestamp,
+        question: record.intention || '',
+        castingMethod: record.metadata.casting_method || 'three-coins',
+        primaryHexagram: {
+          hexagram: {
+            number: record.metadata.primary_hexagram.number,
+            chineseName: record.metadata.primary_hexagram.chinese_name,
+            englishName: record.metadata.primary_hexagram.name,
+            // Note: Full hexagram data would need to be reconstituted from the hexagrams data
+          },
+          lines: record.metadata.primary_hexagram.lines || [],
+          changingLines: record.metadata.primary_hexagram.changing_lines || [],
+        } as CastedHexagram,
+        relatingHexagram: record.metadata.relating_hexagram
+          ? ({
+              hexagram: {
+                number: record.metadata.relating_hexagram.number,
+                chineseName: record.metadata.relating_hexagram.chinese_name,
+                englishName: record.metadata.relating_hexagram.name,
+              },
+              lines: [],
+              changingLines: [],
+            } as CastedHexagram)
+          : undefined,
+        interpretation,
+        interpretationSource: record.metadata.interpretation_source || 'ai',
+      };
+    });
 
     console.log(`✅ Loaded ${readings.length} readings`);
 

@@ -63,13 +63,35 @@ export const JournalEntryScreen: React.FC<JournalEntryScreenProps> = ({ navigati
     }
   }, [route.params?.linkedReading, route.params?.entryType]);
 
-  // Generate default title
+  // Generate default title based on entry type or linked reading
   const getDefaultTitle = () => {
-    return `Journal Entry ${date.toLocaleDateString('en-US', {
+    const formattedDate = date.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
       year: 'numeric',
-    })}`;
+    });
+
+    // If linked reading, use its type
+    if (linkedReading) {
+      const readingType = linkedReading.reading_type.toUpperCase();
+      return `${readingType} ${formattedDate}`;
+    }
+
+    // Otherwise use entry type
+    if (entryType === 'iching') {
+      return `I CHING ${formattedDate}`;
+    } else if (entryType === 'tarot') {
+      return `TAROT ${formattedDate}`;
+    } else if (entryType === 'dream') {
+      return `DREAM ${formattedDate}`;
+    } else if (entryType === 'horoscope') {
+      return `HOROSCOPE ${formattedDate}`;
+    } else if (entryType === 'synastry') {
+      return `SYNASTRY ${formattedDate}`;
+    }
+
+    // Default
+    return `Journal Entry ${formattedDate}`;
   };
 
   const handleSave = async () => {

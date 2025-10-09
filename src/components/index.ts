@@ -4,3 +4,6 @@ export { LoadingSpinner } from './LoadingSpinner';
 export { TabNavigation } from './TabNavigation';
 export { TextInput } from './TextInput';
 export { LocationPicker } from './LocationPicker';
+export { CompatibilityMeter, CompatibilityMeterGroup } from './synastry/CompatibilityMeter';
+export { SavedChartForm } from './synastry/SavedChartForm';
+export { PartnerSelector } from './synastry/PartnerSelector';

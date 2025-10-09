@@ -248,6 +248,10 @@ export const loadTarotHistory = async (): Promise<TarotReading[]> => {
   console.log('📚 Loading tarot reading history...');
 
   try {
+    // Import spreads and deck to reconstruct full objects
+    const { TAROT_SPREADS } = await import('../data/tarot/spreads');
+    const { TAROT_DECK } = await import('../data/tarot/tarotCards');
+
     const { data, error } = await supabase
       .from('readings')
       .select('*')
@@ -262,22 +266,56 @@ export const loadTarotHistory = async (): Promise<TarotReading[]> => {
     }
 
     // Transform database records to TarotReading objects
-    const readings: TarotReading[] = (data || []).map(record => ({
-      id: record.id,
-      userId: record.user_id,
-      createdAt: record.timestamp,
-      intention: record.intention || '',
-      spread: {
-        id: record.metadata.spread_id,
-        name: record.metadata.spread_name || '',
+    const readings: TarotReading[] = (data || []).map(record => {
+      // Find the full spread layout from spread_id
+      const spreadId = record.metadata.spread_id;
+      const fullSpread = TAROT_SPREADS.find(s => s.id === spreadId);
+
+      // If we can't find the spread, create a minimal one with positions
+      const spread: SpreadLayout = fullSpread || {
+        id: spreadId || 'unknown',
+        name: record.metadata.spread_name || 'Unknown Spread',
         description: '',
         cardCount: record.metadata.cards?.length || 0,
-        positions: []
-      },
-      cards: record.metadata.cards || [],
-      interpretation: record.interpretation,
-      interpretationSource: record.metadata.interpretation_source || 'ai'
-    }));
+        positions: (record.metadata.cards || []).map((card: any, index: number) => ({
+          id: `pos-${index}`,
+          name: card.position || `Position ${index + 1}`,
+          meaning: card.positionMeaning || '',
+          x: index === 0 ? 0.5 : index === 1 ? 0.3 : 0.7,
+          y: 0.5,
+        })),
+      };
+
+      // Reconstruct cards with imageUri from TAROT_DECK
+      const cards: DrawnCard[] = (record.metadata.cards || []).map((savedCard: any) => {
+        // Find the full card in TAROT_DECK by name or id
+        const fullCard = TAROT_DECK.find(
+          c => c.name === savedCard.card?.name || c.id === savedCard.card?.id
+        );
+
+        if (!fullCard) {
+          console.warn(`Card not found in deck: ${savedCard.card?.name || savedCard.card?.id}`);
+        }
+
+        return {
+          card: fullCard || savedCard.card, // Use full card with imageUri, fallback to saved card
+          position: savedCard.position,
+          orientation: savedCard.orientation,
+          positionMeaning: savedCard.positionMeaning,
+        };
+      });
+
+      return {
+        id: record.id,
+        userId: record.user_id,
+        createdAt: record.timestamp,
+        intention: record.intention || '',
+        spread,
+        cards,
+        interpretation: record.interpretation,
+        interpretationSource: record.metadata.interpretation_source || 'ai'
+      };
+    });
 
     console.log(`✅ Loaded ${readings.length} readings`);
 

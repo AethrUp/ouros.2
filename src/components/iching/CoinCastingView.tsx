@@ -142,7 +142,7 @@ export const CoinCastingView: React.FC<CoinCastingViewProps> = ({
       </View>
 
       {/* Cast Button */}
-      {currentLinePosition <= 6 && (
+      {completedLines.length < 6 && (
         <View style={styles.buttonSection}>
           <TouchableOpacity
             style={[
@@ -161,7 +161,7 @@ export const CoinCastingView: React.FC<CoinCastingViewProps> = ({
       )}
 
       {/* Completion Message */}
-      {currentLinePosition > 6 && (
+      {completedLines.length === 6 && (
         <View style={styles.completionContainer}>
           <Text style={styles.completionTitle}>Hexagram Complete</Text>
           <Text style={styles.completionMessage}>Calculating your reading...</Text>

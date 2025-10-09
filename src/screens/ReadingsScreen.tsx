@@ -50,7 +50,7 @@ export const ReadingsScreen: React.FC<NavigationProps> = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <HeaderBar
-        title="Reading History"
+        title="READINGS"
         rightActions={[
           {
             icon: 'funnel-outline',
@@ -101,9 +101,15 @@ export const ReadingsScreen: React.FC<NavigationProps> = ({ navigation }) => {
             {allReadings.map((reading, index) => (
               <Animated.View key={reading.id} entering={FadeIn.delay(index * 50)}>
                 {reading.type === 'tarot' ? (
-                  <TarotReadingCard reading={reading} onPress={() => console.log('View tarot')} />
+                  <TarotReadingCard
+                    reading={reading}
+                    onPress={() => navigation.navigate('TarotReadingDetail', { readingId: reading.id })}
+                  />
                 ) : (
-                  <IChingReadingCard reading={reading} onPress={() => console.log('View iching')} />
+                  <IChingReadingCard
+                    reading={reading}
+                    onPress={() => navigation.navigate('IChingReadingDetail', { readingId: reading.id })}
+                  />
                 )}
               </Animated.View>
             ))}
@@ -123,28 +129,24 @@ interface TarotReadingCardProps {
 }
 
 const TarotReadingCard: React.FC<TarotReadingCardProps> = ({ reading, onPress }) => {
-  const dateStr = format(new Date(reading.createdAt), 'MMM d, yyyy');
-  const timeStr = format(new Date(reading.createdAt), 'h:mm a');
+  const dateStr = format(new Date(reading.createdAt), 'MMM d');
 
   return (
     <TouchableOpacity style={styles.readingCard} onPress={onPress} activeOpacity={0.8}>
       <View style={styles.readingHeader}>
-        <View style={[styles.readingTypeBadge, styles.tarotBadge]}>
-          <Text style={styles.readingTypeText}>Tarot</Text>
+        <View style={styles.readingTypeBadge}>
+          <Text style={styles.readingTypeText}>TAROT</Text>
         </View>
         <Text style={styles.readingDate}>{dateStr}</Text>
       </View>
 
-      <Text style={styles.readingIntention} numberOfLines={2}>
+      <Text style={styles.readingIntention} numberOfLines={1}>
         {reading.intention || 'No intention recorded'}
       </Text>
 
-      <View style={styles.readingDetails}>
-        <Text style={styles.readingDetailText}>
-          {reading.spread?.name || 'Unknown Spread'} • {reading.cards?.length || 0} cards
-        </Text>
-        <Text style={styles.readingTime}>{timeStr}</Text>
-      </View>
+      <Text style={styles.readingDetails}>
+        {reading.spread?.name || 'Unknown Spread'} • {reading.cards?.length || 0} cards
+      </Text>
     </TouchableOpacity>
   );
 };
@@ -158,8 +160,7 @@ interface IChingReadingCardProps {
 }
 
 const IChingReadingCard: React.FC<IChingReadingCardProps> = ({ reading, onPress }) => {
-  const dateStr = format(new Date(reading.createdAt), 'MMM d, yyyy');
-  const timeStr = format(new Date(reading.createdAt), 'h:mm a');
+  const dateStr = format(new Date(reading.createdAt), 'MMM d');
 
   const hexagramName =
     reading.primaryHexagram?.hexagram?.englishName ||
@@ -170,22 +171,19 @@ const IChingReadingCard: React.FC<IChingReadingCardProps> = ({ reading, onPress 
   return (
     <TouchableOpacity style={styles.readingCard} onPress={onPress} activeOpacity={0.8}>
       <View style={styles.readingHeader}>
-        <View style={[styles.readingTypeBadge, styles.ichingBadge]}>
-          <Text style={styles.readingTypeText}>I Ching</Text>
+        <View style={styles.readingTypeBadge}>
+          <Text style={styles.readingTypeText}>I CHING</Text>
         </View>
         <Text style={styles.readingDate}>{dateStr}</Text>
       </View>
 
-      <Text style={styles.readingIntention} numberOfLines={2}>
+      <Text style={styles.readingIntention} numberOfLines={1}>
         {reading.question || 'No question recorded'}
       </Text>
 
-      <View style={styles.readingDetails}>
-        <Text style={styles.readingDetailText}>
-          #{hexagramNumber} {hexagramName}
-        </Text>
-        <Text style={styles.readingTime}>{timeStr}</Text>
-      </View>
+      <Text style={styles.readingDetails}>
+        #{hexagramNumber} {hexagramName}
+      </Text>
     </TouchableOpacity>
   );
 };
@@ -260,65 +258,53 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
   },
   readingsList: {
-    padding: spacing.md,
-    gap: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.xl * 2,
+    gap: spacing.md,
   },
   readingCard: {
-    backgroundColor: colors.background.secondary,
+    backgroundColor: colors.background.card,
     borderRadius: 12,
     padding: spacing.md,
     borderWidth: 1,
-    borderColor: colors.border.primary,
+    borderColor: colors.border,
   },
   readingHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.sm,
+    marginBottom: spacing.md,
   },
   readingTypeBadge: {
+    ...typography.caption,
+    color: '#FFFFFF',
+    backgroundColor: 'rgba(200, 182, 226, 0.5)',
+    paddingHorizontal: spacing.sm,
     paddingVertical: 4,
-    paddingHorizontal: 10,
     borderRadius: 12,
-  },
-  tarotBadge: {
-    backgroundColor: 'rgba(147, 51, 234, 0.15)',
-  },
-  ichingBadge: {
-    backgroundColor: 'rgba(129, 184, 181, 0.15)',
+    overflow: 'hidden',
+    alignSelf: 'flex-start',
   },
   readingTypeText: {
     ...typography.caption,
-    fontSize: 10,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    color: '#FFFFFF',
   },
   readingDate: {
     ...typography.caption,
     color: colors.text.secondary,
-    fontSize: 12,
   },
   readingIntention: {
-    ...typography.body,
-    fontSize: 15,
-    lineHeight: 22,
-    marginBottom: spacing.sm,
-    color: colors.text.primary,
+    fontSize: 20,
+    fontWeight: '400',
+    marginBottom: spacing.xs,
+    color: '#F6D99F',
+    fontFamily: 'Georgia',
+    letterSpacing: 0,
   },
   readingDetails: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  readingDetailText: {
-    ...typography.caption,
-    color: colors.text.secondary,
-    fontSize: 11,
-  },
-  readingTime: {
-    ...typography.caption,
-    color: colors.text.secondary,
-    fontSize: 11,
+    ...typography.body,
+    color: 'rgba(255, 255, 255, 0.5)',
+    lineHeight: 20,
   },
 });

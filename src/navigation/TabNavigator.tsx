@@ -1,18 +1,24 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { StackActions } from '@react-navigation/native';
 import {
   HomeScreen,
   NatalChartScreen,
+  PlanetDetailScreen,
   ReadingsScreen,
   JournalScreen,
   JournalEntryScreen,
   ProfileScreen,
   DailyHoroscopeScreen,
   TarotScreen,
+  TarotReadingDetailScreen,
   IChingScreen,
+  IChingReadingDetailScreen,
   OracleScreen,
   FriendsScreen,
+  SynastryScreen,
+  SavedChartsScreen,
 } from '../screens';
 import { TabNavigation } from '../components';
 import { useAppStore } from '../store';
@@ -21,6 +27,7 @@ const Tab = createBottomTabNavigator();
 const HomeStack = createNativeStackNavigator();
 const OracleStack = createNativeStackNavigator();
 const JournalStack = createNativeStackNavigator();
+const FriendsStack = createNativeStackNavigator();
 
 // Home Stack Navigator (for home + detail screens)
 const HomeStackNavigator: React.FC = () => {
@@ -39,6 +46,8 @@ const HomeStackNavigator: React.FC = () => {
 
 // Oracle Stack Navigator (for oracle selection + tarot/iching screens)
 const OracleStackNavigator: React.FC = () => {
+  const { clearSession, clearIChingSession } = useAppStore();
+
   return (
     <OracleStack.Navigator
       screenOptions={{
@@ -46,8 +55,26 @@ const OracleStackNavigator: React.FC = () => {
       }}
     >
       <OracleStack.Screen name="OracleMain" component={OracleScreen} />
-      <OracleStack.Screen name="Tarot" component={TarotScreen} />
-      <OracleStack.Screen name="IChing" component={IChingScreen} />
+      <OracleStack.Screen
+        name="Tarot"
+        component={TarotScreen}
+        listeners={{
+          blur: () => {
+            console.log('🔄 Tarot screen blurred - clearing session');
+            clearSession();
+          }
+        }}
+      />
+      <OracleStack.Screen
+        name="IChing"
+        component={IChingScreen}
+        listeners={{
+          blur: () => {
+            console.log('🔄 I Ching screen blurred - clearing session');
+            clearIChingSession();
+          }
+        }}
+      />
     </OracleStack.Navigator>
   );
 };
@@ -63,8 +90,26 @@ const JournalStackNavigator: React.FC = () => {
       <JournalStack.Screen name="JournalMain" component={JournalScreen} />
       <JournalStack.Screen name="JournalEntry" component={JournalEntryScreen} />
       <JournalStack.Screen name="chart" component={NatalChartScreen} />
+      <JournalStack.Screen name="PlanetDetail" component={PlanetDetailScreen} />
       <JournalStack.Screen name="readings" component={ReadingsScreen} />
+      <JournalStack.Screen name="TarotReadingDetail" component={TarotReadingDetailScreen} />
+      <JournalStack.Screen name="IChingReadingDetail" component={IChingReadingDetailScreen} />
     </JournalStack.Navigator>
+  );
+};
+
+// Friends Stack Navigator (includes synastry and saved charts)
+const FriendsStackNavigator: React.FC = () => {
+  return (
+    <FriendsStack.Navigator
+      screenOptions={{
+        headerShown: false,
+      }}
+    >
+      <FriendsStack.Screen name="FriendsMain" component={FriendsScreen} />
+      <FriendsStack.Screen name="Synastry" component={SynastryScreen} />
+      <FriendsStack.Screen name="SavedCharts" component={SavedChartsScreen} />
+    </FriendsStack.Navigator>
   );
 };
 
@@ -75,7 +120,7 @@ export const TabNavigator: React.FC = () => {
     { id: 'home', label: 'Home', icon: 'home-outline', screen: HomeStackNavigator },
     { id: 'oracle', label: 'Oracle', icon: 'moon-outline', screen: OracleStackNavigator },
     { id: 'journal', label: 'Journal', icon: 'journal-outline', screen: JournalStackNavigator },
-    { id: 'friends', label: 'Friends', icon: 'people-outline', screen: FriendsScreen },
+    { id: 'friends', label: 'Friends', icon: 'people-outline', screen: FriendsStackNavigator },
   ];
 
   return (
@@ -104,9 +149,25 @@ export const TabNavigator: React.FC = () => {
           key={tab.id}
           name={tab.id}
           component={tab.screen}
-          listeners={{
+          listeners={({ navigation }) => ({
             focus: () => setActiveTab(tab.id),
-          }}
+            blur: () => {
+              // Reset Oracle stack to OracleMain when leaving the tab
+              if (tab.id === 'oracle') {
+                console.log('🔄 Oracle tab lost focus - resetting to OracleMain');
+                const state = navigation.getState();
+                const oracleRoute = state.routes.find((r: any) => r.name === 'oracle');
+
+                // Only reset if the stack has more than one screen
+                if (oracleRoute?.state?.index > 0) {
+                  navigation.dispatch({
+                    ...StackActions.popToTop(),
+                    target: oracleRoute.state.key,
+                  });
+                }
+              }
+            },
+          })}
         />
       ))}
     </Tab.Navigator>
