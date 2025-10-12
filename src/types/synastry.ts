@@ -151,11 +151,12 @@ export interface ModalityCompatibility {
 export interface SynastryReading {
   id: string;
   synastryChartId: string;
-  connectionId: string;
+  connectionId?: string;      // Optional - for user-to-user synastry
+  savedChartId?: string;      // Optional - for user-to-saved-chart synastry
 
   // Reading content
   interpretation: string;
-  focusArea?: 'romantic' | 'friendship' | 'business' | 'family' | 'general';
+  relationshipContext?: string;  // Free-text description of relationship (e.g., "girlfriend", "coworker", "mom")
 
   // AI generation metadata
   aiGenerated: boolean;
@@ -170,6 +171,98 @@ export interface SynastryReading {
   // Expanded data (loaded separately)
   synastryChart?: SynastryChart;
   connection?: Connection;
+}
+
+// =====================================================
+// DAILY SYNASTRY FORECAST TYPES
+// =====================================================
+
+export interface TransitAspect {
+  transitPlanet: string;
+  natalPlanet: string;
+  aspect: string;
+  orb: number;
+  strength: number;
+  transitInfo: {
+    isRetrograde: boolean;
+  };
+}
+
+export interface TransitData {
+  aspects: TransitAspect[];
+  summary: {
+    totalAspects: number;
+    majorAspects: number;
+    activeAspects: number;
+    strongestAspect: TransitAspect | null;
+  };
+  metadata?: {
+    calculatedAt: string;
+    dataSource: string;
+    precision: string;
+  };
+}
+
+export interface TriggeredSynastryAspect {
+  synastryAspect: SynastryAspect;
+  triggeringTransits: TransitAspect[];
+  intensity: number;
+  theme: string;
+  advice: string;
+}
+
+export interface DailySynastryForecast {
+  id: string;
+  date: string;
+
+  // Relationship reference
+  synastryChartId: string;
+  connectionId?: string;
+  savedChartId?: string;
+
+  // People names
+  person1Name: string;
+  person2Name: string;
+
+  // Today's transit data
+  person1Transits: TransitData;
+  person2Transits: TransitData;
+  currentPositions: Record<string, {
+    position: number;
+    sign: string;
+    degree: number;
+    retrograde: boolean;
+    formatted: string;
+  }>;
+  triggeredAspects: TriggeredSynastryAspect[];
+
+  // Preview (lightweight - for cards)
+  preview: {
+    title: string;
+    summary: string;
+    energyRating: 'harmonious' | 'intense' | 'challenging' | 'transformative';
+    topTheme: string;
+  };
+
+  // Full content
+  fullContent: {
+    morningForecast: string;
+    afternoonForecast: string;
+    eveningForecast: string;
+    advice: string[];
+    activitiesSuggested: string[];
+    activitiesToAvoid: string[];
+    transitAnalysis: string;
+  };
+
+  // Metadata
+  hasFullForecast: boolean;
+  generatedAt: string;
+  model?: string;
+  promptVersion?: string;
+
+  // Expanded data
+  synastryChart?: SynastryChart;
 }
 
 // =====================================================
@@ -251,6 +344,12 @@ export interface SocialState {
   isGeneratingReading: boolean;
   synastryError: string | null;
 
+  // Daily Synastry Forecasts
+  dailySynastryForecasts: Record<string, DailySynastryForecast>; // Keyed by synastryChartId
+  isLoadingForecast: boolean;
+  isGeneratingForecast: boolean;
+  forecastError: string | null;
+
   // UI state
   showInviteModal: boolean;
   inviteFriendCode: string;
@@ -300,7 +399,7 @@ export interface CalculateSynastryResponse {
 export interface GenerateSynastryReadingRequest {
   synastryChartId: string;
   connectionId: string;
-  focusArea?: 'romantic' | 'friendship' | 'business' | 'family' | 'general';
+  relationshipContext?: string;
   detailLevel?: 'brief' | 'detailed' | 'comprehensive';
 }
 

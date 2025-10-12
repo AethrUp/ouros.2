@@ -15,10 +15,13 @@ import {
   TarotReadingDetailScreen,
   IChingScreen,
   IChingReadingDetailScreen,
+  DreamInterpretationScreen,
   OracleScreen,
   FriendsScreen,
   SynastryScreen,
   SavedChartsScreen,
+  DailySynastryForecastScreen,
+  SubscriptionScreen,
 } from '../screens';
 import { TabNavigation } from '../components';
 import { useAppStore } from '../store';
@@ -40,13 +43,14 @@ const HomeStackNavigator: React.FC = () => {
       <HomeStack.Screen name="HomeMain" component={HomeScreen} />
       <HomeStack.Screen name="DailyHoroscope" component={DailyHoroscopeScreen} />
       <HomeStack.Screen name="Profile" component={ProfileScreen} />
+      <HomeStack.Screen name="Subscription" component={SubscriptionScreen} />
     </HomeStack.Navigator>
   );
 };
 
-// Oracle Stack Navigator (for oracle selection + tarot/iching screens)
+// Oracle Stack Navigator (for oracle selection + tarot/iching/dream screens)
 const OracleStackNavigator: React.FC = () => {
-  const { clearSession, clearIChingSession } = useAppStore();
+  const { clearSession, clearIChingSession, clearDreamSession } = useAppStore();
 
   return (
     <OracleStack.Navigator
@@ -72,6 +76,16 @@ const OracleStackNavigator: React.FC = () => {
           blur: () => {
             console.log('🔄 I Ching screen blurred - clearing session');
             clearIChingSession();
+          }
+        }}
+      />
+      <OracleStack.Screen
+        name="DreamInterpretation"
+        component={DreamInterpretationScreen}
+        listeners={{
+          blur: () => {
+            console.log('🔄 Dream Interpretation screen blurred - clearing session');
+            clearDreamSession();
           }
         }}
       />
@@ -109,6 +123,7 @@ const FriendsStackNavigator: React.FC = () => {
       <FriendsStack.Screen name="FriendsMain" component={FriendsScreen} />
       <FriendsStack.Screen name="Synastry" component={SynastryScreen} />
       <FriendsStack.Screen name="SavedCharts" component={SavedChartsScreen} />
+      <FriendsStack.Screen name="DailySynastryForecast" component={DailySynastryForecastScreen} />
     </FriendsStack.Navigator>
   );
 };

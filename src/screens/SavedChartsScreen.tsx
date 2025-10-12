@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { NavigationProps } from '../types';
-import { HeaderBar } from '../components';
+import { HeaderBar, SwipeableChartCard } from '../components';
 import { colors, spacing, typography } from '../styles';
 import { useAppStore } from '../store';
 import { SavedChartForm } from '../components/synastry/SavedChartForm';
@@ -45,26 +45,35 @@ export const SavedChartsScreen: React.FC<NavigationProps> = ({ navigation }) => 
     }
   };
 
-  const handleDeleteChart = (chart: SavedChart) => {
-    Alert.alert(
-      'Delete Chart',
-      `Are you sure you want to delete the chart for ${chart.name}?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await deleteSavedChart(chart.id);
-              Alert.alert('Success', 'Chart deleted successfully');
-            } catch (error: any) {
-              Alert.alert('Error', error.message || 'Failed to delete chart');
-            }
+  const confirmDeleteChart = (chartName: string): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      Alert.alert(
+        'Delete Chart',
+        `Are you sure you want to delete the chart for ${chartName}?`,
+        [
+          {
+            text: 'Cancel',
+            style: 'cancel',
+            onPress: () => reject()
           },
-        },
-      ]
-    );
+          {
+            text: 'Delete',
+            style: 'destructive',
+            onPress: () => resolve(),
+          },
+        ],
+        { cancelable: true, onDismiss: () => reject() }
+      );
+    });
+  };
+
+  const handleDeleteChart = async (chartId: string): Promise<void> => {
+    try {
+      await deleteSavedChart(chartId);
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to delete chart');
+      throw error;
+    }
   };
 
   const handleViewChart = (chart: SavedChart) => {
@@ -111,70 +120,69 @@ export const SavedChartsScreen: React.FC<NavigationProps> = ({ navigation }) => 
       ) : (
         <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
           {savedCharts.map((chart) => (
-            <View key={chart.id} style={styles.chartCard}>
-              <TouchableOpacity
-                style={styles.chartHeader}
-                onPress={() => handleViewChart(chart)}
-              >
-                <View style={styles.chartIcon}>
-                  <Ionicons name="star" size={28} color={colors.primary} />
-                </View>
-                <View style={styles.chartInfo}>
-                  <Text style={styles.chartName}>{chart.name}</Text>
-                  {chart.relationship && (
-                    <Text style={styles.chartLabel}>{chart.relationship}</Text>
-                  )}
-                  <View style={styles.chartDetails}>
-                    <Ionicons name="calendar-outline" size={14} color={colors.text.secondary} />
-                    <Text style={styles.chartDetailText}>
-                      {new Date(chart.birthData.birthDate).toLocaleDateString()}
-                    </Text>
+            <SwipeableChartCard
+              key={chart.id}
+              onConfirmDelete={() => confirmDeleteChart(chart.name)}
+              onDelete={() => handleDeleteChart(chart.id)}
+            >
+              <View style={styles.chartCard}>
+                <TouchableOpacity
+                  style={styles.chartHeader}
+                  onPress={() => handleViewChart(chart)}
+                >
+                  <View style={styles.chartIcon}>
+                    <Ionicons name="star" size={28} color={colors.primary} />
                   </View>
-                  <View style={styles.chartDetails}>
-                    <Ionicons name="location-outline" size={14} color={colors.text.secondary} />
-                    <Text style={styles.chartDetailText}>
-                      {chart.birthData.birthLocation.name}
-                    </Text>
-                  </View>
-                  {!chart.birthData.timeUnknown && (
+                  <View style={styles.chartInfo}>
+                    <Text style={styles.chartName}>{chart.name}</Text>
+                    {chart.relationship && (
+                      <Text style={styles.chartLabel}>{chart.relationship}</Text>
+                    )}
                     <View style={styles.chartDetails}>
-                      <Ionicons name="time-outline" size={14} color={colors.text.secondary} />
+                      <Ionicons name="calendar-outline" size={14} color={colors.text.secondary} />
                       <Text style={styles.chartDetailText}>
-                        {chart.birthData.birthTime}
+                        {new Date(chart.birthData.birthDate).toLocaleDateString()}
                       </Text>
                     </View>
-                  )}
+                    <View style={styles.chartDetails}>
+                      <Ionicons name="location-outline" size={14} color={colors.text.secondary} />
+                      <Text style={styles.chartDetailText}>
+                        {chart.birthData.birthLocation.name}
+                      </Text>
+                    </View>
+                    {!chart.birthData.timeUnknown && (
+                      <View style={styles.chartDetails}>
+                        <Ionicons name="time-outline" size={14} color={colors.text.secondary} />
+                        <Text style={styles.chartDetailText}>
+                          {chart.birthData.birthTime}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                </TouchableOpacity>
+
+                <View style={styles.chartActions}>
+                  <TouchableOpacity
+                    style={styles.actionButton}
+                    onPress={() => {
+                      // Navigate to synastry with this saved chart
+                      navigation.navigate('Friends');
+                      // TODO: Pass chart as parameter or use store
+                    }}
+                  >
+                    <Ionicons name="people-outline" size={18} color={colors.primary} />
+                    <Text style={styles.actionButtonText}>Use in Synastry</Text>
+                  </TouchableOpacity>
                 </View>
-              </TouchableOpacity>
 
-              <View style={styles.chartActions}>
-                <TouchableOpacity
-                  style={styles.actionButton}
-                  onPress={() => {
-                    // Navigate to synastry with this saved chart
-                    navigation.navigate('Friends');
-                    // TODO: Pass chart as parameter or use store
-                  }}
-                >
-                  <Ionicons name="people-outline" size={18} color={colors.primary} />
-                  <Text style={styles.actionButtonText}>Use in Synastry</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[styles.actionButton, styles.actionButtonDanger]}
-                  onPress={() => handleDeleteChart(chart)}
-                >
-                  <Ionicons name="trash-outline" size={18} color={colors.error} />
-                </TouchableOpacity>
+                {chart.notes && (
+                  <View style={styles.notesContainer}>
+                    <Text style={styles.notesLabel}>Notes:</Text>
+                    <Text style={styles.notesText}>{chart.notes}</Text>
+                  </View>
+                )}
               </View>
-
-              {chart.notes && (
-                <View style={styles.notesContainer}>
-                  <Text style={styles.notesLabel}>Notes:</Text>
-                  <Text style={styles.notesText}>{chart.notes}</Text>
-                </View>
-              )}
-            </View>
+            </SwipeableChartCard>
           ))}
         </ScrollView>
       )}
@@ -246,7 +254,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background.secondary,
     borderRadius: 12,
     padding: spacing.md,
-    marginBottom: spacing.md,
   },
   chartHeader: {
     flexDirection: 'row',

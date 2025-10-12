@@ -1,16 +1,39 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { NavigationProps } from '../types';
 import { HeaderBar } from '../components';
+import { DebugSubscriptionPanel } from '../components/DebugSubscriptionPanel';
 import { colors, spacing, typography } from '../styles';
 import { useAppStore } from '../store';
 
 export const ProfileScreen: React.FC<NavigationProps> = ({ navigation }) => {
   const [isResetting, setIsResetting] = useState(false);
+  const [showDebugPanel, setShowDebugPanel] = useState(false);
+  const tapCount = useRef(0);
+  const tapTimer = useRef<NodeJS.Timeout | null>(null);
+
   const resetOnboarding = useAppStore((state) => state.resetOnboarding);
   const clearChart = useAppStore((state) => state.clearChart);
   const birthData = useAppStore((state) => state.birthData);
   const logout = useAppStore((state) => state.logout);
+
+  // Triple-tap to open debug panel (dev only)
+  const handleTitlePress = () => {
+    if (!__DEV__) return;
+
+    tapCount.current += 1;
+
+    if (tapTimer.current) {
+      clearTimeout(tapTimer.current);
+    }
+
+    tapTimer.current = setTimeout(() => {
+      if (tapCount.current >= 3) {
+        setShowDebugPanel(true);
+      }
+      tapCount.current = 0;
+    }, 500);
+  };
 
   const handleResetOnboarding = () => {
     Alert.alert(
@@ -53,7 +76,9 @@ export const ProfileScreen: React.FC<NavigationProps> = ({ navigation }) => {
         ]}
       />
       <View style={styles.content}>
-        <Text style={styles.text}>Profile Screen</Text>
+        <TouchableOpacity onPress={handleTitlePress} activeOpacity={1}>
+          <Text style={styles.text}>Profile Screen</Text>
+        </TouchableOpacity>
 
         {birthData && (
           <View style={styles.section}>
@@ -74,6 +99,12 @@ export const ProfileScreen: React.FC<NavigationProps> = ({ navigation }) => {
           </Text>
         </TouchableOpacity>
       </View>
+
+      {/* Debug Panel (dev only) */}
+      <DebugSubscriptionPanel
+        visible={showDebugPanel}
+        onClose={() => setShowDebugPanel(false)}
+      />
     </View>
   );
 };

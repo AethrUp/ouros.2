@@ -7,10 +7,12 @@ import {
   SynastryReading,
   SavedChart,
   SynastryPartner,
+  DailySynastryForecast,
 } from '../../types/synastry';
 import { synastryAPI } from '../../handlers/synastryAPI';
 import { savedChartsAPI } from '../../handlers/savedChartsAPI';
 import { generateSynastryReading } from '../../handlers/synastryReading';
+import { getDailySynastryForecast } from '../../handlers/dailySynastryForecast';
 import { NatalChartData, BirthData } from '../../types/user';
 
 // Initial state
@@ -41,6 +43,12 @@ const initialState: SocialState = {
   isGeneratingReading: false,
   synastryError: null,
 
+  // Daily Synastry Forecasts
+  dailySynastryForecasts: {},
+  isLoadingForecast: false,
+  isGeneratingForecast: false,
+  forecastError: null,
+
   // UI state
   showInviteModal: false,
   inviteFriendCode: '',
@@ -61,7 +69,7 @@ export interface SocialSlice extends SocialState {
 
   // Invitation actions
   loadInvitations: () => Promise<void>;
-  sendInvitation: (email: string, message?: string) => Promise<void>;
+  sendInvitation: (friendCode: string, message?: string) => Promise<void>;
   acceptInvitation: (invitationId: string) => Promise<void>;
   declineInvitation: (invitationId: string) => Promise<void>;
   cancelInvitation: (invitationId: string) => Promise<void>;
@@ -89,10 +97,26 @@ export interface SocialSlice extends SocialState {
   generateSynastryReading: (
     synastryChartId: string,
     connectionId: string,
-    focusArea?: string
+    relationshipContext?: string
   ) => Promise<void>;
   deleteSynastryReading: (readingId: string) => Promise<void>;
   setCurrentPartner: (partner: SynastryPartner | null) => void;
+
+  // Daily Synastry Forecast actions
+  loadDailySynastryForecast: (
+    synastryChart: SynastryChart,
+    person1Chart: NatalChartData,
+    person2Chart: NatalChartData,
+    person1Profile: any,
+    person2Profile: any,
+    person1Name: string,
+    person2Name: string,
+    connectionId?: string,
+    savedChartId?: string,
+    options?: { forceRegenerate?: boolean; focusArea?: string }
+  ) => Promise<void>;
+  setDailySynastryForecast: (forecast: DailySynastryForecast) => void;
+  clearDailySynastryForecast: (synastryChartId: string) => void;
 
   // UI actions
   loadMyFriendCode: () => Promise<void>;
@@ -433,7 +457,7 @@ export const createSocialSlice: StateCreator<
     }
   },
 
-  generateSynastryReading: async (synastryChartId, connectionId, focusArea) => {
+  generateSynastryReading: async (synastryChartId, connectionId, relationshipContext) => {
     set({ isGeneratingReading: true, synastryError: null });
 
     try {
@@ -470,6 +494,77 @@ export const createSocialSlice: StateCreator<
         synastryError: error instanceof Error ? error.message : 'Failed to delete reading',
       });
     }
+  },
+
+  // =====================================================
+  // DAILY SYNASTRY FORECAST ACTIONS
+  // =====================================================
+
+  loadDailySynastryForecast: async (
+    synastryChart,
+    person1Chart,
+    person2Chart,
+    person1Profile,
+    person2Profile,
+    person1Name,
+    person2Name,
+    connectionId,
+    savedChartId,
+    options
+  ) => {
+    set({ isLoadingForecast: true, isGeneratingForecast: true, forecastError: null });
+
+    try {
+      const result = await getDailySynastryForecast(
+        synastryChart,
+        person1Chart,
+        person2Chart,
+        person1Profile,
+        person2Profile,
+        person1Name,
+        person2Name,
+        connectionId,
+        savedChartId,
+        options
+      );
+
+      if (!result.success || !result.forecast) {
+        throw new Error(result.error || 'Failed to generate forecast');
+      }
+
+      // Store the forecast keyed by synastry chart ID
+      set((state) => ({
+        dailySynastryForecasts: {
+          ...state.dailySynastryForecasts,
+          [synastryChart.id]: result.forecast!,
+        },
+        isLoadingForecast: false,
+        isGeneratingForecast: false,
+      }));
+    } catch (error) {
+      console.error('Error loading daily synastry forecast:', error);
+      set({
+        forecastError: error instanceof Error ? error.message : 'Failed to load forecast',
+        isLoadingForecast: false,
+        isGeneratingForecast: false,
+      });
+    }
+  },
+
+  setDailySynastryForecast: (forecast) => {
+    set((state) => ({
+      dailySynastryForecasts: {
+        ...state.dailySynastryForecasts,
+        [forecast.synastryChartId]: forecast,
+      },
+    }));
+  },
+
+  clearDailySynastryForecast: (synastryChartId) => {
+    set((state) => {
+      const { [synastryChartId]: removed, ...rest } = state.dailySynastryForecasts;
+      return { dailySynastryForecasts: rest };
+    });
   },
 
   // =====================================================
@@ -515,6 +610,7 @@ export const createSocialSlice: StateCreator<
       invitationsError: null,
       savedChartsError: null,
       synastryError: null,
+      forecastError: null,
     });
   },
 

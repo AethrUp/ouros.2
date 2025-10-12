@@ -6,6 +6,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { CastedHexagram, IChingInterpretation } from '../../types/iching';
 import { HexagramDisplay } from './HexagramDisplay';
@@ -40,11 +41,12 @@ export const InterpretationView: React.FC<InterpretationViewProps> = ({
 }) => {
   const { hexagram: primary, changingLines } = primaryHexagram;
   const hasChangingLines = changingLines.length > 0;
+  const insets = useSafeAreaInsets();
 
   return (
     <View style={styles.container}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + spacing.md }]}>
         <Text style={styles.headerTitle}>I Ching Reading</Text>
         <View style={styles.headerActions}>
           {onSave && (
@@ -104,8 +106,6 @@ export const InterpretationView: React.FC<InterpretationViewProps> = ({
 
       {/* Interpretation */}
       <Animated.View entering={FadeIn.delay(600)} style={styles.interpretationSection}>
-        <Text style={styles.sectionLabel}>Interpretation</Text>
-
         {isGenerating ? (
           <View style={styles.loadingContainer}>
             <LoadingSpinner />
@@ -142,9 +142,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border.primary,
+    paddingBottom: spacing.md,
     backgroundColor: colors.background.primary,
   },
   headerTitle: {
@@ -167,8 +165,6 @@ const styles = StyleSheet.create({
   },
   hexagramsMainSection: {
     padding: spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border.primary,
   },
   hexagramsRow: {
     flexDirection: 'row',

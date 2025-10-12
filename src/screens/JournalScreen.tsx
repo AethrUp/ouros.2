@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { NavigationProps } from '../types';
-import { HeaderBar } from '../components';
+import { HeaderBar, Button } from '../components';
 import { colors, spacing, typography } from '../styles';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppStore } from '../store';
@@ -29,19 +29,25 @@ export const JournalScreen: React.FC<NavigationProps> = ({ navigation }) => {
         {/* Quick Access Section */}
         <View style={styles.quickAccessSection}>
           <View style={styles.accessRow}>
-            <TouchableOpacity
-              style={styles.accessCard}
-              onPress={() => navigation.navigate('chart')}
-            >
-              <Text style={styles.accessTitle}>NATAL CHART</Text>
-            </TouchableOpacity>
+            <View style={{ flex: 1 }}>
+              <Button
+                title="Natal Chart"
+                onPress={() => navigation.navigate('chart')}
+                variant="primary"
+                size="medium"
+                fullWidth
+              />
+            </View>
 
-            <TouchableOpacity
-              style={styles.accessCard}
-              onPress={() => navigation.navigate('readings')}
-            >
-              <Text style={styles.accessTitle}>READINGS</Text>
-            </TouchableOpacity>
+            <View style={{ flex: 1 }}>
+              <Button
+                title="Readings"
+                onPress={() => navigation.navigate('readings')}
+                variant="primary"
+                size="medium"
+                fullWidth
+              />
+            </View>
           </View>
         </View>
 
@@ -118,21 +124,6 @@ const styles = StyleSheet.create({
   accessRow: {
     flexDirection: 'row',
     gap: spacing.md,
-  },
-  accessCard: {
-    flex: 1,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.md,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  accessTitle: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#000000',
-    letterSpacing: 1.2,
   },
   entriesSection: {
     paddingTop: spacing.xl,

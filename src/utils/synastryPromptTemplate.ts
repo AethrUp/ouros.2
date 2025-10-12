@@ -40,8 +40,8 @@ const formatSynastryAspects = (aspects: SynastryAspect[]): string => {
  */
 const formatChartSummary = (chart: NatalChartData, personName: string): string => {
   const { planets } = chart;
-  const sun = planets.sun;
-  const moon = planets.moon;
+  const sun = planets.Sun || planets.sun;
+  const moon = planets.Moon || planets.moon;
   const ascendant = chart.angles.ascendant;
 
   return `${personName}'s Chart: Sun in ${sun.sign}, Moon in ${moon.sign}, Ascendant at ${ascendant.toFixed(1)}°`;
@@ -56,7 +56,7 @@ export const createSynastryPrompt = (
   person2Chart: NatalChartData,
   person1Name: string,
   person2Name: string,
-  focusArea: 'romantic' | 'friendship' | 'business' | 'family' | 'general' = 'general',
+  relationshipContext?: string,
   detailLevel: 'brief' | 'detailed' | 'comprehensive' = 'detailed'
 ): string => {
   const aspectsText = formatSynastryAspects(synastryChart.synastryAspects);
@@ -69,13 +69,11 @@ export const createSynastryPrompt = (
     comprehensive: '8-12 paragraphs',
   };
 
-  const focusGuidance = {
-    romantic: 'Focus on romantic compatibility, attraction, emotional connection, and long-term relationship potential.',
-    friendship: 'Focus on friendship dynamics, shared interests, communication styles, and mutual support.',
-    business: 'Focus on professional compatibility, complementary skills, work styles, and collaborative potential.',
-    family: 'Focus on family dynamics, emotional bonds, understanding, and long-term harmony.',
-    general: 'Provide a balanced overview of compatibility across all areas of life.',
-  };
+  const relationshipGuidance = relationshipContext
+    ? `RELATIONSHIP CONTEXT: ${person1Name} describes ${person2Name} as their "${relationshipContext}".
+Tailor your interpretation to this specific relationship dynamic. Consider what matters most in this type of connection and frame your insights accordingly.`
+    : `RELATIONSHIP CONTEXT: General compatibility analysis.
+Provide a balanced overview that could apply to any type of meaningful connection.`;
 
   return `You are an expert relationship astrologer providing a synastry analysis. Your writing should be:
 - Warm and insightful, like a trusted advisor
@@ -88,6 +86,8 @@ export const createSynastryPrompt = (
 CONTEXT:
 ${person1Summary}
 ${person2Summary}
+
+${relationshipGuidance}
 
 COMPATIBILITY SCORE: ${synastryChart.compatibilityScore}/100
 
@@ -113,22 +113,20 @@ ${synastryChart.strengths.map((s) => `- ${s}`).join('\n')}
 KEY CHALLENGES:
 ${synastryChart.challenges.map((c) => `- ${c}`).join('\n')}
 
-FOCUS AREA: ${focusArea}
-${focusGuidance[focusArea]}
-
 LENGTH: ${lengthGuidance[detailLevel]}
 
 Generate a ${detailLevel} synastry reading with the following structure:
 
 1. OPENING (1 paragraph)
    - Set the tone and context
+   - Acknowledge the relationship context if provided
    - Mention overall compatibility score and what it means
    - Give a preview of key themes
 
 2. STRENGTHS SECTION (${detailLevel === 'brief' ? '1 paragraph' : '2-3 paragraphs'})
    - Discuss the most harmonious aspects
-   - Explain what these mean for their ${focusArea} relationship
-   - Give specific examples of how these play out
+   - Explain what these mean for their specific relationship
+   - Give concrete examples of how these play out
    - Make them feel good about their connection
 
 3. GROWTH AREAS SECTION (${detailLevel === 'brief' ? '1 paragraph' : '2-3 paragraphs'})
@@ -140,12 +138,12 @@ Generate a ${detailLevel} synastry reading with the following structure:
 4. ELEMENTAL & MODALITY COMPATIBILITY (${detailLevel === 'comprehensive' ? '2 paragraphs' : '1 paragraph'})
    - Explain how their elemental makeup interacts
    - Discuss their approaches to action and change
-   - Connect to real-world situations
+   - Connect to real-world situations in their relationship context
 
-5. ${focusArea === 'romantic' ? 'ROMANTIC DYNAMICS' : focusArea === 'friendship' ? 'FRIENDSHIP DYNAMICS' : focusArea === 'business' ? 'PROFESSIONAL DYNAMICS' : 'RELATIONSHIP DYNAMICS'} (${detailLevel === 'brief' ? '1 paragraph' : '2-3 paragraphs'})
-   - Deep dive into ${focusArea}-specific aspects
-   - Provide insights unique to this type of relationship
-   - Give practical advice
+5. RELATIONSHIP DYNAMICS (${detailLevel === 'brief' ? '1 paragraph' : '2-3 paragraphs'})
+   - Deep dive into aspects most relevant to their relationship type
+   - Provide insights unique to this connection
+   - Give practical advice tailored to their dynamic
 
 6. ADVICE & RECOMMENDATIONS (1 paragraph)
    - Summarize key takeaways
@@ -160,8 +158,7 @@ IMPORTANT GUIDELINES:
 - Provide practical, actionable advice
 - Write in a warm, supportive tone
 - Reference ${person1Name} and ${person2Name} by name
-- ${focusArea === 'romantic' ? 'Discuss attraction, emotional connection, communication, intimacy, and long-term potential' : ''}
-- ${focusArea === 'business' ? 'Discuss work styles, decision-making, leadership, and collaborative potential' : ''}
+- Tailor your language and focus to the relationship context provided
 - Be honest but never discouraging
 - Emphasize that astrology shows potentials, not destinies
 

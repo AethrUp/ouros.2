@@ -169,16 +169,6 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
 
   return (
     <View style={styles.container} testID={testId}>
-      <TextInput
-        style={styles.input}
-        placeholder="START TYPING CITY"
-        placeholderTextColor={theme.colors.textPlaceholder}
-        value={searchText}
-        onChangeText={handleSearchChange}
-        autoCapitalize="none"
-        autoCorrect={false}
-      />
-
       {suggestions.length > 0 && (
         <FlatList
           data={suggestions}
@@ -196,6 +186,16 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
           nestedScrollEnabled={true}
         />
       )}
+
+      <TextInput
+        style={styles.input}
+        placeholder="START TYPING CITY"
+        placeholderTextColor={theme.colors.textPlaceholder}
+        value={searchText}
+        onChangeText={handleSearchChange}
+        autoCapitalize="none"
+        autoCorrect={false}
+      />
     </View>
   );
 };
@@ -212,12 +212,11 @@ const styles = StyleSheet.create({
     fontSize: theme.fontSize.md,
     color: theme.colors.textInverse,
     fontFamily: 'Inter',
-    marginBottom: theme.spacing.sm,
   },
   suggestionsContainer: {
     backgroundColor: theme.colors.surfaceDark,
     borderRadius: theme.borderRadius.md,
-    marginTop: theme.spacing.sm,
+    marginBottom: theme.spacing.sm,
   },
   suggestionsList: {
     maxHeight: 200,

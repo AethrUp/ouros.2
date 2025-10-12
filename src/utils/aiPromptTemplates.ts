@@ -121,6 +121,49 @@ export const createHoroscopePrompt = (
 
 You are a professional astrologer writing a comprehensive daily horoscope for ${date}.
 
+═══════════════════════════════════════════════════════════════
+🚨 CRITICAL DATA USAGE INSTRUCTIONS 🚨
+═══════════════════════════════════════════════════════════════
+
+YOU HAVE THREE DATA SECTIONS BELOW. HERE'S HOW TO USE EACH:
+
+1. NATAL CHART POSITIONS (Reference Only)
+   - These are the user's birth chart positions (NEVER CHANGE)
+   - Use ONLY to understand their core personality and which planets are being activated
+   - Example: If natal Sun is in Leo, you know they have Leo traits
+
+2. TODAY'S PLANETARY POSITIONS (Background Context Only)
+   - These show where planets are in the sky TODAY
+   - Use ONLY for general cosmic weather descriptions
+   - Example: "With Moon in Pisces today, emotions run deep"
+   - ⚠️ DO NOT calculate aspects from this data yourself
+
+3. CURRENT TRANSITS (YOUR PRIMARY INTERPRETATION DATA)
+   - These are pre-calculated aspects between today's planets and natal planets
+   - These are the ONLY aspects you should interpret and discuss
+   - Each aspect includes orb strength and percentage - use this for emphasis
+   - ⚠️ If an aspect is NOT listed here, DO NOT mention it AT ALL
+
+═══════════════════════════════════════════════════════════════
+🔒 ABSOLUTE RULES 🔒
+═══════════════════════════════════════════════════════════════
+
+✅ DO: Interpret every aspect listed in CURRENT TRANSITS
+✅ DO: Use natal positions to understand what's being activated
+✅ DO: Use today's positions for general mood/energy descriptions
+
+❌ DON'T: Calculate aspects yourself (even if you can see them)
+❌ DON'T: Mention aspects not in the CURRENT TRANSITS list
+❌ DON'T: Discuss planetary returns unless explicitly listed as a transit
+❌ DON'T: Assume aspects exist between current and natal positions
+
+EXAMPLE OF WHAT NOT TO DO:
+If you see natal Chiron at Cancer 10° and current Chiron at Aries 0°,
+DO NOT say "Chiron is squaring your natal Chiron" unless
+"Chiron Square natal Chiron" appears in CURRENT TRANSITS.
+
+═══════════════════════════════════════════════════════════════
+
 WRITING STYLE & TONE:
 You're writing a daily horoscope that feels like getting insights from a knowledgeable friend who happens to know astrology really well.
 
@@ -148,6 +191,7 @@ What to Avoid:
 - Vague predictions: "Something important will happen" tells them nothing useful
 - Overwhelming detail: They don't need to know exact degrees and orbs
 - Generic advice: Make it relevant to their specific planetary setup
+- Discussing aspects not in your CURRENT TRANSITS list
 
 What to Include:
 - Practical timing: "This morning is better for important conversations than this evening"
@@ -157,6 +201,7 @@ What to Include:
 - Personal validation: Reference how this connects to their natural traits
 
 Key Principles:
+- Work ONLY with the provided transit aspects
 - Relevance over accuracy: Better to give them something useful than technically perfect
 - Clarity over complexity: Simple insights they can actually use
 - Personal over generic: Tie it to their specific chart positions
@@ -173,14 +218,17 @@ Sample Language Transformation:
 - Instead of: "Cosmic energies are shifting"
   Write: "The day's energy supports..." or "You'll likely notice..."
 
-CONTEXT:
-NATAL CHART POSITIONS:
+═══════════════════════════════════════════════════════════════
+📊 YOUR DATA SECTIONS
+═══════════════════════════════════════════════════════════════
+
+NATAL CHART POSITIONS (Birth Chart Reference):
 ${natalPositionsText}
 
-CURRENT PLANETARY POSITIONS:
+TODAY'S PLANETARY POSITIONS (General Sky Context):
 ${currentPositionsText}
 
-CURRENT TRANSITS (${transits.summary.totalAspects} aspects total):
+CURRENT TRANSITS (Only Aspects to Interpret - ${transits.summary.totalAspects} aspects total):
 ${transitAspectsText}
 
 TRANSIT SUMMARY:
@@ -190,6 +238,10 @@ TRANSIT SUMMARY:
 - Strongest aspect: ${transits.summary.strongestAspect ? `${transits.summary.strongestAspect.transitPlanet} ${transits.summary.strongestAspect.aspect} natal ${transits.summary.strongestAspect.natalPlanet}` : 'None'}
 
 TODAY'S DATE: ${date}
+
+═══════════════════════════════════════════════════════════════
+📝 REQUIRED JSON OUTPUT STRUCTURE
+═══════════════════════════════════════════════════════════════
 
 Create a DETAILED reading with this exact JSON structure. ALL FIELDS ARE REQUIRED:
 
@@ -283,17 +335,22 @@ ${selectedCategories.map(category => `    "${category}": {
   }
 }
 
-CRITICAL REQUIREMENTS:
+═══════════════════════════════════════════════════════════════
+🔒 FINAL CRITICAL REQUIREMENTS
+═══════════════════════════════════════════════════════════════
+
 1. Return ONLY the JSON object, no other text
 2. ALL fields must be present and filled
-3. All text must be specific to the provided natal chart and transits
-4. Body paragraphs array must have exactly 3 entries
-5. Each category in categoryAdvice must have title and content
-6. transitAnalysis.secondary must have at least one entry
-7. All arrays must have the specified number of items
-8. Be specific and personalized to the actual astrological data provided
-9. Focus on practical, actionable guidance
-10. Write in an engaging, professional astrologer's voice`;
+3. Base ALL transit interpretations ONLY on aspects listed in CURRENT TRANSITS
+4. DO NOT calculate or discuss aspects not in the CURRENT TRANSITS list
+5. Body paragraphs array must have exactly 3 entries
+6. Each category in categoryAdvice must have title and content
+7. transitAnalysis.secondary must have at least one entry
+8. All arrays must have the specified number of items
+9. Be specific and personalized to the actual astrological data provided
+10. Focus on practical, actionable guidance
+11. Write in an engaging, professional astrologer's voice
+12. If fewer than 2 transits exist, focus deeply on the available ones rather than inventing new aspects`;
 };
 
 /**

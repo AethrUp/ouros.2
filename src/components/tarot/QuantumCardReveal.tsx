@@ -10,6 +10,7 @@ import {
 import { DrawnCard, SpreadLayout } from '../../types/tarot';
 import { TarotCard as TarotCardComponent } from './TarotCard';
 import { HeaderBar } from '../HeaderBar';
+import { Button } from '../Button';
 import { theme } from '../../styles/theme';
 
 const { width, height } = Dimensions.get('window');
@@ -113,7 +114,18 @@ export const QuantumCardReveal: React.FC<QuantumCardRevealProps> = ({
   const handleNext = () => {
     if (!isFlipped) return;
 
-    // Slide card to its position in spread
+    // If this is the last card, call onComplete immediately without updating local state
+    // Updating local state would cause a re-render race condition with the store update
+    if (isLastCard) {
+      console.log('✅ Last card revealed, triggering interpretation');
+      onComplete();
+      return;
+    }
+
+    // For non-last cards, mark this position as revealed
+    setRevealedPositions([...revealedPositions, currentCardIndex]);
+
+    // For non-last cards, animate to position in spread
     const position = spread.positions[currentCardIndex];
     const targetX = (position.x - 0.5) * width;
     const targetY = (position.y - 0.5) * height;
@@ -135,24 +147,16 @@ export const QuantumCardReveal: React.FC<QuantumCardRevealProps> = ({
         useNativeDriver: true,
       }),
     ]).start(() => {
-      // Mark this position as revealed
-      setRevealedPositions([...revealedPositions, currentCardIndex]);
+      // Move to next card
+      setCurrentCardIndex(currentCardIndex + 1);
 
-      if (isLastCard) {
-        // All cards revealed
-        onComplete();
-      } else {
-        // Move to next card
-        setCurrentCardIndex(currentCardIndex + 1);
-
-        // Reset animations for next card
-        cardScale.setValue(0);
-        cardRotateY.setValue(0);
-        cardOpacity.setValue(0);
-        cardTranslateY.setValue(-40);
-        contentOpacity.setValue(0);
-        slideAnim.setValue(0);
-      }
+      // Reset animations for next card
+      cardScale.setValue(0);
+      cardRotateY.setValue(0);
+      cardOpacity.setValue(0);
+      cardTranslateY.setValue(-40);
+      contentOpacity.setValue(0);
+      slideAnim.setValue(0);
     });
   };
 
@@ -265,15 +269,15 @@ export const QuantumCardReveal: React.FC<QuantumCardRevealProps> = ({
             </Text>
           </View>
 
-          <TouchableOpacity
-            style={styles.nextButton}
-            onPress={handleNext}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.nextButtonText}>
-              {isLastCard ? 'COMPLETE' : 'NEXT'}
-            </Text>
-          </TouchableOpacity>
+          <View style={styles.buttonContainer}>
+            <Button
+              title={isLastCard ? 'Complete' : 'Next'}
+              onPress={handleNext}
+              variant="primary"
+              size="medium"
+              fullWidth
+            />
+          </View>
         </Animated.View>
       )}
     </View>
@@ -346,14 +350,14 @@ const styles = StyleSheet.create({
   cardName: {
     fontSize: 24,
     fontWeight: '400',
-    color: theme.colors.text.primary,
-    fontFamily: 'Libre Baskerville',
+    color: '#F6D99F', // Yellow from theme
+    fontFamily: 'PTSerif_400Regular',
     textAlign: 'center',
     marginBottom: theme.spacing.xs,
   },
   positionName: {
     fontSize: 14,
-    color: '#D4AF37', // Gold
+    color: '#FFFFFF', // White
     fontFamily: 'Inter',
     textAlign: 'center',
     marginBottom: theme.spacing.md,
@@ -362,24 +366,14 @@ const styles = StyleSheet.create({
   },
   cardMeaning: {
     fontSize: 14,
-    color: theme.colors.text.primary,
+    color: 'rgba(255, 255, 255, 0.5)', // 50% white
     fontFamily: 'Inter',
     textAlign: 'center',
     lineHeight: 20,
+    textTransform: 'uppercase',
   },
-  nextButton: {
-    backgroundColor: theme.colors.textInverse || '#FFFFFF',
+  buttonContainer: {
     marginHorizontal: theme.spacing.lg,
     marginBottom: theme.spacing.xl,
-    paddingVertical: theme.spacing.md,
-    borderRadius: theme.borderRadius.md,
-    alignItems: 'center',
-  },
-  nextButtonText: {
-    fontSize: theme.fontSize.md,
-    fontWeight: theme.fontWeight.semibold,
-    color: theme.colors.background.primary,
-    letterSpacing: 1.2,
-    fontFamily: 'Inter',
   },
 });

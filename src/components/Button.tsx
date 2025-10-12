@@ -167,16 +167,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   buttonText: {
-    fontWeight: theme.fontWeight.semibold,
+    fontWeight: theme.fontWeight.medium,
     textAlign: 'center',
     letterSpacing: 1.2,
     fontFamily: 'Inter',
   },
   text_small: {
-    fontSize: theme.fontSize.sm,
+    fontSize: theme.fontSize.xs,
   },
   text_medium: {
-    fontSize: theme.fontSize.md,
+    fontSize: theme.fontSize.sm,
   },
   text_large: {
     fontSize: theme.fontSize.lg,

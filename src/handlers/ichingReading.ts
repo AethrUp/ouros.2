@@ -331,6 +331,47 @@ export const loadIChingHistory = async (): Promise<IChingReading[]> => {
         }
       }
 
+      // Reconstruct primary hexagram
+      const primaryLines = record.metadata.primary_hexagram.lines || [];
+      const changingLines = record.metadata.primary_hexagram.changing_lines || [];
+
+      // Reconstruct relating hexagram lines from primary hexagram + changing lines
+      let relatingHexagram: CastedHexagram | undefined = undefined;
+      if (record.metadata.relating_hexagram && primaryLines.length > 0) {
+        const relatingLines = primaryLines.map((line: any, idx: number) => {
+          const isChanging = changingLines.includes(line.position);
+
+          if (isChanging) {
+            // Flip the line type
+            const isYang = line.type === 'yang' || line.type === 'changing-yang';
+            const flippedType = isYang ? 'yin' : 'yang';
+            return {
+              position: idx + 1,
+              type: flippedType,
+              isChanging: false,
+            };
+          }
+
+          // Keep the line as-is but mark as stable
+          const isYang = line.type === 'yang' || line.type === 'changing-yang';
+          return {
+            position: idx + 1,
+            type: isYang ? 'yang' : 'yin',
+            isChanging: false,
+          };
+        });
+
+        relatingHexagram = {
+          hexagram: {
+            number: record.metadata.relating_hexagram.number,
+            chineseName: record.metadata.relating_hexagram.chinese_name,
+            englishName: record.metadata.relating_hexagram.name,
+          },
+          lines: relatingLines,
+          changingLines: [],
+        } as CastedHexagram;
+      }
+
       return {
         id: record.id,
         userId: record.user_id,
@@ -344,20 +385,10 @@ export const loadIChingHistory = async (): Promise<IChingReading[]> => {
             englishName: record.metadata.primary_hexagram.name,
             // Note: Full hexagram data would need to be reconstituted from the hexagrams data
           },
-          lines: record.metadata.primary_hexagram.lines || [],
-          changingLines: record.metadata.primary_hexagram.changing_lines || [],
+          lines: primaryLines,
+          changingLines: changingLines,
         } as CastedHexagram,
-        relatingHexagram: record.metadata.relating_hexagram
-          ? ({
-              hexagram: {
-                number: record.metadata.relating_hexagram.number,
-                chineseName: record.metadata.relating_hexagram.chinese_name,
-                englishName: record.metadata.relating_hexagram.name,
-              },
-              lines: [],
-              changingLines: [],
-            } as CastedHexagram)
-          : undefined,
+        relatingHexagram,
         interpretation,
         interpretationSource: record.metadata.interpretation_source || 'ai',
       };

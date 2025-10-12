@@ -22,12 +22,6 @@ export const StructuredInterpretationView: React.FC<
 
   return (
     <Animated.View entering={FadeIn.delay(300)} style={styles.container}>
-      {/* Metadata indicators */}
-      <View style={styles.metadataRow}>
-        <Badge text={tone} type="tone" />
-        <Badge text={`${confidence} confidence`} type="confidence" />
-      </View>
-
       {/* Overview */}
       <Section title="Overview">
         <Text style={styles.bodyText}>{interpretation.overview}</Text>

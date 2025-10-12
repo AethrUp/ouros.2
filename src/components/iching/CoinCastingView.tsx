@@ -11,6 +11,7 @@ import { HexagramLine, CoinToss } from '../../types/iching';
 import { castLineWithCoins } from '../../utils/ichingCasting';
 import { colors, typography, spacing } from '../../styles';
 import { HeaderBar } from '../HeaderBar';
+import { Button } from '../Button';
 
 interface CoinCastingViewProps {
   question: string;
@@ -144,19 +145,14 @@ export const CoinCastingView: React.FC<CoinCastingViewProps> = ({
       {/* Cast Button */}
       {completedLines.length < 6 && (
         <View style={styles.buttonSection}>
-          <TouchableOpacity
-            style={[
-              styles.castButton,
-              isAnimating && styles.castButtonDisabled,
-            ]}
+          <Button
+            title={completedLines.length > 0 ? 'Cast Again' : 'Cast Coins'}
             onPress={handleCast}
-            activeOpacity={0.8}
+            variant="primary"
+            size="medium"
             disabled={isAnimating}
-          >
-            <Text style={styles.castButtonText}>
-              {completedLines.length > 0 ? 'CAST AGAIN' : 'CAST COINS'}
-            </Text>
-          </TouchableOpacity>
+            fullWidth
+          />
         </View>
       )}
 
@@ -187,29 +183,8 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   buttonSection: {
-    alignItems: 'center',
+    paddingHorizontal: spacing.lg,
     paddingVertical: spacing.lg,
-  },
-  castButton: {
-    backgroundColor: '#FFFFFF',
-    paddingVertical: 12,
-    paddingHorizontal: 32,
-    borderRadius: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 4,
-  },
-  castButtonDisabled: {
-    backgroundColor: 'rgba(255, 255, 255, 0.4)',
-  },
-  castButtonText: {
-    ...typography.button,
-    color: colors.background.primary,
-    fontSize: 16,
-    fontWeight: '600',
-    letterSpacing: 1.2,
   },
   completionContainer: {
     alignItems: 'center',

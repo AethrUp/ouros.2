@@ -32,7 +32,7 @@ export interface TarotSlice {
   startSession: (spread: SpreadLayout) => void;
   setIntention: (intention: string) => void;
   drawCards: () => Promise<void>;
-  generateInterpretation: () => Promise<void>;
+  generateTarotInterpretation: () => Promise<void>;
   saveReading: () => Promise<void>;
   clearSession: () => void;
   loadHistory: () => Promise<void>;
@@ -131,14 +131,18 @@ export const createTarotSlice: StateCreator<TarotSlice> = (set, get) => ({
     }
   },
 
-  generateInterpretation: async () => {
+  generateTarotInterpretation: async () => {
+    console.log('🎯 generateTarotInterpretation STORE METHOD called');
     const { intention, drawnCards } = get();
+    console.log('🎯 drawnCards.length:', drawnCards.length);
 
     if (drawnCards.length === 0) {
+      console.log('❌ No cards drawn - returning early');
       set({ tarotError: 'No cards drawn' });
       return;
     }
 
+    console.log('🎯 Setting sessionStep to interpretation...');
     set({ isGeneratingInterpretation: true, sessionStep: 'interpretation', tarotError: null });
 
     try {

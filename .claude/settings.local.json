@@ -29,7 +29,14 @@
       "WebFetch(domain:claude.com)",
       "Bash(npx ts-node:*)",
       "Bash(node:*)",
-      "Bash(del \"D:\\AppsBuild\\ouros2\\check-hexagrams.js\")"
+      "Bash(del \"D:\\AppsBuild\\ouros2\\check-hexagrams.js\")",
+      "Bash(npx tsc:*)",
+      "Bash(npx supabase:*)",
+      "Bash(cat:*)",
+      "Bash(del run-migration.js)",
+      "Bash(del test-transits.ts)",
+      "Bash(del test-transits.js)",
+      "Read(//c/Users/joe/Dropbox/Design/aether/Apps/SkyChart/Build/**)"
     ],
     "deny": [],
     "ask": []

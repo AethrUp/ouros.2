@@ -3,7 +3,7 @@
  * Main coordinator for I Ching consultation flow
  */
 
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -14,15 +14,17 @@ import {
   Platform,
   ScrollView,
   AppState,
+  Keyboard,
+  TouchableWithoutFeedback,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { useFocusEffect } from '@react-navigation/native';
 import { useAppStore } from '../store';
 import { CoinCastingView } from '../components/iching/CoinCastingView';
 import { InterpretationView } from '../components/iching/InterpretationView';
 import { QuantumLoadingScreen } from '../components/tarot/QuantumLoadingScreen';
-import { colors, typography, spacing } from '../styles';
+import { Button, HeaderBar } from '../components';
+import { colors, typography, spacing, theme } from '../styles';
 import { HexagramLine, CastingMethod } from '../types/iching';
 import { getHexagramByLines } from '../data/iching/hexagrams';
 import { NavigationProps } from '../types';
@@ -295,9 +297,9 @@ export const IChingScreen: React.FC<NavigationProps> = ({ navigation }) => {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <View style={styles.container}>
       {renderContent()}
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -316,45 +318,71 @@ const QuestionInputView: React.FC<QuestionInputViewProps> = ({
   onSubmit,
 }) => {
   const isValid = question.trim().length >= 3;
+  const scrollViewRef = useRef<ScrollView>(null);
+  const inputRef = useRef<TextInput>(null);
+
+  const handleInputFocus = () => {
+    setTimeout(() => {
+      scrollViewRef.current?.scrollToEnd({ animated: true });
+    }, 100);
+  };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      <ScrollView contentContainerStyle={styles.questionContainer}>
-        <Animated.View entering={FadeIn} style={styles.questionContent}>
-          <Text style={styles.questionTitle}>Your Question</Text>
-          <Text style={styles.questionSubtitle}>
-            Focus your mind and ask a clear question. The I Ching responds best to specific
-            inquiries about your situation.
-          </Text>
+    <View style={styles.container}>
+      <HeaderBar title="I CHING" />
 
-          <TextInput
-            style={styles.questionInput}
-            placeholder="What do I need to know about..."
-            placeholderTextColor="rgba(255, 255, 255, 0.5)"
-            value={question}
-            onChangeText={onQuestionChange}
-            multiline
-            numberOfLines={4}
-            maxLength={500}
-            autoFocus
-          />
+      <KeyboardAvoidingView
+        style={styles.keyboardView}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+      >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <View style={styles.innerContainer}>
+            <ScrollView
+              ref={scrollViewRef}
+              style={styles.scrollView}
+              contentContainerStyle={styles.scrollContent}
+              keyboardShouldPersistTaps="handled"
+            >
+              <Text style={styles.questionTitle}>Your Question</Text>
+              <Text style={styles.questionSubtitle}>
+                Focus your mind and ask a clear question. The I Ching responds best to specific
+                inquiries about your situation.
+              </Text>
 
-          <Text style={styles.characterCount}>{question.length}/500</Text>
+              <TextInput
+                ref={inputRef}
+                style={styles.questionInput}
+                placeholder="Provide guidance on..."
+                placeholderTextColor={theme.colors.text.secondary}
+                value={question}
+                onChangeText={onQuestionChange}
+                onFocus={handleInputFocus}
+                multiline
+                numberOfLines={4}
+                maxLength={500}
+                textAlignVertical="top"
+                returnKeyType="done"
+                blurOnSubmit={true}
+              />
 
-          <TouchableOpacity
-            style={[styles.submitButton, !isValid && styles.submitButtonDisabled]}
-            onPress={onSubmit}
-            disabled={!isValid}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.submitButtonText}>Begin Casting</Text>
-          </TouchableOpacity>
-        </Animated.View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+              <Text style={styles.characterCount}>{question.length}/500</Text>
+            </ScrollView>
+
+            <View style={styles.buttonContainer}>
+              <Button
+                title="Begin Casting"
+                onPress={onSubmit}
+                variant="primary"
+                size="medium"
+                disabled={!isValid}
+                fullWidth
+              />
+            </View>
+          </View>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
+    </View>
   );
 };
 
@@ -363,68 +391,55 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background.primary,
   },
-  // Question Input
-  questionContainer: {
-    flexGrow: 1,
-    padding: spacing.lg,
-  },
-  questionContent: {
+  keyboardView: {
     flex: 1,
-    justifyContent: 'center',
+  },
+  innerContainer: {
+    flex: 1,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.lg,
   },
   questionTitle: {
-    ...typography.h1,
-    textAlign: 'left',
+    fontSize: 20,
+    fontWeight: '400',
     color: '#F6D99F',
-    marginBottom: spacing.xs,
+    fontFamily: 'PTSerif_400Regular',
+    marginBottom: spacing.sm,
   },
   questionSubtitle: {
-    ...typography.body,
-    textAlign: 'left',
+    fontSize: 14,
     color: colors.text.primary,
+    fontFamily: 'Inter',
+    lineHeight: 20,
     marginBottom: spacing.xl,
-    lineHeight: 22,
   },
   questionInput: {
-    ...typography.body,
     backgroundColor: colors.background.secondary,
     borderRadius: 8,
-    padding: spacing.md,
-    minHeight: 120,
-    textAlignVertical: 'top',
+    padding: spacing.lg,
     color: colors.text.primary,
+    fontSize: 14,
+    fontFamily: 'Inter',
+    minHeight: 120,
     borderWidth: 0,
+    marginBottom: spacing.xs,
   },
   characterCount: {
-    ...typography.caption,
+    fontSize: 11,
     color: colors.text.secondary,
+    fontFamily: 'Inter',
     textAlign: 'right',
     marginTop: spacing.xs,
-    fontSize: 11,
   },
-  submitButton: {
-    backgroundColor: '#FFFFFF',
-    paddingVertical: 14,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: spacing.xl,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 4,
-  },
-  submitButtonDisabled: {
-    opacity: 0.5,
-  },
-  submitButtonText: {
-    ...typography.button,
-    color: colors.background.primary,
-    fontSize: 16,
-    fontWeight: '600',
-    letterSpacing: 1.2,
-    textTransform: 'uppercase',
+  buttonContainer: {
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.xl,
   },
   errorButton: {
     position: 'absolute',

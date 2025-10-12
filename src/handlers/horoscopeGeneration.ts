@@ -85,6 +85,16 @@ export const generateDailyHoroscope = async (
       majorAspects: transitData.summary.majorAspects,
     });
 
+    // DEBUG: Log detailed transit aspects
+    console.log('🔍 DEBUG: Detailed Transit Aspects:');
+    transitData.aspects.forEach((aspect: any, index: number) => {
+      console.log(`  ${index + 1}. ${aspect.transitingPlanet} ${aspect.aspect} ${aspect.natalPlanet}`, {
+        orb: aspect.orb,
+        isApplying: aspect.isApplying,
+        exactDate: aspect.exactDate,
+      });
+    });
+
     // Step 2: Get current planetary positions
     console.log('🌍 Fetching current planetary positions...');
     const currentPositionsResult = await getTropicalTransits();
@@ -100,6 +110,33 @@ export const generateDailyHoroscope = async (
     // Step 3: Build AI prompt
     console.log('📝 Building AI prompt...');
     const userCategories = userProfile.selectedCategories || userProfile.preferences?.selectedCategories;
+
+    // DEBUG: Log input data being sent to prompt creation
+    console.log('🔍 DEBUG: ========== INPUT DATA FOR PROMPT CREATION ==========');
+    console.log('🔍 DEBUG: Natal Chart Summary:', {
+      planets: Object.keys(natalChart.planets || {}),
+      houses: Object.keys(natalChart.houses || {}),
+      ascendant: natalChart.ascendant,
+      name: userProfile.name || 'N/A',
+      birthDate: userProfile.birthDate || 'N/A',
+      birthLocation: userProfile.birthLocation || 'N/A',
+    });
+    console.log('🔍 DEBUG: Complete Natal Chart Planets:', natalChart.planets);
+    console.log('🔍 DEBUG: Complete Natal Chart Houses:', natalChart.houses);
+    console.log('🔍 DEBUG: Transit Data Summary:', {
+      totalAspects: transitData.aspects.length,
+      majorAspects: transitData.summary.majorAspects,
+      aspectTypes: [...new Set(transitData.aspects.map((a: any) => a.aspect))],
+      transitingPlanets: [...new Set(transitData.aspects.map((a: any) => a.transitingPlanet))],
+      natalPlanets: [...new Set(transitData.aspects.map((a: any) => a.natalPlanet))],
+    });
+    console.log('🔍 DEBUG: Complete Transit Aspects:', JSON.stringify(transitData.aspects, null, 2));
+    console.log('🔍 DEBUG: Transit Summary:', transitData.summary);
+    console.log('🔍 DEBUG: Current Planetary Positions:', currentPositions);
+    console.log('🔍 DEBUG: User Categories:', userCategories);
+    console.log('🔍 DEBUG: Date:', today);
+    console.log('🔍 DEBUG: ========== END OF INPUT DATA ==========');
+
     const prompt = createHoroscopePrompt(
       natalChart,
       transitData,
@@ -108,8 +145,20 @@ export const generateDailyHoroscope = async (
       userCategories
     );
 
+    // DEBUG: Log the complete prompt
+    console.log('🔍 DEBUG: ========== FULL PROMPT SENT TO LLM ==========');
+    console.log(prompt);
+    console.log('🔍 DEBUG: ========== END OF PROMPT ==========');
+    console.log('🔍 DEBUG: Prompt length:', prompt.length, 'characters');
+
     // Step 4: Call Anthropic API
     console.log('🤖 Calling Anthropic Claude API...');
+    console.log('🔍 DEBUG: API Request Details:', {
+      model: 'claude-sonnet-4-5-20250929',
+      max_tokens: 12000,
+      message_role: 'user',
+      content_length: prompt.length,
+    });
     const startTime = Date.now();
 
     const message = await anthropic.messages.create({
@@ -326,6 +375,105 @@ export const generateDailyHoroscope = async (
 };
 
 /**
+ * Load horoscope from Supabase for a specific date
+ */
+const loadHoroscopeFromSupabase = async (
+  userId: string,
+  date: string
+): Promise<DailyHoroscope | null> => {
+  try {
+    console.log('🔍 Checking Supabase for horoscope:', { userId, date });
+
+    const { data, error } = await supabase
+      .from('daily_horoscopes')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('date', date)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        // No rows returned - not an error, just no horoscope for this date
+        console.log('📭 No horoscope found in Supabase for', date);
+        return null;
+      }
+      console.error('❌ Error loading horoscope from Supabase:', error);
+      return null;
+    }
+
+    if (!data) {
+      console.log('📭 No horoscope found in Supabase for', date);
+      return null;
+    }
+
+    console.log('✅ Found horoscope in Supabase for', date);
+
+    // Reconstruct DailyHoroscope from database record
+    const horoscope: DailyHoroscope = {
+      date: data.date,
+      preview: {
+        title: data.title,
+        summary: data.summary,
+        weather: {
+          moon: typeof data.weather_moon === 'string'
+            ? data.weather_moon
+            : JSON.parse(data.weather_moon || '{}'),
+          venus: typeof data.weather_venus === 'string'
+            ? data.weather_venus
+            : JSON.parse(data.weather_venus || '{}'),
+          mercury: typeof data.weather_mercury === 'string'
+            ? data.weather_mercury
+            : JSON.parse(data.weather_mercury || '{}'),
+        },
+        categoryAdvice: data.category_advice || {},
+      },
+      fullContent: {
+        fullReading: data.full_reading || null,
+        transitAnalysis: data.transit_analysis || null,
+        timeGuidance: data.time_guidance || null,
+        spiritualGuidance: data.spiritual_guidance || null,
+        transitInsights: data.transit_insights || [],
+        astronomicalData: data.astronomical_data || null,
+        explore: data.explore || [],
+        limit: data.limitations || [],
+        dailyFocus: data.daily_focus || null,
+        advice: data.advice || null,
+      },
+      content: {
+        title: data.title,
+        summary: data.summary,
+        weather: {
+          moon: typeof data.weather_moon === 'string'
+            ? data.weather_moon
+            : JSON.parse(data.weather_moon || '{}'),
+          venus: typeof data.weather_venus === 'string'
+            ? data.weather_venus
+            : JSON.parse(data.weather_venus || '{}'),
+          mercury: typeof data.weather_mercury === 'string'
+            ? data.weather_mercury
+            : JSON.parse(data.weather_mercury || '{}'),
+        },
+        categoryAdvice: data.category_advice || {},
+        fullReading: data.full_reading || null,
+        transitAnalysis: data.transit_analysis || null,
+        transitInsights: data.transit_insights || [],
+        explore: data.explore || [],
+        limit: data.limitations || [],
+        dailyFocus: data.daily_focus || null,
+        advice: data.advice || null,
+      },
+      hasFullReading: data.has_full_reading || false,
+      lastUpdated: data.last_updated,
+    };
+
+    return horoscope;
+  } catch (error: any) {
+    console.error('❌ Failed to load horoscope from Supabase:', error);
+    return null;
+  }
+};
+
+/**
  * Get daily horoscope (with caching)
  */
 export const getDailyHoroscope = async (
@@ -335,10 +483,11 @@ export const getDailyHoroscope = async (
   options: HoroscopeGenerationOptions = {}
 ): Promise<HoroscopeGenerationResult> => {
   const { forceRegenerate = false, maxCacheAgeHours = 24 } = options;
+  const today = getTodayDate();
 
-  // Check if cache is valid
+  // Step 1: Check local cache (fastest)
   if (!forceRegenerate && cachedHoroscope && isCacheValid(cachedHoroscope.date, maxCacheAgeHours)) {
-    console.log('✅ Using cached horoscope for', cachedHoroscope.date);
+    console.log('✅ Using cached horoscope from AsyncStorage for', cachedHoroscope.date);
     return {
       success: true,
       horoscope: cachedHoroscope,
@@ -346,7 +495,21 @@ export const getDailyHoroscope = async (
     };
   }
 
-  // Generate new horoscope
+  // Step 2: Check Supabase database (before generating new)
+  if (!forceRegenerate && userProfile.id) {
+    const dbHoroscope = await loadHoroscopeFromSupabase(userProfile.id, today);
+    if (dbHoroscope) {
+      console.log('✅ Using horoscope from Supabase for', today);
+      return {
+        success: true,
+        horoscope: dbHoroscope,
+        fromCache: true,
+      };
+    }
+  }
+
+  // Step 3: Generate new horoscope
+  console.log('🔄 No valid horoscope found, generating new one for', today);
   return await generateDailyHoroscope(natalChart, userProfile, options);
 };
 

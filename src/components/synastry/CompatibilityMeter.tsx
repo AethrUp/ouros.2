@@ -2,6 +2,52 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { colors, spacing, typography } from '../../styles';
 
+// Alchemical symbols for elements
+const ELEMENT_SYMBOLS = {
+  fire: '🜂',
+  earth: '🜃',
+  air: '🜁',
+  water: '🜄',
+};
+
+interface ElementCompatibilityItemProps {
+  element: 'fire' | 'earth' | 'air' | 'water';
+  score: number;
+}
+
+const ElementCompatibilityItem: React.FC<ElementCompatibilityItemProps> = ({ element, score }) => {
+  const normalizedScore = Math.max(0, Math.min(100, score));
+
+  const getRating = (score: number): string => {
+    if (score >= 80) return 'EXCELLENT';
+    if (score >= 60) return 'STRONG';
+    if (score >= 40) return 'MODERATE';
+    return 'COMPLEX';
+  };
+
+  const rating = getRating(normalizedScore);
+  const symbol = ELEMENT_SYMBOLS[element];
+  const elementName = element.charAt(0).toUpperCase() + element.slice(1);
+
+  return (
+    <View style={styles.elementItem}>
+      <Text style={styles.elementSymbol}>{symbol}</Text>
+      <Text style={styles.elementName}>{elementName}</Text>
+      <View style={styles.elementBarBackground}>
+        <View
+          style={[
+            styles.elementBarFill,
+            {
+              width: `${normalizedScore}%`,
+            },
+          ]}
+        />
+      </View>
+      <Text style={styles.elementRating}>{rating}</Text>
+    </View>
+  );
+};
+
 interface CompatibilityMeterProps {
   score: number;
   label: string;
@@ -20,22 +66,13 @@ export const CompatibilityMeter: React.FC<CompatibilityMeterProps> = ({
   // Ensure score is between 0 and 100
   const normalizedScore = Math.max(0, Math.min(100, score));
 
-  // Determine color based on score
-  const getColor = (score: number): string => {
-    if (score >= 80) return '#4CAF50'; // Green - Excellent
-    if (score >= 60) return '#8BC34A'; // Light Green - Good
-    if (score >= 40) return '#FFC107'; // Amber - Fair
-    return '#FF9800'; // Orange - Challenging
-  };
-
   const getRating = (score: number): string => {
-    if (score >= 80) return 'Excellent';
-    if (score >= 60) return 'Strong';
-    if (score >= 40) return 'Moderate';
-    return 'Complex';
+    if (score >= 80) return 'EXCELLENT';
+    if (score >= 60) return 'STRONG';
+    if (score >= 40) return 'MODERATE';
+    return 'COMPLEX';
   };
 
-  const barColor = getColor(normalizedScore);
   const rating = getRating(normalizedScore);
 
   const sizes = {
@@ -58,34 +95,64 @@ export const CompatibilityMeter: React.FC<CompatibilityMeterProps> = ({
 
   const sizeConfig = sizes[size];
 
+  // Use simplified vertical layout for small size without percentage
+  if (size === 'small' && !showPercentage) {
+    return (
+      <View style={styles.container}>
+        <Text style={[styles.label, { fontSize: sizeConfig.labelSize * 1.3 }]}>{label}</Text>
+
+        {/* Progress bar */}
+        <View style={[styles.barBackground, { height: sizeConfig.height }]}>
+          <View
+            style={[
+              styles.barFill,
+              {
+                width: `${normalizedScore}%`,
+                height: sizeConfig.height,
+              },
+            ]}
+          />
+        </View>
+
+        <Text style={[styles.rating, { fontSize: sizeConfig.fontSize }]}>
+          {rating}
+        </Text>
+
+        {/* Description */}
+        {description && <Text style={styles.description}>{description}</Text>}
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={[styles.label, { fontSize: sizeConfig.labelSize }]}>{label}</Text>
-        <View style={styles.scoreContainer}>
-          {showPercentage && (
-            <Text style={[styles.score, { fontSize: sizeConfig.fontSize, color: barColor }]}>
-              {normalizedScore}%
-            </Text>
-          )}
-          <Text style={[styles.rating, { fontSize: sizeConfig.fontSize, color: barColor }]}>
+      <View style={styles.mainContent}>
+        <View style={styles.leftContent}>
+          <Text style={[styles.label, { fontSize: sizeConfig.labelSize * 1.3 }]}>{label}</Text>
+
+          {/* Progress bar */}
+          <View style={[styles.barBackground, { height: sizeConfig.height }]}>
+            <View
+              style={[
+                styles.barFill,
+                {
+                  width: `${normalizedScore}%`,
+                  height: sizeConfig.height,
+                },
+              ]}
+            />
+          </View>
+
+          <Text style={[styles.rating, { fontSize: sizeConfig.fontSize }]}>
             {rating}
           </Text>
         </View>
-      </View>
 
-      {/* Progress bar */}
-      <View style={[styles.barBackground, { height: sizeConfig.height }]}>
-        <View
-          style={[
-            styles.barFill,
-            {
-              width: `${normalizedScore}%`,
-              backgroundColor: barColor,
-              height: sizeConfig.height,
-            },
-          ]}
-        />
+        {showPercentage && (
+          <Text style={[styles.score, { fontSize: sizeConfig.fontSize * 2.5 }]}>
+            {normalizedScore}%
+          </Text>
+        )}
       </View>
 
       {/* Description */}
@@ -126,47 +193,11 @@ export const CompatibilityMeterGroup: React.FC<CompatibilityMeterGroupProps> = (
       {(fire !== undefined || earth !== undefined || air !== undefined || water !== undefined) && (
         <View style={styles.subsection}>
           <Text style={styles.subsectionTitle}>Elemental Harmony</Text>
-          <View style={styles.metersGrid}>
-            {fire !== undefined && (
-              <View style={styles.gridItem}>
-                <CompatibilityMeter
-                  score={fire}
-                  label="Fire 🔥"
-                  size="small"
-                  showPercentage={false}
-                />
-              </View>
-            )}
-            {earth !== undefined && (
-              <View style={styles.gridItem}>
-                <CompatibilityMeter
-                  score={earth}
-                  label="Earth 🌍"
-                  size="small"
-                  showPercentage={false}
-                />
-              </View>
-            )}
-            {air !== undefined && (
-              <View style={styles.gridItem}>
-                <CompatibilityMeter
-                  score={air}
-                  label="Air 💨"
-                  size="small"
-                  showPercentage={false}
-                />
-              </View>
-            )}
-            {water !== undefined && (
-              <View style={styles.gridItem}>
-                <CompatibilityMeter
-                  score={water}
-                  label="Water 💧"
-                  size="small"
-                  showPercentage={false}
-                />
-              </View>
-            )}
+          <View style={styles.elementQuadrant}>
+            {fire !== undefined && <ElementCompatibilityItem element="fire" score={fire} />}
+            {earth !== undefined && <ElementCompatibilityItem element="earth" score={earth} />}
+            {air !== undefined && <ElementCompatibilityItem element="air" score={air} />}
+            {water !== undefined && <ElementCompatibilityItem element="water" score={water} />}
           </View>
         </View>
       )}
@@ -175,9 +206,9 @@ export const CompatibilityMeterGroup: React.FC<CompatibilityMeterGroupProps> = (
       {(cardinal !== undefined || fixed !== undefined || mutable !== undefined) && (
         <View style={styles.subsection}>
           <Text style={styles.subsectionTitle}>Action Styles</Text>
-          <View style={styles.metersGrid}>
+          <View style={styles.actionStylesRow}>
             {cardinal !== undefined && (
-              <View style={styles.gridItem}>
+              <View style={styles.actionStyleItem}>
                 <CompatibilityMeter
                   score={cardinal}
                   label="Cardinal"
@@ -187,7 +218,7 @@ export const CompatibilityMeterGroup: React.FC<CompatibilityMeterGroupProps> = (
               </View>
             )}
             {fixed !== undefined && (
-              <View style={styles.gridItem}>
+              <View style={styles.actionStyleItem}>
                 <CompatibilityMeter
                   score={fixed}
                   label="Fixed"
@@ -197,7 +228,7 @@ export const CompatibilityMeterGroup: React.FC<CompatibilityMeterGroupProps> = (
               </View>
             )}
             {mutable !== undefined && (
-              <View style={styles.gridItem}>
+              <View style={styles.actionStyleItem}>
                 <CompatibilityMeter
                   score={mutable}
                   label="Mutable"
@@ -217,38 +248,42 @@ const styles = StyleSheet.create({
   container: {
     marginBottom: spacing.md,
   },
-  header: {
+  mainContent: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.xs,
+  },
+  leftContent: {
+    flex: 1,
+    marginRight: spacing.lg,
   },
   label: {
-    ...typography.body,
+    fontFamily: 'PTSerif-Regular',
     fontWeight: '600',
     color: colors.text.primary,
-  },
-  scoreContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
+    marginBottom: spacing.sm,
   },
   score: {
-    ...typography.body,
+    fontFamily: 'PTSerif-Regular',
     fontWeight: '700',
+    color: '#F8D89E',
   },
   rating: {
     ...typography.caption,
     fontWeight: '600',
+    color: 'rgba(255, 255, 255, 0.5)',
+    textTransform: 'uppercase',
+    marginTop: spacing.xs,
   },
   barBackground: {
     width: '100%',
-    backgroundColor: colors.background.tertiary,
+    backgroundColor: '#434343',
     borderRadius: 10,
     overflow: 'hidden',
   },
   barFill: {
     borderRadius: 10,
+    backgroundColor: '#F8D89E',
   },
   description: {
     ...typography.caption,
@@ -257,9 +292,6 @@ const styles = StyleSheet.create({
     lineHeight: 16,
   },
   groupContainer: {
-    backgroundColor: colors.background.secondary,
-    borderRadius: 12,
-    padding: spacing.lg,
     marginBottom: spacing.lg,
   },
   overallSection: {
@@ -288,5 +320,56 @@ const styles = StyleSheet.create({
     width: '50%',
     paddingHorizontal: spacing.xs,
     marginBottom: spacing.sm,
+  },
+  elementQuadrant: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.md,
+  },
+  elementItem: {
+    width: '47%',
+    alignItems: 'center',
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.sm,
+  },
+  elementSymbol: {
+    fontSize: 40,
+    marginBottom: spacing.xs,
+    color: '#FFFFFF',
+  },
+  elementName: {
+    fontFamily: 'PTSerif-Regular',
+    fontWeight: '600',
+    color: colors.text.primary,
+    marginBottom: spacing.sm,
+    fontSize: 16,
+  },
+  elementBarBackground: {
+    width: '100%',
+    height: 6,
+    backgroundColor: '#434343',
+    borderRadius: 10,
+    overflow: 'hidden',
+    marginBottom: spacing.xs,
+  },
+  elementBarFill: {
+    height: 6,
+    borderRadius: 10,
+    backgroundColor: '#F8D89E',
+  },
+  elementRating: {
+    ...typography.caption,
+    fontWeight: '600',
+    fontSize: 11,
+    color: 'rgba(255, 255, 255, 0.5)',
+    textTransform: 'uppercase',
+  },
+  actionStylesRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+  },
+  actionStyleItem: {
+    flex: 1,
   },
 });

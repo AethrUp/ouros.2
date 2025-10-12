@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "ouros2",
-    "slug": "ouros2",
+    "slug": "ouros",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -15,7 +15,11 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.aethrup.ouros",
+      "config": {
+        "usesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -26,6 +30,12 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "dc02d5a1-84ac-47d3-89de-8b3830ca3f03"
+      }
+    },
+    "owner": "aethrup"
   }
 }

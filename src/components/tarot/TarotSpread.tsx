@@ -160,12 +160,12 @@ const styles = StyleSheet.create({
     position: 'absolute',
   },
   cardName: {
-    fontSize: 12,
-    color: theme.colors.text.primary,
-    fontFamily: 'Libre Baskerville',
+    fontSize: 20,
+    fontWeight: '400',
+    color: '#F6D99F',
+    fontFamily: 'PTSerif_400Regular',
     textAlign: 'center',
-    marginTop: 2,
-    textTransform: 'uppercase',
+    marginTop: 12,
     width: '100%',
   },
 });

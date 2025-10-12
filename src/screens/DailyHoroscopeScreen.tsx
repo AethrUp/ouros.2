@@ -207,6 +207,48 @@ const DailyHoroscopeScreen = () => {
       .toUpperCase();
   };
 
+  // Handle journal prompt press
+  const handleJournalPrompt = async (prompt: string, promptIndex: number) => {
+    try {
+      console.log('📝 Creating journal entry for prompt:', prompt);
+
+      // Save horoscope as a "reading" for proper linking
+      const { saveHoroscopeReading } = await import('../handlers/horoscopeReading');
+      const savedReading = await saveHoroscopeReading({
+        horoscope: dailyHoroscope,
+        prompt: prompt,
+      });
+
+      // Create linked reading object
+      const linkedReading = {
+        id: savedReading.id, // Real database ID from readings table
+        reading_type: 'horoscope' as const,
+        title: `Daily Horoscope - ${getCurrentDate()}`,
+        timestamp: new Date().toISOString(),
+        interpretation: fullContent.fullReading?.introduction || content.summary || '',
+        intention: prompt, // The prompt itself
+        metadata: {
+          prompt: prompt,
+          promptIndex: promptIndex,
+          date: getCurrentDate(),
+          hasTransits: !!fullContent.transitAnalysis,
+        },
+      };
+
+      // Navigate to journal
+      navigation.navigate('journal', {
+        screen: 'JournalEntry',
+        params: {
+          linkedReading,
+          entryType: 'horoscope',
+        },
+      });
+    } catch (error: any) {
+      console.error('Failed to create journal entry:', error);
+      // Could add error toast/alert here in the future
+    }
+  };
+
   // Loading state
   if (isLoadingDailyReading) {
     return (
@@ -469,12 +511,28 @@ const DailyHoroscopeScreen = () => {
 
         {spiritualGuidance?.journalPrompts && spiritualGuidance.journalPrompts.length > 0 && (
           <View style={styles.spiritualCard}>
-            <Text style={[styles.sectionTitle, { marginTop: 0, marginBottom: spacing.sm }]}>Journal Prompts</Text>
+            <Text style={[styles.sectionTitle, { marginTop: 0, marginBottom: spacing.xs }]}>Journal Prompts</Text>
+            <Text style={[styles.promptHintText, { marginBottom: spacing.sm }]}>
+              Tap a prompt to journal about it
+            </Text>
             {spiritualGuidance.journalPrompts.map((prompt, index) => (
-              <View key={index} style={styles.promptItem}>
-                <Text style={styles.bodyText}>✦</Text>
-                <Text style={[styles.promptText, { marginBottom: spacing.xs }]}>{prompt}</Text>
-              </View>
+              <TouchableOpacity
+                key={index}
+                style={styles.promptItemTouchable}
+                onPress={() => handleJournalPrompt(prompt, index)}
+                activeOpacity={0.7}
+              >
+                <View style={styles.promptItemContainer}>
+                  <Text style={styles.bodyText}>✦</Text>
+                  <Text style={[styles.promptText, { flex: 1, marginBottom: 0 }]}>{prompt}</Text>
+                  <Ionicons
+                    name="journal-outline"
+                    size={16}
+                    color={colors.text.secondary}
+                    style={styles.promptIcon}
+                  />
+                </View>
+              </TouchableOpacity>
             ))}
           </View>
         )}
@@ -832,6 +890,22 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontStyle: 'italic',
   },
+  promptHintText: {
+    ...typography.caption,
+    color: colors.text.secondary,
+    fontStyle: 'italic',
+    fontSize: 11,
+  },
+  promptItemTouchable: {
+    marginBottom: spacing.xs,
+    borderRadius: 6,
+    padding: spacing.sm,
+    backgroundColor: 'rgba(255, 255, 255, 0.02)',
+  },
+  promptItemContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   promptItem: {
     flexDirection: 'row',
     marginBottom: spacing.xs,
@@ -841,6 +915,9 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     flex: 1,
     paddingLeft: spacing.sm,
+  },
+  promptIcon: {
+    marginLeft: spacing.sm,
   },
   cosmicWeatherSection: {
     borderTopWidth: 1,

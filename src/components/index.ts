@@ -7,3 +7,4 @@ export { LocationPicker } from './LocationPicker';
 export { CompatibilityMeter, CompatibilityMeterGroup } from './synastry/CompatibilityMeter';
 export { SavedChartForm } from './synastry/SavedChartForm';
 export { PartnerSelector } from './synastry/PartnerSelector';
+export { SwipeableChartCard } from './SwipeableChartCard';

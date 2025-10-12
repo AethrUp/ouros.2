@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -10,9 +10,11 @@ import {
   Alert,
   ActivityIndicator,
   Clipboard,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { NavigationProps } from '../types';
-import { HeaderBar } from '../components';
+import { HeaderBar, Button, SwipeableChartCard } from '../components';
 import { colors, spacing, typography } from '../styles';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppStore } from '../store';
@@ -38,6 +40,7 @@ export const FriendsScreen: React.FC<NavigationProps> = ({ navigation }) => {
     loadMyFriendCode,
     loadSavedCharts,
     createSavedChart,
+    deleteSavedChart,
     sendInvitation,
     acceptInvitation,
     declineInvitation,
@@ -46,6 +49,12 @@ export const FriendsScreen: React.FC<NavigationProps> = ({ navigation }) => {
 
   const [activeTab, setActiveTab] = useState<'connections' | 'invitations'>('connections');
   const [showChartForm, setShowChartForm] = useState(false);
+  const [codeDigits, setCodeDigits] = useState(['', '', '', '', '', '']);
+
+  // Refs for code input fields
+  const codeInputRefs = useRef<Array<TextInput | null>>([
+    null, null, null, null, null, null
+  ]);
 
   useEffect(() => {
     loadConnections();
@@ -61,22 +70,57 @@ export const FriendsScreen: React.FC<NavigationProps> = ({ navigation }) => {
     }
   };
 
-  const handleSendInvitation = async () => {
-    const code = inviteFriendCode.trim().toUpperCase();
+  const handleCodeChange = (text: string, index: number) => {
+    // Only allow alphanumeric characters
+    const sanitized = text.toUpperCase().replace(/[^A-Z0-9]/g, '');
 
-    if (!code) {
-      Alert.alert('Error', 'Please enter a friend code');
-      return;
+    if (sanitized.length > 1) {
+      // Handle paste - distribute characters across fields
+      const chars = sanitized.split('').slice(0, 6);
+      const newDigits = [...codeDigits];
+      chars.forEach((char, i) => {
+        if (index + i < 6) {
+          newDigits[index + i] = char;
+        }
+      });
+      setCodeDigits(newDigits);
+
+      // Focus the next empty field or the last field
+      const nextIndex = Math.min(index + chars.length, 5);
+      codeInputRefs.current[nextIndex]?.focus();
+    } else {
+      // Single character input
+      const newDigits = [...codeDigits];
+      newDigits[index] = sanitized;
+      setCodeDigits(newDigits);
+
+      // Auto-focus next field if character was entered
+      if (sanitized && index < 5) {
+        codeInputRefs.current[index + 1]?.focus();
+      }
     }
+  };
 
-    if (code.length !== 6) {
-      Alert.alert('Error', 'Friend code must be 6 characters');
+  const handleCodeKeyPress = (e: any, index: number) => {
+    // Handle backspace
+    if (e.nativeEvent.key === 'Backspace' && !codeDigits[index] && index > 0) {
+      codeInputRefs.current[index - 1]?.focus();
+    }
+  };
+
+  const handleSendInvitation = async () => {
+    const code = codeDigits.join('');
+
+    if (!code || code.length < 6) {
+      Alert.alert('Error', 'Please enter a complete 6-character friend code');
       return;
     }
 
     try {
-      await sendInvitation(code, inviteMessage);
+      await sendInvitation(code);
       Alert.alert('Success', 'Invitation sent!');
+      // Clear the code fields
+      setCodeDigits(['', '', '', '', '', '']);
     } catch (error: any) {
       Alert.alert('Error', error.message || 'Failed to send invitation');
     }
@@ -112,19 +156,66 @@ export const FriendsScreen: React.FC<NavigationProps> = ({ navigation }) => {
     );
   };
 
-  const handleRemoveConnection = async (connectionId: string, friendName: string) => {
-    Alert.alert(
-      'Remove Connection',
-      `Remove ${friendName} from your connections?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Remove',
-          style: 'destructive',
-          onPress: () => removeConnection(connectionId),
-        },
-      ]
-    );
+  const confirmRemoveConnection = (friendName: string): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      Alert.alert(
+        'Remove Connection',
+        `Remove ${friendName} from your connections?`,
+        [
+          {
+            text: 'Cancel',
+            style: 'cancel',
+            onPress: () => reject()
+          },
+          {
+            text: 'Remove',
+            style: 'destructive',
+            onPress: () => resolve(),
+          },
+        ],
+        { cancelable: true, onDismiss: () => reject() }
+      );
+    });
+  };
+
+  const handleRemoveConnection = async (connectionId: string): Promise<void> => {
+    try {
+      await removeConnection(connectionId);
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to remove connection');
+      throw error;
+    }
+  };
+
+  const confirmDeleteSavedChart = (name: string): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      Alert.alert(
+        'Delete Chart',
+        `Remove ${name} from your saved charts?`,
+        [
+          {
+            text: 'Cancel',
+            style: 'cancel',
+            onPress: () => reject()
+          },
+          {
+            text: 'Delete',
+            style: 'destructive',
+            onPress: () => resolve(),
+          },
+        ],
+        { cancelable: true, onDismiss: () => reject() }
+      );
+    });
+  };
+
+  const handleDeleteSavedChart = async (chartId: string): Promise<void> => {
+    try {
+      await deleteSavedChart(chartId);
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to delete chart');
+      throw error;
+    }
   };
 
   const handleViewSynastry = (connection: any) => {
@@ -189,7 +280,7 @@ export const FriendsScreen: React.FC<NavigationProps> = ({ navigation }) => {
       {/* Tabs */}
       <View style={styles.tabs}>
         <TouchableOpacity
-          style={[styles.tab, activeTab === 'connections' && styles.tabActive]}
+          style={styles.tab}
           onPress={() => setActiveTab('connections')}
         >
           <Text style={[styles.tabText, activeTab === 'connections' && styles.tabTextActive]}>
@@ -200,10 +291,11 @@ export const FriendsScreen: React.FC<NavigationProps> = ({ navigation }) => {
               <Text style={styles.badgeText}>{connections.length}</Text>
             </View>
           )}
+          {activeTab === 'connections' && <View style={styles.activeIndicator} />}
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.tab, activeTab === 'invitations' && styles.tabActive]}
+          style={styles.tab}
           onPress={() => setActiveTab('invitations')}
         >
           <Text style={[styles.tabText, activeTab === 'invitations' && styles.tabTextActive]}>
@@ -214,6 +306,7 @@ export const FriendsScreen: React.FC<NavigationProps> = ({ navigation }) => {
               <Text style={styles.badgeText}>{receivedInvitations.length}</Text>
             </View>
           )}
+          {activeTab === 'invitations' && <View style={styles.activeIndicator} />}
         </TouchableOpacity>
       </View>
 
@@ -224,7 +317,7 @@ export const FriendsScreen: React.FC<NavigationProps> = ({ navigation }) => {
               <View style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color={colors.primary} />
               </View>
-            ) : connections.length === 0 ? (
+            ) : connections.length === 0 && savedCharts.length === 0 ? (
               <View style={styles.emptyState}>
                 <Ionicons name="people-outline" size={64} color={colors.text.secondary} />
                 <Text style={styles.emptyTitle}>No Connections Yet</Text>
@@ -232,79 +325,103 @@ export const FriendsScreen: React.FC<NavigationProps> = ({ navigation }) => {
                   Add friends or create saved charts for people without the app
                 </Text>
                 <View style={styles.emptyButtonContainer}>
-                  <TouchableOpacity
-                    style={styles.primaryButton}
-                    onPress={() => setShowInviteModal(true)}
-                  >
-                    <Ionicons name="person-add-outline" size={20} color="#FFF" />
-                    <Text style={styles.primaryButtonText}>Add Friend</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.primaryButton, styles.secondaryButton]}
-                    onPress={() => setShowChartForm(true)}
-                  >
-                    <Ionicons name="add-circle-outline" size={20} color={colors.primary} />
-                    <Text style={[styles.primaryButtonText, styles.secondaryButtonText]}>
-                      Create Chart
-                    </Text>
-                  </TouchableOpacity>
+                  <View style={{ flex: 1 }}>
+                    <Button
+                      title="Add Friend"
+                      onPress={() => setShowInviteModal(true)}
+                      variant="primary"
+                      size="medium"
+                      fullWidth
+                    />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Button
+                      title="Add Chart"
+                      onPress={() => setShowChartForm(true)}
+                      variant="primary"
+                      size="medium"
+                      fullWidth
+                    />
+                  </View>
                 </View>
               </View>
             ) : (
               <>
-                {/* Saved Charts Quick Access */}
+                {/* Saved Charts Section */}
                 {savedCharts.length > 0 && (
-                  <TouchableOpacity
-                    style={styles.quickAccessCard}
-                    onPress={() => navigation.navigate('SavedCharts')}
-                  >
-                    <View style={styles.quickAccessIcon}>
-                      <Ionicons name="bookmark" size={24} color={colors.primary} />
-                    </View>
-                    <View style={styles.quickAccessInfo}>
-                      <Text style={styles.quickAccessTitle}>Saved Charts</Text>
-                      <Text style={styles.quickAccessSubtitle}>
-                        {savedCharts.length} chart{savedCharts.length !== 1 ? 's' : ''} available
-                      </Text>
-                    </View>
-                    <Ionicons name="chevron-forward" size={20} color={colors.text.secondary} />
-                  </TouchableOpacity>
+                  <>
+                    <Text style={styles.sectionTitle}>Saved Charts</Text>
+                    {savedCharts.map((chart) => (
+                      <SwipeableChartCard
+                        key={chart.id}
+                        onConfirmDelete={() => confirmDeleteSavedChart(chart.name)}
+                        onDelete={() => handleDeleteSavedChart(chart.id)}
+                      >
+                        <TouchableOpacity
+                          style={styles.connectionCard}
+                          onPress={() => {
+                            // Create a mock FriendConnection from saved chart
+                            const mockConnection: any = {
+                              connectionId: chart.id,
+                              friendId: chart.id,
+                              friendEmail: '',
+                              friendDisplayName: chart.name,
+                              friendCode: '',
+                              userSharesChart: true,
+                              friendSharesChart: true,
+                              relationshipLabel: chart.relationship,
+                              createdAt: chart.createdAt,
+                            };
+                            navigation.navigate('Synastry', {
+                              connection: mockConnection,
+                              savedChart: chart
+                            });
+                          }}
+                        >
+                          <View style={styles.connectionInfo}>
+                            <Text style={styles.connectionName}>{chart.name}</Text>
+                            <Text style={styles.connectionCode}>
+                              {new Date(chart.birthData.birthDate).toLocaleDateString()}
+                              {chart.birthData.timeUnknown ? '' : ` • ${chart.birthData.birthTime}`}
+                            </Text>
+                            {chart.relationship && (
+                              <Text style={styles.connectionLabel}>{chart.relationship.toUpperCase()}</Text>
+                            )}
+                          </View>
+                        </TouchableOpacity>
+                      </SwipeableChartCard>
+                    ))}
+                  </>
+                )}
+
+                {/* Connections Section */}
+                {connections.length > 0 && (
+                  <>
+                    <Text style={[styles.sectionTitle, savedCharts.length > 0 && { marginTop: spacing.xl }]}>
+                      Connections
+                    </Text>
+                  </>
                 )}
 
                 {connections.map((connection) => (
-                  <View key={connection.connectionId} style={styles.connectionCard}>
-                  <View style={styles.connectionHeader}>
-                    <View style={styles.avatarPlaceholder}>
-                      <Ionicons name="person-outline" size={32} color={colors.primary} />
-                    </View>
-                    <View style={styles.connectionInfo}>
-                      <Text style={styles.connectionName}>{connection.friendDisplayName}</Text>
-                      <Text style={styles.connectionCode}>Code: {connection.friendCode}</Text>
-                      {connection.relationshipLabel && (
-                        <Text style={styles.connectionLabel}>{connection.relationshipLabel}</Text>
-                      )}
-                    </View>
-                  </View>
-
-                  <View style={styles.connectionActions}>
+                  <SwipeableChartCard
+                    key={connection.connectionId}
+                    onConfirmDelete={() => confirmRemoveConnection(connection.friendDisplayName)}
+                    onDelete={() => handleRemoveConnection(connection.connectionId)}
+                  >
                     <TouchableOpacity
-                      style={styles.actionButton}
+                      style={styles.connectionCard}
                       onPress={() => handleViewSynastry(connection)}
                     >
-                      <Ionicons name="star-outline" size={20} color={colors.primary} />
-                      <Text style={styles.actionButtonText}>View Synastry</Text>
+                      <View style={styles.connectionInfo}>
+                        <Text style={styles.connectionName}>{connection.friendDisplayName}</Text>
+                        <Text style={styles.connectionCode}>Code: {connection.friendCode}</Text>
+                        {connection.relationshipLabel && (
+                          <Text style={styles.connectionLabel}>{connection.relationshipLabel.toUpperCase()}</Text>
+                        )}
+                      </View>
                     </TouchableOpacity>
-
-                    <TouchableOpacity
-                      style={[styles.actionButton, styles.actionButtonDanger]}
-                      onPress={() =>
-                        handleRemoveConnection(connection.connectionId, connection.friendDisplayName)
-                      }
-                    >
-                      <Ionicons name="person-remove-outline" size={20} color={colors.error} />
-                    </TouchableOpacity>
-                  </View>
-                </View>
+                  </SwipeableChartCard>
                 ))}
               </>
             )}
@@ -395,46 +512,74 @@ export const FriendsScreen: React.FC<NavigationProps> = ({ navigation }) => {
         transparent={true}
         onRequestClose={() => setShowInviteModal(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Add Friend</Text>
-              <TouchableOpacity onPress={() => setShowInviteModal(false)}>
-                <Ionicons name="close" size={24} color={colors.text.primary} />
-              </TouchableOpacity>
-            </View>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.modalOverlay}
+        >
+          <TouchableOpacity
+            activeOpacity={1}
+            style={styles.modalOverlay}
+            onPress={() => setShowInviteModal(false)}
+          >
+            <TouchableOpacity activeOpacity={1} onPress={(e) => e.stopPropagation()}>
+              <View style={styles.modalContent}>
+                <View style={styles.modalHeader}>
+                  <Text style={styles.modalTitle}>Add Friend</Text>
+                  <TouchableOpacity onPress={() => setShowInviteModal(false)}>
+                    <Ionicons name="close" size={24} color={colors.text.primary} />
+                  </TouchableOpacity>
+                </View>
 
-            <Text style={styles.modalDescription}>
-              Enter your friend's 6-character code to send them a connection request.
-            </Text>
+                {/* Your Friend Code */}
+                {myFriendCode && (
+                  <View style={styles.modalFriendCodeCard}>
+                    <Text style={styles.modalFriendCodeLabel}>Your Friend Code</Text>
+                    <View style={styles.modalFriendCodeRow}>
+                      <Text style={styles.modalFriendCodeText}>{myFriendCode}</Text>
+                      <TouchableOpacity onPress={handleCopyFriendCode}>
+                        <Ionicons name="copy-outline" size={20} color={colors.primary} />
+                      </TouchableOpacity>
+                    </View>
+                    <Text style={styles.modalFriendCodeHint}>
+                      Share this code with your friend
+                    </Text>
+                  </View>
+                )}
 
-            <TextInput
-              style={styles.input}
-              placeholder="Friend Code (e.g., ABC123)"
-              placeholderTextColor={colors.text.secondary}
-              value={inviteFriendCode}
-              onChangeText={(text) => setInviteFriendCode(text.toUpperCase())}
-              maxLength={6}
-              autoCapitalize="characters"
-              autoCorrect={false}
-            />
+                <Text style={styles.modalDescription}>
+                  Enter your friend's 6-character code to send them a connection request.
+                </Text>
 
-            <TextInput
-              style={[styles.input, styles.textArea]}
-              placeholder="Personal message (optional)"
-              placeholderTextColor={colors.text.secondary}
-              value={inviteMessage}
-              onChangeText={setInviteMessage}
-              multiline
-              numberOfLines={3}
-            />
+                <View style={styles.codeInputContainer}>
+                  {codeDigits.map((digit, index) => (
+                    <TextInput
+                      key={index}
+                      ref={(ref) => (codeInputRefs.current[index] = ref)}
+                      style={styles.codeInput}
+                      value={digit}
+                      onChangeText={(text) => handleCodeChange(text, index)}
+                      onKeyPress={(e) => handleCodeKeyPress(e, index)}
+                      maxLength={1}
+                      autoCapitalize="characters"
+                      autoCorrect={false}
+                      keyboardType="default"
+                      selectTextOnFocus
+                      textAlign="center"
+                    />
+                  ))}
+                </View>
 
-            <TouchableOpacity style={styles.sendButton} onPress={handleSendInvitation}>
-              <Ionicons name="paper-plane" size={20} color="#FFF" />
-              <Text style={styles.sendButtonText}>Send Invitation</Text>
+                <Button
+                  title="Send Invitation"
+                  onPress={handleSendInvitation}
+                  variant="primary"
+                  size="medium"
+                  fullWidth
+                />
+              </View>
             </TouchableOpacity>
-          </View>
-        </View>
+          </TouchableOpacity>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* Saved Chart Form Modal */}
@@ -453,13 +598,13 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background.primary,
   },
   friendCodeCard: {
-    backgroundColor: colors.background.secondary,
+    backgroundColor: colors.background.card,
     marginHorizontal: spacing.lg,
     marginTop: spacing.md,
     padding: spacing.lg,
     borderRadius: 12,
-    borderWidth: 2,
-    borderColor: colors.primary + '40',
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   friendCodeLabel: {
     ...typography.caption,
@@ -510,18 +655,25 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: spacing.md,
     gap: spacing.xs,
-  },
-  tabActive: {
-    borderBottomWidth: 2,
-    borderBottomColor: colors.primary,
+    position: 'relative',
   },
   tabText: {
     ...typography.body,
     color: colors.text.secondary,
+    textTransform: 'uppercase',
+    letterSpacing: 1.2,
   },
   tabTextActive: {
-    color: colors.primary,
+    color: '#FFFFFF',
     fontWeight: '600',
+  },
+  activeIndicator: {
+    position: 'absolute',
+    bottom: 0,
+    left: '25%',
+    right: '25%',
+    height: 2,
+    backgroundColor: '#FFFFFF',
   },
   badge: {
     backgroundColor: colors.primary,
@@ -575,97 +727,41 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: spacing.md,
   },
-  primaryButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.primary,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    borderRadius: 8,
-    gap: spacing.sm,
-  },
-  primaryButtonText: {
-    ...typography.button,
-    color: '#FFF',
-  },
-  secondaryButton: {
-    backgroundColor: 'transparent',
-    borderWidth: 2,
-    borderColor: colors.primary,
-  },
-  secondaryButtonText: {
-    color: colors.primary,
-  },
   connectionCard: {
-    backgroundColor: colors.background.secondary,
+    backgroundColor: colors.background.card,
     borderRadius: 12,
-    padding: spacing.md,
-    marginBottom: spacing.md,
-  },
-  connectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: spacing.md,
-  },
-  avatarPlaceholder: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: colors.background.tertiary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.lg,
   },
   connectionInfo: {
     flex: 1,
   },
   connectionName: {
-    ...typography.h3,
+    ...typography.h2,
     marginBottom: spacing.xs,
   },
   connectionCode: {
     ...typography.caption,
-    color: colors.text.secondary,
+    color: '#FFFFFF',
     fontFamily: 'monospace',
   },
   connectionLabel: {
     ...typography.caption,
-    color: colors.primary,
+    color: 'rgba(255, 255, 255, 0.5)',
+    letterSpacing: 1.2,
     marginTop: spacing.xs,
-  },
-  connectionActions: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  actionButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: colors.primary,
-    gap: spacing.xs,
-  },
-  actionButtonDanger: {
-    flex: 0,
-    borderColor: colors.error,
-  },
-  actionButtonText: {
-    ...typography.button,
-    color: colors.primary,
-    fontSize: 14,
   },
   sectionTitle: {
     ...typography.h3,
     marginBottom: spacing.md,
   },
   invitationCard: {
-    backgroundColor: colors.background.secondary,
+    backgroundColor: colors.background.card,
     borderRadius: 12,
-    padding: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.lg,
     marginBottom: spacing.md,
   },
   invitationHeader: {
@@ -745,26 +841,60 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: spacing.md,
     marginBottom: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.border,
+    borderWidth: 0,
   },
   textArea: {
     minHeight: 80,
     textAlignVertical: 'top',
   },
-  sendButton: {
+  codeInputContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: spacing.lg,
+    gap: spacing.sm,
+  },
+  codeInput: {
+    flex: 1,
+    ...typography.h2,
+    backgroundColor: colors.background.secondary,
+    borderRadius: 8,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.xs,
+    borderWidth: 0,
+    textAlign: 'center',
+    color: colors.primary,
+    fontSize: 24,
+    fontWeight: '600',
+  },
+  modalFriendCodeCard: {
+    backgroundColor: colors.background.secondary,
+    padding: spacing.md,
+    borderRadius: 8,
+    marginBottom: spacing.lg,
+  },
+  modalFriendCodeLabel: {
+    ...typography.caption,
+    color: colors.text.secondary,
+    marginBottom: spacing.xs,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  modalFriendCodeRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.primary,
-    paddingVertical: spacing.md,
-    borderRadius: 8,
-    gap: spacing.sm,
-    marginTop: spacing.md,
+    justifyContent: 'space-between',
+    marginBottom: spacing.xs,
   },
-  sendButtonText: {
-    ...typography.button,
-    color: '#FFF',
+  modalFriendCodeText: {
+    ...typography.h2,
+    color: colors.primary,
+    letterSpacing: 4,
+    fontSize: 24,
+  },
+  modalFriendCodeHint: {
+    ...typography.caption,
+    color: colors.text.secondary,
+    fontSize: 12,
   },
   quickAccessCard: {
     flexDirection: 'row',

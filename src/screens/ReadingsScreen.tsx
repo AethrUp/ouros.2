@@ -18,8 +18,10 @@ export const ReadingsScreen: React.FC<NavigationProps> = ({ navigation }) => {
   const {
     readings,
     ichingReadings,
+    dreamReadings,
     loadHistory,
     loadIChingHistory,
+    loadDreamHistory,
     isLoadingHistory,
     isLoadingIChingHistory,
   } = useAppStore();
@@ -30,12 +32,13 @@ export const ReadingsScreen: React.FC<NavigationProps> = ({ navigation }) => {
   useEffect(() => {
     loadHistory();
     loadIChingHistory();
+    loadDreamHistory();
   }, []);
 
   // Handle refresh
   const handleRefresh = async () => {
     setRefreshing(true);
-    await Promise.all([loadHistory(), loadIChingHistory()]);
+    await Promise.all([loadHistory(), loadIChingHistory(), loadDreamHistory()]);
     setRefreshing(false);
   };
 
@@ -43,6 +46,7 @@ export const ReadingsScreen: React.FC<NavigationProps> = ({ navigation }) => {
   const allReadings = [
     ...readings.map((r) => ({ ...r, type: 'tarot' as const })),
     ...ichingReadings.map((r) => ({ ...r, type: 'iching' as const })),
+    ...dreamReadings.map((r) => ({ ...r, type: 'dream' as const })),
   ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   const isLoading = isLoadingHistory || isLoadingIChingHistory;
@@ -74,8 +78,8 @@ export const ReadingsScreen: React.FC<NavigationProps> = ({ navigation }) => {
             <Text style={styles.emptyIcon}>📖</Text>
             <Text style={styles.emptyTitle}>No Readings Yet</Text>
             <Text style={styles.emptyText}>
-              Your divination readings will appear here. Start with a Tarot reading or I Ching
-              consultation.
+              Your divination readings will appear here. Start with a Tarot reading, I Ching
+              consultation, or dream interpretation.
             </Text>
             <View style={styles.emptyButtons}>
               <TouchableOpacity
@@ -105,10 +109,19 @@ export const ReadingsScreen: React.FC<NavigationProps> = ({ navigation }) => {
                     reading={reading}
                     onPress={() => navigation.navigate('TarotReadingDetail', { readingId: reading.id })}
                   />
-                ) : (
+                ) : reading.type === 'iching' ? (
                   <IChingReadingCard
                     reading={reading}
                     onPress={() => navigation.navigate('IChingReadingDetail', { readingId: reading.id })}
+                  />
+                ) : (
+                  <DreamReadingCard
+                    reading={reading}
+                    onPress={() => {
+                      // For now, just show an alert or navigate to a simple detail view
+                      // TODO: Create DreamReadingDetailScreen
+                      console.log('Dream reading detail:', reading.id);
+                    }}
                   />
                 )}
               </Animated.View>
@@ -184,6 +197,41 @@ const IChingReadingCard: React.FC<IChingReadingCardProps> = ({ reading, onPress 
       <Text style={styles.readingDetails}>
         #{hexagramNumber} {hexagramName}
       </Text>
+    </TouchableOpacity>
+  );
+};
+
+/**
+ * Dream Reading Card
+ */
+interface DreamReadingCardProps {
+  reading: any;
+  onPress: () => void;
+}
+
+const DreamReadingCard: React.FC<DreamReadingCardProps> = ({ reading, onPress }) => {
+  const dateStr = format(new Date(reading.createdAt), 'MMM d');
+
+  const dreamPreview =
+    reading.dreamDescription?.substring(0, 60) ||
+    reading.intention?.substring(0, 60) ||
+    'No description';
+
+  return (
+    <TouchableOpacity style={styles.readingCard} onPress={onPress} activeOpacity={0.8}>
+      <View style={styles.readingHeader}>
+        <View style={[styles.readingTypeBadge, styles.dreamBadge]}>
+          <Text style={styles.readingTypeText}>DREAM</Text>
+        </View>
+        <Text style={styles.readingDate}>{dateStr}</Text>
+      </View>
+
+      <Text style={styles.readingIntention} numberOfLines={2}>
+        {dreamPreview}
+        {dreamPreview.length >= 60 ? '...' : ''}
+      </Text>
+
+      <Text style={styles.readingDetails}>Dream Interpretation</Text>
     </TouchableOpacity>
   );
 };
@@ -285,6 +333,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     overflow: 'hidden',
     alignSelf: 'flex-start',
+  },
+  dreamBadge: {
+    backgroundColor: 'rgba(139, 189, 229, 0.5)', // Blue tint for dreams
   },
   readingTypeText: {
     ...typography.caption,

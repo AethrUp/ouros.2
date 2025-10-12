@@ -119,7 +119,13 @@ export const JournalEntryScreen: React.FC<JournalEntryScreenProps> = ({ navigati
         });
       }
 
-      navigation.goBack();
+      // If we came from a reading (linked reading exists in params), navigate to journal list
+      // Otherwise just go back to previous screen
+      if (route.params?.linkedReading && !entryId) {
+        navigation.navigate('JournalMain' as any);
+      } else {
+        navigation.goBack();
+      }
     } catch (error) {
       console.error('Failed to save journal entry:', error);
     }
@@ -149,13 +155,23 @@ export const JournalEntryScreen: React.FC<JournalEntryScreenProps> = ({ navigati
     }
   };
 
+  const handleBackPress = () => {
+    // If we came from a reading (linked reading exists in params) and not editing,
+    // navigate to journal list. Otherwise just go back.
+    if (route.params?.linkedReading && !entryId) {
+      navigation.navigate('JournalMain' as any);
+    } else {
+      navigation.goBack();
+    }
+  };
+
   return (
     <View style={styles.container}>
       <HeaderBar
         title="JOURNAL"
         leftAction={{
           icon: 'arrow-back',
-          onPress: () => navigation.goBack(),
+          onPress: handleBackPress,
         }}
         rightActions={[
           {
@@ -245,7 +261,7 @@ export const JournalEntryScreen: React.FC<JournalEntryScreenProps> = ({ navigati
             <View style={styles.linkedReadingHeader}>
               <Text style={styles.linkedReadingLabel}>Prompt or link to reading</Text>
             </View>
-            <Text style={styles.linkedReadingTitle} numberOfLines={1}>
+            <Text style={styles.linkedReadingTitle} numberOfLines={2}>
               {linkedReading.intention || 'Reading'}
             </Text>
             <Text style={styles.linkedReadingDate}>

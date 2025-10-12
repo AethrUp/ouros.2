@@ -4,7 +4,7 @@
  */
 
 import React, { useEffect } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Image } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -30,6 +30,7 @@ const AnimatedCoin: React.FC<CoinProps> = ({ isHeads, delay = 0, animate, animat
   const rotation = useSharedValue(0);
   const translateY = useSharedValue(0);
   const opacity = useSharedValue(1);
+  const resultOpacity = useSharedValue(0); // For crossfade effect
   const [showResult, setShowResult] = React.useState(false);
 
   useEffect(() => {
@@ -40,6 +41,7 @@ const AnimatedCoin: React.FC<CoinProps> = ({ isHeads, delay = 0, animate, animat
       // Reset to starting position
       rotation.value = 0;
       translateY.value = 0;
+      resultOpacity.value = 0; // Start with casting image visible
 
       // Coin toss animation
       rotation.value = withDelay(
@@ -69,9 +71,14 @@ const AnimatedCoin: React.FC<CoinProps> = ({ isHeads, delay = 0, animate, animat
         )
       );
 
-      // Reveal result and call onComplete after animation finishes
+      // Crossfade to result after animation finishes
       setTimeout(() => {
         setShowResult(true);
+        // Fade in the result image
+        resultOpacity.value = withTiming(1, {
+          duration: 400,
+          easing: Easing.inOut(Easing.ease),
+        });
         if (onComplete) {
           onComplete();
         }
@@ -87,19 +94,31 @@ const AnimatedCoin: React.FC<CoinProps> = ({ isHeads, delay = 0, animate, animat
     opacity: opacity.value,
   }));
 
-  // During animation, show neutral color. After animation, show result
-  const coinColor = showResult
-    ? (isHeads ? styles.headsColor : styles.tailsColor)
-    : styles.animatingColor;
+  const resultAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: resultOpacity.value,
+  }));
+
+  // Result image (heads or tails)
+  const resultImage = isHeads
+    ? require('../../../assets/iching/coinHeads.png')
+    : require('../../../assets/iching/coinTails.png');
 
   return (
     <Animated.View style={[styles.coin, animatedStyle]}>
-      <View style={[styles.coinFace, coinColor]}>
-        <View style={styles.coinInner}>
-          {/* Simple representation - can be replaced with images */}
-          <View style={styles.coinSymbol} />
-        </View>
-      </View>
+      {/* Casting image - always visible during flip */}
+      <Image
+        source={require('../../../assets/iching/coincasting.png')}
+        style={styles.coinImage}
+        resizeMode="cover"
+      />
+      {/* Result image - fades in when showResult is true */}
+      {showResult && (
+        <Animated.Image
+          source={resultImage}
+          style={[styles.coinImage, styles.coinImageAbsolute, resultAnimatedStyle]}
+          resizeMode="cover"
+        />
+      )}
     </Animated.View>
   );
 };
@@ -182,41 +201,22 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-  },
-  coinFace: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#F6DAA1',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 6,
     elevation: 8,
+    overflow: 'hidden', // Ensures image is clipped to borderRadius
   },
-  headsColor: {
-    backgroundColor: '#FFD700', // Gold for heads (yang)
+  coinImage: {
+    width: '100%',
+    height: '100%',
   },
-  tailsColor: {
-    backgroundColor: '#C0C0C0', // Silver for tails (yin)
-  },
-  animatingColor: {
-    backgroundColor: '#B8860B', // Dark goldenrod - neutral during animation
-  },
-  coinInner: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  coinSymbol: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+  coinImageAbsolute: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
   },
 });

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { DrawnCard, SpreadLayout } from '../../types/tarot';
 import { TarotCard } from './TarotCard';
 import { TarotSpread } from './TarotSpread';
@@ -29,25 +30,17 @@ export const InterpretationScreen: React.FC<InterpretationScreenProps> = ({
 
   return (
     <View style={styles.container}>
-      <HeaderBar title="TAROT" />
-
-      {/* Action Buttons */}
-      <View style={styles.actionButtons}>
-        <TouchableOpacity
-          style={[styles.actionButton, styles.saveButton]}
-          onPress={onSave}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.saveButtonText}>SAVE READING</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.actionButton, styles.journalButton]}
-          onPress={onJournal}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.journalButtonText}>JOURNAL</Text>
-        </TouchableOpacity>
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Tarot Reading</Text>
+        <View style={styles.headerActions}>
+          <TouchableOpacity style={styles.iconButton} onPress={onSave} activeOpacity={0.7}>
+            <Ionicons name="bookmark-outline" size={24} color={theme.colors.text.primary} />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.iconButton} onPress={onJournal} activeOpacity={0.7}>
+            <Ionicons name="journal-outline" size={24} color={theme.colors.text.primary} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView
@@ -96,6 +89,27 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: theme.colors.background.primary,
   },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.md,
+    backgroundColor: theme.colors.background.primary,
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: '400',
+    color: theme.colors.text.primary,
+    fontFamily: 'PTSerif_400Regular',
+  },
+  headerActions: {
+    flexDirection: 'row',
+    gap: theme.spacing.md,
+  },
+  iconButton: {
+    padding: theme.spacing.xs,
+  },
   content: {
     flex: 1,
   },
@@ -112,12 +126,13 @@ const styles = StyleSheet.create({
   },
   selectedCardSection: {
     marginBottom: theme.spacing.xl,
+    marginTop: theme.spacing.lg,
   },
   selectedCardName: {
-    fontSize: 16,
+    fontSize: 20,
     fontWeight: '400',
-    color: theme.colors.text.primary,
-    fontFamily: 'Libre Baskerville',
+    color: '#F6D99F',
+    fontFamily: 'PTSerif_400Regular',
     marginBottom: theme.spacing.sm,
   },
   selectedCardMeaning: {
@@ -127,7 +142,7 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   interpretationSection: {
-    marginTop: theme.spacing.sm,
+    marginTop: theme.spacing.xl,
     marginBottom: theme.spacing.xl,
   },
   interpretationTitle: {
@@ -142,39 +157,5 @@ const styles = StyleSheet.create({
     color: theme.colors.text.primary,
     fontFamily: 'Inter',
     lineHeight: 22,
-  },
-  actionButtons: {
-    flexDirection: 'row',
-    paddingHorizontal: theme.spacing.lg,
-    paddingBottom: theme.spacing.md,
-    gap: theme.spacing.md,
-  },
-  actionButton: {
-    flex: 1,
-    paddingVertical: theme.spacing.sm,
-    borderRadius: theme.borderRadius.md,
-    alignItems: 'center',
-  },
-  saveButton: {
-    backgroundColor: 'transparent',
-    borderWidth: 1.5,
-    borderColor: theme.colors.textInverse || '#FFFFFF',
-  },
-  saveButtonText: {
-    fontSize: theme.fontSize.sm,
-    fontWeight: theme.fontWeight.semibold,
-    color: theme.colors.text.primary,
-    letterSpacing: 1.2,
-    fontFamily: 'Inter',
-  },
-  journalButton: {
-    backgroundColor: theme.colors.textInverse || '#FFFFFF',
-  },
-  journalButtonText: {
-    fontSize: theme.fontSize.sm,
-    fontWeight: theme.fontWeight.semibold,
-    color: theme.colors.background.primary,
-    letterSpacing: 1.2,
-    fontFamily: 'Inter',
   },
 });

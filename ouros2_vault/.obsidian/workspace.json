@@ -27,12 +27,26 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "iching-json-migration-plan.md",
+                "file": "daily_horoscope_prompt_template.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "iching-json-migration-plan"
+              "title": "daily_horoscope_prompt_template"
+            }
+          },
+          {
+            "id": "a1e4da2b12e692fc",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "Updated Daily Reading.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Updated Daily Reading"
             }
           },
           {
@@ -106,7 +120,7 @@
             }
           }
         ],
-        "currentTab": 1
+        "currentTab": 2
       }
     ],
     "direction": "vertical"
@@ -255,8 +269,15 @@
       "table-editor-obsidian:Advanced Tables Toolbar": false
     }
   },
-  "active": "a9d601dc18bffb5f",
+  "active": "a1e4da2b12e692fc",
   "lastOpenFiles": [
+    "daily_horoscope_prompt_template.md",
+    "Updated Daily Reading.md",
+    "iching-json-migration-plan.md",
+    "DIAGNOSIS_chiron_return_hallucination.md",
+    "DIAGNOSIS_chiron_return_hallucination.md.tmp.13148.1760112642856",
+    "daily_horoscope_prompt_template.md.tmp.13148.1760112564089",
+    "dream_interpretation_prompt.md",
     "iching Prompt.md",
     "iching-json-migration-plan.md.tmp.9008.1759932120182",
     "iching-json-migration-plan.md.tmp.9008.1759932104938",
@@ -265,16 +286,13 @@
     "iching-json-migration-plan.md.tmp.9008.1759932057055",
     "iching-json-migration-plan.md.tmp.9008.1759932046015",
     "iching-json-migration-plan.md.tmp.9008.1759932020055",
-    "iching-json-migration-plan.md",
     "iching-json-migration-plan.md.tmp.9008.1759931993267",
     "tarot_interpretation_prompt.md",
     "iching-interpretation-prompt.md",
     "DAILY_READING_DATA_STRUCTURE.md",
-    "iching-interpretation-prompt.md.tmp.9008.1759929305206",
     "astrology_app_architecture.md",
     "astrology_component_apis.md",
     "Marketing/I Feel Disconnected from My Purpose.md",
-    "astrology_development_tasks.csv.tmp.15884.1759691456729",
     "Marketing/high-level benefits.md",
     "Marketing/Highlight Points.md",
     "Marketing/Am I Making the Right Choice.md",

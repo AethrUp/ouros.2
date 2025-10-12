@@ -40,7 +40,7 @@ export const OracleScreen: React.FC<NavigationProps> = ({ navigation }) => {
         {/* Dream Interpretation Option */}
         <TouchableOpacity
           style={styles.optionCard}
-          onPress={() => {}}
+          onPress={() => navigation.navigate('DreamInterpretation')}
         >
           <Text style={styles.optionTitle}>Dream Interpretation</Text>
           <Text style={styles.optionDescription}>

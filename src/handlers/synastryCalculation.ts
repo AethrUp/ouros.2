@@ -42,6 +42,58 @@ const ASPECT_ANGLES: Record<AspectType, number> = {
   quincunx: 150,
 };
 
+// Aspect importance weights - normalized planet names (lowercase)
+const ASPECT_WEIGHTS: Record<string, number> = {
+  // Tier 1: Core relationship aspects
+  'sun-moon': 3.0,
+  'sun-venus': 2.5,
+  'moon-venus': 2.5,
+  'venus-mars': 3.0,
+  'sun-mars': 2.0,
+  'moon-mars': 2.0,
+
+  // Tier 2: Important personal planets
+  'sun-mercury': 1.8,
+  'moon-mercury': 1.8,
+  'venus-mercury': 1.8,
+  'mars-mercury': 1.5,
+  'sun-jupiter': 1.8,
+  'moon-jupiter': 1.8,
+  'venus-jupiter': 2.0,
+
+  // Tier 3: Outer planets to personal planets
+  'sun-saturn': 1.5,
+  'moon-saturn': 1.5,
+  'venus-saturn': 1.5,
+  'mars-saturn': 1.3,
+  'sun-uranus': 1.3,
+  'moon-uranus': 1.3,
+  'sun-neptune': 1.3,
+  'moon-neptune': 1.3,
+  'sun-pluto': 1.3,
+  'moon-pluto': 1.3,
+};
+
+// Conjunction significance bonuses
+const CONJUNCTION_BONUSES: Record<string, number> = {
+  'sun-moon': 15,      // Luminaries together - very significant
+  'venus-mars': 12,    // Love/attraction planets
+  'sun-venus': 10,     // Harmony and attraction
+  'moon-venus': 10,    // Emotional harmony
+  'sun-mars': 8,       // Ego/action alignment
+  'moon-mars': 8,      // Emotional/sexual chemistry
+  'venus-jupiter': 8,  // Love expansion
+  'sun-jupiter': 6,    // Confidence boost
+  'moon-jupiter': 6,   // Emotional expansion
+};
+
+// Major vs minor aspects
+const MAJOR_ASPECTS: AspectType[] = ['conjunction', 'opposition', 'trine', 'square', 'sextile'];
+const MINOR_ASPECTS: AspectType[] = ['quincunx', 'semi_sextile', 'quintile', 'bi_quintile'];
+
+// Maximum number of minor aspects to include (prevents dilution)
+const MAX_MINOR_ASPECTS = 18;
+
 /**
  * Calculate synastry chart between two users
  */
@@ -203,6 +255,58 @@ function calculateAspectStrength(orb: number, maxOrb: number): number {
 }
 
 /**
+ * Get the importance weight for an aspect between two planets
+ */
+function getAspectWeight(planet1: string, planet2: string): number {
+  const p1 = planet1.toLowerCase();
+  const p2 = planet2.toLowerCase();
+  const key1 = `${p1}-${p2}`;
+  const key2 = `${p2}-${p1}`;
+  return ASPECT_WEIGHTS[key1] || ASPECT_WEIGHTS[key2] || 1.0;
+}
+
+/**
+ * Filter aspects and cap minor aspects to prevent score dilution
+ */
+function filterAndCapAspects(aspects: SynastryAspect[]): SynastryAspect[] {
+  // Separate major and minor aspects
+  const majorAspects = aspects.filter((aspect) => MAJOR_ASPECTS.includes(aspect.type));
+  const minorAspects = aspects.filter((aspect) => MINOR_ASPECTS.includes(aspect.type));
+
+  // Sort minor aspects by strength (tightest orbs first)
+  const sortedMinorAspects = minorAspects.sort((a, b) => b.strength - a.strength);
+
+  // Cap minor aspects - only take the strongest ones
+  const cappedMinorAspects = sortedMinorAspects.slice(0, MAX_MINOR_ASPECTS);
+
+  return [...majorAspects, ...cappedMinorAspects];
+}
+
+/**
+ * Calculate bonus points for significant conjunctions
+ */
+function calculateSignificanceBonus(aspects: SynastryAspect[]): number {
+  let bonus = 0;
+
+  aspects.forEach((aspect) => {
+    if (aspect.type === 'conjunction') {
+      const p1 = aspect.planet1.toLowerCase();
+      const p2 = aspect.planet2.toLowerCase();
+      const key1 = `${p1}-${p2}`;
+      const key2 = `${p2}-${p1}`;
+      const bonusPoints = CONJUNCTION_BONUSES[key1] || CONJUNCTION_BONUSES[key2] || 0;
+
+      if (bonusPoints > 0) {
+        // Scale bonus by aspect strength (tighter orb = more bonus)
+        bonus += bonusPoints * aspect.strength;
+      }
+    }
+  });
+
+  return bonus;
+}
+
+/**
  * Determine element from zodiac sign
  */
 function determineElement(sign: string): 'fire' | 'earth' | 'air' | 'water' {
@@ -230,22 +334,31 @@ function analyzeElementCompatibility(
   const user1Elements = countPlanetsByElement(user1Planets);
   const user2Elements = countPlanetsByElement(user2Planets);
 
-  // Calculate compatibility for each element
-  const fire = calculateElementScore(user1Elements.fire, user2Elements.fire);
-  const earth = calculateElementScore(user1Elements.earth, user2Elements.earth);
-  const air = calculateElementScore(user1Elements.air, user2Elements.air);
-  const water = calculateElementScore(user1Elements.water, user2Elements.water);
+  // Calculate individual element scores using balance-based approach
+  const elements = ['fire', 'earth', 'air', 'water'] as const;
+  let totalBalance = 0;
+  const elementScores: Record<string, number> = {};
 
-  // Overall is weighted average (fire and air are compatible, earth and water are compatible)
-  const fireAirAvg = (fire + air) / 2;
-  const earthWaterAvg = (earth + water) / 2;
-  const overall = (fireAirAvg + earthWaterAvg) / 2;
+  elements.forEach((element) => {
+    const diff = Math.abs(user1Elements[element] - user2Elements[element]);
+    const maxCount = Math.max(user1Elements[element], user2Elements[element]);
+    const balance = maxCount > 0 ? 1 - diff / maxCount : 1;
+    totalBalance += balance;
+
+    // Convert balance to percentage score for individual elements
+    elementScores[element] = balance * 100;
+  });
+
+  // Traditional complementary pairing approach
+  const fireAir = (totalBalance * 0.25) * 2; // Fire + Air compatibility
+  const earthWater = (totalBalance * 0.25) * 2; // Earth + Water compatibility
+  const overall = ((fireAir + earthWater) / 2) * 100;
 
   return {
-    fire,
-    earth,
-    air,
-    water,
+    fire: elementScores.fire,
+    earth: elementScores.earth,
+    air: elementScores.air,
+    water: elementScores.water,
     overall,
     description: generateElementDescription(overall),
   };
@@ -269,16 +382,6 @@ function countPlanetsByElement(planets: Record<string, PlanetPosition>): Record<
 }
 
 /**
- * Calculate element score
- */
-function calculateElementScore(user1Count: number, user2Count: number): number {
-  // Higher score when both have balanced representation
-  const avg = (user1Count + user2Count) / 2;
-  const balance = 1 - Math.abs(user1Count - user2Count) / 10;
-  return Math.min(100, (avg / 10) * 100 * balance);
-}
-
-/**
  * Generate element compatibility description
  */
 function generateElementDescription(score: number): string {
@@ -298,16 +401,27 @@ function analyzeModalityCompatibility(
   const user1Modalities = countPlanetsByModality(user1Planets);
   const user2Modalities = countPlanetsByModality(user2Planets);
 
-  const cardinal = calculateElementScore(user1Modalities.cardinal, user2Modalities.cardinal);
-  const fixed = calculateElementScore(user1Modalities.fixed, user2Modalities.fixed);
-  const mutable = calculateElementScore(user1Modalities.mutable, user2Modalities.mutable);
+  // Calculate individual modality scores using balance-based approach
+  const modalities = ['cardinal', 'fixed', 'mutable'] as const;
+  let totalBalance = 0;
+  const modalityScores: Record<string, number> = {};
 
-  const overall = (cardinal + fixed + mutable) / 3;
+  modalities.forEach((modality) => {
+    const diff = Math.abs(user1Modalities[modality] - user2Modalities[modality]);
+    const maxCount = Math.max(user1Modalities[modality], user2Modalities[modality]);
+    const balance = maxCount > 0 ? 1 - diff / maxCount : 1;
+    totalBalance += balance;
+
+    // Convert balance to percentage score for individual modalities
+    modalityScores[modality] = balance * 100;
+  });
+
+  const overall = (totalBalance / modalities.length) * 100;
 
   return {
-    cardinal,
-    fixed,
-    mutable,
+    cardinal: modalityScores.cardinal,
+    fixed: modalityScores.fixed,
+    mutable: modalityScores.mutable,
     overall,
     description: generateModalityDescription(overall),
   };
@@ -346,26 +460,69 @@ function generateModalityDescription(score: number): string {
 }
 
 /**
- * Calculate overall compatibility score
+ * Calculate overall compatibility score using improved weighted ratio method
  */
 function calculateOverallCompatibility(
   aspects: SynastryAspect[],
   elementComp: ElementCompatibility,
   modalityComp: ModalityCompatibility
 ): number {
-  // Aspect score: harmonious aspects add, challenging aspects subtract
-  const aspectScore = aspects.reduce((sum, aspect) => {
-    const weight = aspect.strength;
-    return sum + (aspect.isHarmonious ? weight : -weight * 0.5);
-  }, 0);
+  // Step 1: Filter and cap aspects to prevent dilution
+  const filteredAspects = filterAndCapAspects(aspects);
 
-  const normalizedAspectScore = Math.max(0, Math.min(100, (aspectScore / aspects.length) * 100));
+  console.log(`🔮 Synastry aspects - Original: ${aspects.length}, After filtering: ${filteredAspects.length}`);
+  console.log(`   Major aspects: ${filteredAspects.filter((a) => MAJOR_ASPECTS.includes(a.type)).length}`);
+  console.log(`   Minor aspects: ${filteredAspects.filter((a) => MINOR_ASPECTS.includes(a.type)).length}`);
 
-  // Weighted average
-  const overall =
-    normalizedAspectScore * 0.6 + elementComp.overall * 0.25 + modalityComp.overall * 0.15;
+  // Step 2: Calculate weighted harmony scores
+  let harmoniousScore = 0;
+  let challengingScore = 0;
+  let neutralScore = 0;
 
-  return Math.round(Math.max(0, Math.min(100, overall)));
+  filteredAspects.forEach((aspect) => {
+    const weight = getAspectWeight(aspect.planet1, aspect.planet2);
+    const weightedStrength = aspect.strength * weight;
+
+    if (['trine', 'sextile'].includes(aspect.type)) {
+      harmoniousScore += weightedStrength;
+    } else if (aspect.type === 'conjunction') {
+      // Conjunctions are generally harmonious but can be intense
+      harmoniousScore += weightedStrength * 0.8;
+    } else if (['square', 'opposition'].includes(aspect.type)) {
+      challengingScore += weightedStrength;
+    } else {
+      // Minor aspects - treat as mildly challenging or neutral
+      neutralScore += weightedStrength * 0.3;
+    }
+  });
+
+  // Step 3: Calculate base score using weighted ratio method
+  const netHarmony = harmoniousScore - challengingScore * 0.5 - neutralScore * 0.2;
+  const totalWeightedAspects = harmoniousScore + challengingScore + neutralScore;
+
+  let aspectScore = 50; // Neutral baseline
+  if (totalWeightedAspects > 0) {
+    // Scale from the baseline based on net harmony ratio
+    const harmonyRatio = netHarmony / totalWeightedAspects;
+    aspectScore = 50 + harmonyRatio * 50;
+    aspectScore = Math.max(0, Math.min(100, aspectScore));
+  }
+
+  // Step 4: Add significance bonus for important conjunctions
+  const significanceBonus = calculateSignificanceBonus(filteredAspects);
+  aspectScore = Math.min(100, aspectScore + significanceBonus);
+
+  console.log(`   Harmonious: ${harmoniousScore.toFixed(2)}, Challenging: ${challengingScore.toFixed(2)}, Neutral: ${neutralScore.toFixed(2)}`);
+  console.log(`   Net harmony: ${netHarmony.toFixed(2)}, Significance bonus: ${significanceBonus.toFixed(2)}`);
+  console.log(`   Aspect score: ${aspectScore.toFixed(1)}%`);
+
+  // Step 5: Calculate final weighted score
+  const finalScore = aspectScore * 0.6 + elementComp.overall * 0.25 + modalityComp.overall * 0.15;
+
+  console.log(`📊 Final breakdown - Aspects: ${aspectScore.toFixed(1)}% (60%), Elements: ${elementComp.overall.toFixed(1)}% (25%), Modalities: ${modalityComp.overall.toFixed(1)}% (15%)`);
+  console.log(`🎯 Final Compatibility Score: ${finalScore.toFixed(1)}%`);
+
+  return Math.round(Math.max(0, Math.min(100, finalScore)));
 }
 
 /**

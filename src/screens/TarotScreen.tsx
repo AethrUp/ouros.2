@@ -1,17 +1,21 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, TouchableOpacity, Text, AppState } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useAppStore } from '../store';
+import { useFeatureUsage } from '../hooks/useFeatureAccess';
+import { UpgradePrompt } from '../components/UpgradePrompt';
 import { SpreadSelector } from '../components/tarot/SpreadSelector';
 import { IntentionInput } from '../components/tarot/IntentionInput';
 import { QuantumLoadingScreen } from '../components/tarot/QuantumLoadingScreen';
 import { QuantumCardReveal } from '../components/tarot/QuantumCardReveal';
 import { InterpretationScreen } from '../components/tarot/InterpretationScreen';
+import { PaywallModal } from '../components/PaywallModal';
 import { TAROT_SPREADS } from '../data/tarot/spreads';
 import { theme } from '../styles';
 
 export const TarotScreen = ({ navigation }: any) => {
   const {
+    currentSession,
     sessionStep,
     selectedSpread,
     intention,
@@ -23,21 +27,53 @@ export const TarotScreen = ({ navigation }: any) => {
     startSession,
     setIntention,
     drawCards,
-    generateInterpretation,
+    generateTarotInterpretation,
     saveReading,
     clearSession,
   } = useAppStore();
 
-  const handleSpreadSelect = (spread: any) => {
+  // Feature usage tracking
+  const { canUse, currentUsage, limit, tier, useFeature } = useFeatureUsage('tarot');
+  const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
+  const [showPaywall, setShowPaywall] = useState(false);
+  const [hasCheckedUsage, setHasCheckedUsage] = useState(false);
+
+  const handleSpreadSelect = async (spread: any) => {
+    // Only check usage once at session start to prevent repeated checks
+    // and re-renders during the active session
+    if (!hasCheckedUsage) {
+      // Check if user can use this feature
+      if (!canUse) {
+        setShowUpgradePrompt(true);
+        return;
+      }
+
+      // Increment usage counter
+      try {
+        await useFeature();
+        setHasCheckedUsage(true);
+      } catch (error) {
+        console.error('Failed to track usage:', error);
+      }
+    }
+
     startSession(spread);
   };
+
+  // Reset usage check flag when session clears
+  useEffect(() => {
+    if (!currentSession) {
+      setHasCheckedUsage(false);
+    }
+  }, [currentSession]);
 
   const handleIntentionNext = () => {
     drawCards();
   };
 
   const handleCardsRevealed = () => {
-    generateInterpretation();
+    console.log('🎯 handleCardsRevealed called');
+    generateTarotInterpretation();
   };
 
   const handleSaveReading = async () => {
@@ -218,6 +254,29 @@ export const TarotScreen = ({ navigation }: any) => {
   return (
     <View style={styles.container}>
       {renderStep()}
+
+      {/* Upgrade Prompt */}
+      <UpgradePrompt
+        visible={showUpgradePrompt}
+        onClose={() => setShowUpgradePrompt(false)}
+        onUpgrade={() => {
+          setShowUpgradePrompt(false);
+          setShowPaywall(true);
+        }}
+        feature="tarot"
+        currentTier={tier}
+        currentUsage={currentUsage}
+      />
+
+      {/* Paywall Modal */}
+      <PaywallModal
+        visible={showPaywall}
+        onClose={() => setShowPaywall(false)}
+        onSuccess={() => {
+          setShowPaywall(false);
+          // Reload the component to refresh feature access
+        }}
+      />
     </View>
   );
 };

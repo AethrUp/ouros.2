@@ -30,13 +30,13 @@ export const generateSynastryReading = async (
   person1Name: string,
   person2Name: string,
   connectionId: string,
-  focusArea: 'romantic' | 'friendship' | 'business' | 'family' | 'general' = 'general',
+  relationshipContext?: string,
   detailLevel: 'brief' | 'detailed' | 'comprehensive' = 'detailed'
 ): Promise<GenerateSynastryReadingResponse> => {
   try {
     console.log('🌟 Generating synastry reading...');
     console.log(`👥 ${person1Name} & ${person2Name}`);
-    console.log(`💫 Focus: ${focusArea}, Detail: ${detailLevel}`);
+    console.log(`💫 Relationship: ${relationshipContext || 'general'}, Detail: ${detailLevel}`);
 
     // Check if API key is configured
     if (!process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY) {
@@ -50,7 +50,7 @@ export const generateSynastryReading = async (
       person2Chart,
       person1Name,
       person2Name,
-      focusArea,
+      relationshipContext,
       detailLevel
     );
 
@@ -91,7 +91,7 @@ export const generateSynastryReading = async (
       synastryChartId: synastryChart.id,
       connectionId,
       interpretation,
-      focusArea,
+      relationshipContext,
       aiGenerated: true,
       model: MODEL,
       promptVersion: PROMPT_VERSION,

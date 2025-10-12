@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, Keyboard, TouchableWithoutFeedback } from 'react-native';
 import { HeaderBar } from '../HeaderBar';
+import { Button } from '../Button';
 import { theme } from '../../styles/theme';
 
 interface IntentionInputProps {
@@ -54,26 +55,31 @@ export const IntentionInput: React.FC<IntentionInputProps> = ({
             <TextInput
               ref={inputRef}
               style={styles.input}
-              placeholder="SET YOUR INTENTION"
+              placeholder="Provide guidance on..."
               placeholderTextColor={theme.colors.text.secondary}
               value={value}
               onChangeText={onChange}
               onFocus={handleInputFocus}
               multiline
               numberOfLines={6}
+              maxLength={500}
               textAlignVertical="top"
               returnKeyType="done"
               blurOnSubmit={true}
             />
+
+            <Text style={styles.characterCount}>{value.length}/500</Text>
             </ScrollView>
 
-            <TouchableOpacity
-              style={styles.nextButton}
-              onPress={onNext}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.nextButtonText}>NEXT</Text>
-            </TouchableOpacity>
+            <View style={styles.buttonContainer}>
+              <Button
+                title="Next"
+                onPress={onNext}
+                variant="primary"
+                size="medium"
+                fullWidth
+              />
+            </View>
           </View>
         </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
@@ -130,21 +136,17 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter',
     minHeight: 120,
     borderWidth: 0,
-    marginBottom: theme.spacing.xl,
+    marginBottom: theme.spacing.xs,
   },
-  nextButton: {
-    backgroundColor: theme.colors.textInverse || '#FFFFFF',
+  characterCount: {
+    fontSize: 11,
+    color: theme.colors.text.secondary,
+    fontFamily: 'Inter',
+    textAlign: 'right',
+    marginTop: theme.spacing.xs,
+  },
+  buttonContainer: {
     marginHorizontal: theme.spacing.lg,
     marginBottom: theme.spacing.xl,
-    paddingVertical: theme.spacing.sm,
-    borderRadius: theme.borderRadius.md,
-    alignItems: 'center',
-  },
-  nextButtonText: {
-    fontSize: theme.fontSize.sm,
-    fontWeight: theme.fontWeight.semibold,
-    color: theme.colors.background.primary,
-    letterSpacing: 1.2,
-    fontFamily: 'Inter',
   },
 });

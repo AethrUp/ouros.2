@@ -1,0 +1,62 @@
+# Documentation
+*.md
+!README.md
+
+# Obsidian vault
+ouros2_vault/
+
+# Design files
+UI References/
+*.afdesign
+*.afdesign~lock~
+
+# Raw asset sources
+MINOR ARCANE-20251003T205427Z-1-001/
+
+# Testing files
+*.storekit
+Ouros2.storekit
+
+# Database migration files (already run on server)
+*.sql
+supabase_migration_*.sql
+
+# Development scripts
+run-migration.js
+check-hexagrams.js
+test-*.ts
+test-*.js
+
+# Local environment files
+.env.local
+.env.*.local
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Build artifacts
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Git
+.git/
+.gitignore
+
+# Node modules (redundant but explicit)
+node_modules/
+
+# Temporary files
+nul
+tmp/
+temp/

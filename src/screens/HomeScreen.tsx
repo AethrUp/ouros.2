@@ -8,11 +8,46 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { NavigationProps } from '../types';
-import { HeaderBar } from '../components';
+import { HeaderBar, Button } from '../components';
 import { colors, spacing, typography } from '../styles';
 import { useAppStore } from '../store';
 import { getDailyHoroscope } from '../handlers/horoscopeGeneration';
 import { Ionicons } from '@expo/vector-icons';
+import Svg, { Line } from 'react-native-svg';
+
+// Custom hexagram icon component
+const HexagramIcon = ({ size = 28, color = '#FFFFFF' }) => {
+  const lineWidth = size * 0.7;
+  const lineSpacing = size / 7;
+  const strokeWidth = 2;
+  const gapSize = size * 0.15;
+
+  return (
+    <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+      {/* Hexagram with alternating solid and broken lines */}
+      {/* Line 1 - broken (yin) */}
+      <Line x1={(size - lineWidth) / 2} y1={lineSpacing * 1} x2={(size - lineWidth) / 2 + lineWidth / 2 - gapSize / 2} y2={lineSpacing * 1} stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" />
+      <Line x1={(size - lineWidth) / 2 + lineWidth / 2 + gapSize / 2} y1={lineSpacing * 1} x2={(size - lineWidth) / 2 + lineWidth} y2={lineSpacing * 1} stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" />
+
+      {/* Line 2 - solid (yang) */}
+      <Line x1={(size - lineWidth) / 2} y1={lineSpacing * 2} x2={(size - lineWidth) / 2 + lineWidth} y2={lineSpacing * 2} stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" />
+
+      {/* Line 3 - solid (yang) */}
+      <Line x1={(size - lineWidth) / 2} y1={lineSpacing * 3} x2={(size - lineWidth) / 2 + lineWidth} y2={lineSpacing * 3} stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" />
+
+      {/* Line 4 - broken (yin) */}
+      <Line x1={(size - lineWidth) / 2} y1={lineSpacing * 4} x2={(size - lineWidth) / 2 + lineWidth / 2 - gapSize / 2} y2={lineSpacing * 4} stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" />
+      <Line x1={(size - lineWidth) / 2 + lineWidth / 2 + gapSize / 2} y1={lineSpacing * 4} x2={(size - lineWidth) / 2 + lineWidth} y2={lineSpacing * 4} stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" />
+
+      {/* Line 5 - solid (yang) */}
+      <Line x1={(size - lineWidth) / 2} y1={lineSpacing * 5} x2={(size - lineWidth) / 2 + lineWidth} y2={lineSpacing * 5} stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" />
+
+      {/* Line 6 - broken (yin) */}
+      <Line x1={(size - lineWidth) / 2} y1={lineSpacing * 6} x2={(size - lineWidth) / 2 + lineWidth / 2 - gapSize / 2} y2={lineSpacing * 6} stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" />
+      <Line x1={(size - lineWidth) / 2 + lineWidth / 2 + gapSize / 2} y1={lineSpacing * 6} x2={(size - lineWidth) / 2 + lineWidth} y2={lineSpacing * 6} stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" />
+    </Svg>
+  );
+};
 
 // Category icon mappings
 const categoryIcons: Record<string, keyof typeof Ionicons.glyphMap> = {
@@ -46,6 +81,9 @@ export const HomeScreen: React.FC<NavigationProps> = ({ navigation }) => {
     setDailyReadingError,
     setGenerationMetadata,
     setGeneratingHoroscope,
+    connections,
+    savedCharts,
+    synastryReadings,
   } = useAppStore();
 
   // Reset flag on mount and cleanup on unmount
@@ -139,6 +177,128 @@ export const HomeScreen: React.FC<NavigationProps> = ({ navigation }) => {
     navigation.navigate('DailyHoroscope');
   };
 
+  // Get recent synastry connections (both friends and saved charts)
+  const getRecentSynastryConnections = () => {
+    const allConnections: Array<{
+      id: string;
+      name: string;
+      type: 'friend' | 'saved';
+      createdAt: string;
+      hasReading?: boolean;
+      focusArea?: string;
+    }> = [];
+
+    // Add friend connections
+    connections.forEach((conn) => {
+      allConnections.push({
+        id: conn.connectionId,
+        name: conn.friendDisplayName,
+        type: 'friend',
+        createdAt: conn.createdAt,
+      });
+    });
+
+    // Add saved charts
+    savedCharts.forEach((chart) => {
+      const readingForChart = synastryReadings.find((r) => r.synastryChartId === chart.id);
+      allConnections.push({
+        id: chart.id,
+        name: chart.name,
+        type: 'saved',
+        createdAt: chart.createdAt,
+        hasReading: !!readingForChart,
+        focusArea: readingForChart?.focusArea,
+      });
+    });
+
+    // Sort by most recent and take top 5
+    return allConnections
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, 5);
+  };
+
+  // Check if connection is new (within last 7 days)
+  const isNewConnection = (createdAt: string) => {
+    const created = new Date(createdAt);
+    const now = new Date();
+    const daysDiff = (now.getTime() - created.getTime()) / (1000 * 60 * 60 * 24);
+    return daysDiff <= 7;
+  };
+
+  // Render recent synastry connections
+  const renderRecentSynastry = () => {
+    const recentConnections = getRecentSynastryConnections();
+
+    if (recentConnections.length === 0) {
+      return null;
+    }
+
+    return (
+      <View style={styles.synastrySection}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.synastryScroll}>
+          {recentConnections.map((connection) => {
+            const isNew = isNewConnection(connection.createdAt);
+            const readingTitle = connection.focusArea
+              ? connection.focusArea.charAt(0).toUpperCase() + connection.focusArea.slice(1)
+              : 'Synastry Reading';
+
+            return (
+              <TouchableOpacity
+                key={connection.id}
+                style={styles.synastryCard}
+                onPress={() => {
+                  if (connection.type === 'friend') {
+                    // Find the actual friend connection
+                    const friendConnection = connections.find(c => c.connectionId === connection.id);
+                    if (friendConnection) {
+                      navigation.navigate('friends', {
+                        screen: 'Synastry',
+                        params: { connection: friendConnection }
+                      });
+                    }
+                  } else {
+                    // It's a saved chart - create a mock FriendConnection
+                    const savedChart = savedCharts.find(sc => sc.id === connection.id);
+                    if (savedChart) {
+                      const mockConnection: any = {
+                        connectionId: savedChart.id,
+                        friendId: savedChart.id,
+                        friendEmail: '',
+                        friendDisplayName: savedChart.name,
+                        friendCode: '',
+                        userSharesChart: true,
+                        friendSharesChart: true,
+                        relationshipLabel: savedChart.relationship,
+                        createdAt: savedChart.createdAt,
+                      };
+                      navigation.navigate('friends', {
+                        screen: 'Synastry',
+                        params: {
+                          connection: mockConnection,
+                          savedChart: savedChart
+                        }
+                      });
+                    }
+                  }
+                }}
+              >
+                {isNew && (
+                  <View style={styles.newBadge}>
+                    <Text style={styles.newBadgeText}>NEW</Text>
+                  </View>
+                )}
+                <Text style={styles.synastryName}>{connection.name}</Text>
+                <Text style={styles.synastryReading} numberOfLines={1}>
+                  {readingTitle}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      </View>
+    );
+  };
+
   // Render category previews
   const renderCategoryPreviews = () => {
     const selectedCategories = profile?.selectedCategories || [];
@@ -219,30 +379,36 @@ export const HomeScreen: React.FC<NavigationProps> = ({ navigation }) => {
         {!isLoadingDailyReading && !dailyReadingError && dailyHoroscope && (
           <>
             {/* Main Horoscope Card */}
-            <TouchableOpacity style={styles.horoscopeCard} onPress={viewFullHoroscope}>
+            <View style={styles.horoscopeCard}>
               <Text style={styles.horoscopeTitle}>{dailyHoroscope.preview?.title}</Text>
               <Text style={styles.horoscopeSummary} numberOfLines={4}>
                 {dailyHoroscope.preview?.summary}
               </Text>
 
               <View style={styles.readMoreContainer}>
-                <Text style={styles.readMoreText}>READ FULL HOROSCOPE</Text>
+                <Button
+                  title="Read Full Horoscope"
+                  onPress={viewFullHoroscope}
+                  variant="primary"
+                  size="small"
+                />
               </View>
-            </TouchableOpacity>
+            </View>
 
             {/* Category Previews */}
             {renderCategoryPreviews()}
           </>
         )}
 
+        {/* Recent Synastry */}
+        {renderRecentSynastry()}
+
         {/* Quick Actions */}
         <View style={styles.quickActions}>
-          <Text style={styles.sectionTitle}>EXPLORE</Text>
           <TouchableOpacity
             style={styles.actionCard}
             onPress={() => navigation.navigate('journal', { screen: 'chart' })}
           >
-            <Ionicons name="planet-outline" size={24} color={colors.text.primary} />
             <Text style={styles.actionTitle}>Natal Chart</Text>
             <Text style={styles.actionSubtitle}>View your birth chart</Text>
           </TouchableOpacity>
@@ -251,10 +417,37 @@ export const HomeScreen: React.FC<NavigationProps> = ({ navigation }) => {
             style={styles.actionCard}
             onPress={() => navigation.navigate('journal')}
           >
-            <Ionicons name="book-outline" size={24} color={colors.text.primary} />
             <Text style={styles.actionTitle}>Journal</Text>
             <Text style={styles.actionSubtitle}>Reflect on your journey</Text>
           </TouchableOpacity>
+
+          <View style={styles.actionRow}>
+            <TouchableOpacity
+              style={[styles.actionCardThird, { marginRight: spacing.sm }]}
+              onPress={() => navigation.navigate('oracle', { screen: 'Tarot' })}
+            >
+              <Ionicons name="sparkles-outline" size={28} color="#FFFFFF" style={styles.oracleIcon} />
+              <Text style={styles.oracleTitle}>Tarot</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.actionCardThird, { marginRight: spacing.sm }]}
+              onPress={() => navigation.navigate('oracle', { screen: 'IChing' })}
+            >
+              <View style={styles.oracleIcon}>
+                <HexagramIcon size={28} color="#FFFFFF" />
+              </View>
+              <Text style={styles.oracleTitle}>I Ching</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.actionCardThird, { marginRight: 0 }]}
+              onPress={() => navigation.navigate('oracle', { screen: 'DreamInterpretation' })}
+            >
+              <Ionicons name="moon-outline" size={28} color="#FFFFFF" style={styles.oracleIcon} />
+              <Text style={styles.oracleTitle}>Dreams</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         <View style={styles.bottomSpacer} />
@@ -276,9 +469,10 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
   },
   dateText: {
-    ...typography.caption,
+    ...typography.body,
+    fontSize: 16,
     letterSpacing: 1,
-    color: colors.text.secondary,
+    color: '#FFFFFF',
   },
   loadingCard: {
     marginHorizontal: spacing.lg,
@@ -347,15 +541,6 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     marginTop: spacing.md,
   },
-  readMoreText: {
-    ...typography.caption,
-    letterSpacing: 1,
-    backgroundColor: colors.text.primary,
-    color: colors.background.primary,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: 8,
-  },
   categoriesSection: {
     marginBottom: spacing.lg,
   },
@@ -364,6 +549,55 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     marginBottom: spacing.md,
     paddingHorizontal: spacing.lg,
+  },
+  synastrySection: {
+    marginBottom: spacing.lg,
+  },
+  synastryScroll: {
+    paddingLeft: spacing.lg,
+  },
+  synastryCard: {
+    width: 160,
+    marginRight: spacing.md,
+    padding: spacing.md,
+    backgroundColor: colors.background.card,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+    position: 'relative',
+  },
+  newBadge: {
+    position: 'absolute',
+    top: spacing.xs,
+    right: spacing.xs,
+    backgroundColor: colors.text.primary,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  newBadgeText: {
+    ...typography.caption,
+    fontSize: 10,
+    color: colors.background.primary,
+    fontWeight: 'bold',
+  },
+  synastryName: {
+    ...typography.h3,
+    marginBottom: spacing.xs,
+    color: '#F6D99F',
+    fontFamily: 'PTSerif_400Regular',
+    letterSpacing: 0,
+  },
+  synastryType: {
+    ...typography.caption,
+    color: colors.text.secondary,
+    marginBottom: spacing.xs,
+  },
+  synastryReading: {
+    ...typography.body,
+    fontSize: 12,
+    color: '#FFFFFF',
+    textTransform: 'uppercase',
   },
   categoryScroll: {
     paddingLeft: spacing.lg,
@@ -399,14 +633,45 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     marginBottom: spacing.md,
   },
+  actionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: spacing.md,
+  },
+  actionCardHalf: {
+    flex: 1,
+    padding: spacing.lg,
+    backgroundColor: colors.background.card,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  actionCardThird: {
+    flex: 1,
+    padding: spacing.lg,
+    backgroundColor: colors.background.card,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
   actionTitle: {
     ...typography.h3,
-    marginTop: spacing.sm,
     marginBottom: spacing.xs,
   },
   actionSubtitle: {
     ...typography.body,
     color: colors.text.secondary,
+  },
+  oracleIcon: {
+    alignSelf: 'center',
+    marginBottom: spacing.xs,
+  },
+  oracleTitle: {
+    fontSize: 14,
+    color: '#F6D99F',
+    fontFamily: 'PTSerif_400Regular',
+    letterSpacing: 0,
+    textAlign: 'center',
   },
   bottomSpacer: {
     height: spacing.xl * 2,

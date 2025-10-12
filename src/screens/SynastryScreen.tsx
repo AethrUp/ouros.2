@@ -29,12 +29,14 @@ export const SynastryScreen: React.FC<NavigationProps> = ({ navigation, route })
   const {
     natalChart,
     profile,
+    birthData,
   } = useAppStore();
 
   const [currentSynastryChart, setCurrentSynastryChart] = useState<any>(null);
 
   // Get connection from route params
   const connection: FriendConnection = route?.params?.connection;
+  const savedChart = route?.params?.savedChart;
 
   useEffect(() => {
     if (connection && natalChart && profile) {
@@ -56,19 +58,33 @@ export const SynastryScreen: React.FC<NavigationProps> = ({ navigation, route })
     setError(null);
 
     try {
-      // In a real app, you'd fetch the friend's natal chart from the database
-      // For now, we'll use the current user's chart as a placeholder for demo purposes
-      // TODO: Fetch friend's natal chart from Supabase
-      const friendChart = natalChart; // Placeholder
+      // Determine if this is a saved chart or user connection
+      const isSavedChart = !!savedChart;
+      const friendChart = savedChart
+        ? savedChart.natalChart
+        : natalChart; // TODO: Fetch friend's natal chart from Supabase
 
-      // Load or calculate synastry chart
-      const synastryChart = await synastryAPI.loadSynastryChart(
-        profile.id,
-        connection.friendId,
-        natalChart,
-        friendChart,
-        false // Don't force regenerate
-      );
+      // Load or calculate synastry chart using the appropriate method
+      let synastryChart;
+      if (isSavedChart) {
+        // User-to-SavedChart synastry
+        synastryChart = await synastryAPI.loadSynastryChartWithSaved(
+          profile.id,
+          savedChart.id,
+          natalChart,
+          savedChart.natalChart,
+          false
+        );
+      } else {
+        // User-to-User synastry
+        synastryChart = await synastryAPI.loadSynastryChart(
+          profile.id,
+          connection.friendId,
+          natalChart,
+          friendChart,
+          false
+        );
+      }
 
       if (!synastryChart) {
         throw new Error('Failed to load synastry chart');
@@ -76,8 +92,10 @@ export const SynastryScreen: React.FC<NavigationProps> = ({ navigation, route })
 
       setCurrentSynastryChart(synastryChart);
 
-      // Try to load existing reading
-      const readings = await synastryAPI.loadSynastryReadings(connection.connectionId);
+      // Try to load existing reading using the appropriate method
+      const readings = isSavedChart
+        ? await synastryAPI.loadSynastryReadingsForSavedChart(savedChart.id)
+        : await synastryAPI.loadSynastryReadings(connection.connectionId);
 
       if (readings.length > 0) {
         // Use the most recent reading
@@ -90,14 +108,21 @@ export const SynastryScreen: React.FC<NavigationProps> = ({ navigation, route })
           friendChart,
           profile.displayName,
           connection.friendDisplayName,
-          connection.connectionId,
-          'general',
+          isSavedChart ? savedChart.id : connection.connectionId,
+          connection.relationshipLabel || undefined,
           'detailed'
         );
 
         if (result.success && result.reading) {
+          // Add the correct ID field before saving
+          const readingToSave = {
+            ...result.reading,
+            connectionId: isSavedChart ? undefined : connection.connectionId,
+            savedChartId: isSavedChart ? savedChart.id : undefined,
+          };
+
           // Save the reading
-          const savedReading = await synastryAPI.saveSynastryReading(result.reading);
+          const savedReading = await synastryAPI.saveSynastryReading(readingToSave);
           setReading(savedReading);
         } else {
           throw new Error(result.message || 'Failed to generate reading');
@@ -110,6 +135,44 @@ export const SynastryScreen: React.FC<NavigationProps> = ({ navigation, route })
       setError(err.message || 'Failed to load synastry data');
       setIsLoading(false);
     }
+  };
+
+  // Navigate to daily forecast
+  const viewDailyForecast = () => {
+    if (!currentSynastryChart || !natalChart || !profile || !birthData) {
+      console.warn('Missing required data for daily forecast');
+      return;
+    }
+
+    // Prepare profiles for transit calculation
+    const person1Profile = {
+      ...profile,
+      birthDate: birthData.birthDate,
+      birthTime: birthData.birthTime,
+      birthLocation: birthData.birthLocation,
+    };
+
+    const person2Profile = savedChart
+      ? {
+          birthDate: savedChart.birthData.birthDate,
+          birthTime: savedChart.birthData.birthTime,
+          birthLocation: savedChart.birthData.birthLocation,
+        }
+      : person1Profile; // TODO: Get actual friend profile when user-to-user
+
+    const person2Chart = savedChart ? savedChart.natalChart : natalChart;
+
+    navigation.navigate('DailySynastryForecast', {
+      synastryChart: currentSynastryChart,
+      person1Chart: natalChart,
+      person2Chart: person2Chart,
+      person1Profile: person1Profile,
+      person2Profile: person2Profile,
+      person1Name: profile.displayName,
+      person2Name: connection.friendDisplayName,
+      connectionId: savedChart ? undefined : connection.connectionId,
+      savedChartId: savedChart ? savedChart.id : undefined,
+    });
   };
 
   // Section configuration
@@ -245,8 +308,7 @@ export const SynastryScreen: React.FC<NavigationProps> = ({ navigation, route })
 
     return (
       <View onLayout={(e) => measureSection('reading', e)} style={styles.section}>
-        <View style={styles.sectionDivider} />
-        <Text style={[styles.titleText, { paddingHorizontal: 0, marginTop: spacing.lg, marginBottom: spacing.sm }]}>
+        <Text style={[styles.titleText, { paddingHorizontal: 0, marginTop: spacing.md, marginBottom: spacing.sm }]}>
           Relationship Dynamics
         </Text>
 
@@ -338,36 +400,16 @@ export const SynastryScreen: React.FC<NavigationProps> = ({ navigation, route })
           <Text style={styles.headerSubtitle}>SYNASTRY READING</Text>
           <View style={styles.headerNames}>
             <Text style={styles.headerName}>{profile?.displayName}</Text>
-            <Ionicons name="heart" size={16} color={colors.primary} style={styles.headerIcon} />
+            <Text style={styles.headerSeparator}>&</Text>
             <Text style={styles.headerName}>{connection.friendDisplayName}</Text>
           </View>
         </View>
 
-        <TouchableOpacity style={styles.moreButton}>
-          <Ionicons name="ellipsis-horizontal" size={24} color={colors.text.primary} />
+        <TouchableOpacity style={styles.moreButton} onPress={viewDailyForecast}>
+          <Ionicons name="calendar-outline" size={24} color={colors.text.primary} />
         </TouchableOpacity>
       </View>
 
-      {/* Section Navigation Dots */}
-      <View style={styles.sectionNav}>
-        {sections.map((section, index) => (
-          <TouchableOpacity
-            key={section.id}
-            onPress={() => handleSectionPress(index, section.id)}
-            style={styles.sectionNavItem}
-          >
-            <View style={[styles.dot, activeTab === index && styles.dotActive]} />
-            <Text
-              style={[
-                styles.sectionNavLabel,
-                activeTab === index && styles.sectionNavLabelActive,
-              ]}
-            >
-              {section.shortLabel}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
 
       {/* Scrollable Content */}
       <ScrollView
@@ -470,46 +512,14 @@ const styles = StyleSheet.create({
     ...typography.h3,
     fontSize: 16,
   },
-  headerIcon: {
+  headerSeparator: {
+    ...typography.h3,
+    fontSize: 16,
     marginHorizontal: spacing.sm,
+    color: colors.text.secondary,
   },
   moreButton: {
     padding: spacing.xs,
-  },
-  sectionNav: {
-    position: 'absolute',
-    right: spacing.md,
-    top: '40%',
-    zIndex: 10,
-  },
-  sectionNavItem: {
-    alignItems: 'center',
-    marginVertical: spacing.sm,
-  },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: colors.text.secondary + '40',
-    marginBottom: spacing.xs,
-  },
-  dotActive: {
-    backgroundColor: colors.primary,
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-  },
-  sectionNavLabel: {
-    ...typography.caption,
-    fontSize: 9,
-    color: colors.text.secondary,
-    transform: [{ rotate: '90deg' }],
-    width: 60,
-    textAlign: 'center',
-  },
-  sectionNavLabelActive: {
-    color: colors.primary,
-    fontWeight: '600',
   },
   scrollView: {
     flex: 1,

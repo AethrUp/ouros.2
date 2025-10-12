@@ -4,7 +4,7 @@ export type JournalEntryType = 'iching' | 'tarot' | 'dream' | 'journal' | 'horos
 
 export interface LinkedReading {
   id: string;
-  reading_type: 'tarot' | 'iching' | 'horoscope' | 'synastry';
+  reading_type: 'tarot' | 'iching' | 'dream' | 'horoscope' | 'synastry';
   title?: string;
   timestamp: string; // ISO timestamp
   interpretation: string;

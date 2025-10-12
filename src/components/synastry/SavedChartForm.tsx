@@ -10,6 +10,7 @@ import {
   Alert,
   ActivityIndicator,
   Platform,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -109,7 +110,11 @@ export const SavedChartForm: React.FC<SavedChartFormProps> = ({ visible, onClose
 
   return (
     <Modal visible={visible} animationType="slide" transparent={true} onRequestClose={handleClose}>
-      <View style={styles.modalOverlay}>
+      <KeyboardAvoidingView
+        style={styles.modalOverlay}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={0}
+      >
         <View style={styles.modalContent}>
           {/* Header */}
           <View style={styles.header}>
@@ -302,7 +307,7 @@ export const SavedChartForm: React.FC<SavedChartFormProps> = ({ visible, onClose
             </TouchableOpacity>
           </View>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 };

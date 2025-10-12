@@ -483,6 +483,21 @@ export const synastryAPI = {
   },
 
   /**
+   * Load synastry readings for a saved chart
+   */
+  loadSynastryReadingsForSavedChart: async (savedChartId: string): Promise<SynastryReading[]> => {
+    const { data, error } = await supabase
+      .from('synastry_readings')
+      .select('*')
+      .eq('saved_chart_id', savedChartId)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    return (data || []).map(mapSynastryReading);
+  },
+
+  /**
    * Save synastry reading
    */
   saveSynastryReading: async (reading: SynastryReading): Promise<SynastryReading> => {
@@ -493,9 +508,10 @@ export const synastryAPI = {
       .from('synastry_readings')
       .insert({
         synastry_chart_id: reading.synastryChartId,
-        connection_id: reading.connectionId,
+        connection_id: reading.connectionId || null,
+        saved_chart_id: reading.savedChartId || null,
         interpretation: reading.interpretation,
-        focus_area: reading.focusArea,
+        relationship_context: reading.relationshipContext,
         ai_generated: reading.aiGenerated,
         model: reading.model,
         prompt_version: reading.promptVersion,
@@ -568,8 +584,9 @@ function mapSynastryReading(data: any): SynastryReading {
     id: data.id,
     synastryChartId: data.synastry_chart_id,
     connectionId: data.connection_id,
+    savedChartId: data.saved_chart_id,
     interpretation: data.interpretation,
-    focusArea: data.focus_area,
+    relationshipContext: data.relationship_context,
     aiGenerated: data.ai_generated,
     model: data.model,
     promptVersion: data.prompt_version,

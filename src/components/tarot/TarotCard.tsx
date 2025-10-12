@@ -2,6 +2,7 @@ import React, { useRef, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Animated, Image } from 'react-native';
 import { TarotCard as TarotCardType } from '../../types/tarot';
 import { theme } from '../../styles/theme';
+import CardBackSvg from '../../../assets/tarot/rider-waite/card-back.svg';
 
 interface TarotCardProps {
   card?: TarotCardType;
@@ -66,7 +67,10 @@ export const TarotCard: React.FC<TarotCardProps> = ({
         {/* Show back if not revealed */}
         {!isRevealed && (
           <View style={[styles.cardFace, sizeStyles.container, styles.cardBack]}>
-            <View style={styles.cardBackPattern} />
+            <CardBackSvg
+              width={dimensions.width}
+              height={dimensions.height}
+            />
           </View>
         )}
 
@@ -200,14 +204,7 @@ const styles = StyleSheet.create({
     borderColor: '#D4AF37', // Gold
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  cardBackPattern: {
-    width: '70%',
-    height: '70%',
-    borderWidth: 2,
-    borderColor: theme.colors.text.primary,
-    borderRadius: theme.borderRadius.sm,
-    opacity: 0.3,
+    overflow: 'hidden',
   },
   cardFront: {
     backgroundColor: theme.colors.background.card,
