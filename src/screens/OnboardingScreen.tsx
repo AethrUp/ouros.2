@@ -11,29 +11,30 @@ import { NavigationProps } from '../types';
 import { Button } from '../components';
 import { useAppStore } from '../store';
 import { colors, spacing, typography } from '../styles';
+import { handleChartGeneration } from '../handlers/chartGeneration';
 
 interface Category {
   id: string;
   name: string;
-  emoji: string;
   description: string;
 }
 
 const CATEGORIES: Category[] = [
-  { id: 'love', name: 'Love', emoji: '💕', description: 'Romance, relationships, attraction, and emotional connections' },
-  { id: 'career', name: 'Career', emoji: '💼', description: 'Professional growth, ambition, success, and work dynamics' },
-  { id: 'health', name: 'Health', emoji: '🌱', description: 'Physical wellness, mental health, vitality, and healing' },
-  { id: 'family', name: 'Family', emoji: '👨‍👩‍👧‍👦', description: 'Family bonds, home life, ancestry, and domestic harmony' },
-  { id: 'friendship', name: 'Friendship', emoji: '🤝', description: 'Social connections, community, networking, and platonic relationships' },
-  { id: 'travel', name: 'Travel', emoji: '✈️', description: 'Adventures, exploration, new experiences, and cultural expansion' },
-  { id: 'creativity', name: 'Creativity', emoji: '🎨', description: 'Artistic expression, innovation, imagination, and creative projects' },
-  { id: 'spirituality', name: 'Spirituality', emoji: '🔮', description: 'Spiritual growth, intuition, higher consciousness, and inner wisdom' },
-  { id: 'education', name: 'Education', emoji: '📚', description: 'Learning, skill development, knowledge acquisition, and intellectual growth' },
+  { id: 'love', name: 'Love', description: 'Romance, relationships, attraction, and emotional connections' },
+  { id: 'career', name: 'Career', description: 'Professional growth, ambition, success, and work dynamics' },
+  { id: 'health', name: 'Health', description: 'Physical wellness, mental health, vitality, and healing' },
+  { id: 'family', name: 'Family', description: 'Family bonds, home life, ancestry, and domestic harmony' },
+  { id: 'friendship', name: 'Friendship', description: 'Social connections, community, networking, and platonic relationships' },
+  { id: 'travel', name: 'Travel', description: 'Adventures, exploration, new experiences, and cultural expansion' },
+  { id: 'creativity', name: 'Creativity', description: 'Artistic expression, innovation, imagination, and creative projects' },
+  { id: 'spirituality', name: 'Spirituality', description: 'Spiritual growth, intuition, higher consciousness, and inner wisdom' },
+  { id: 'education', name: 'Education', description: 'Learning, skill development, knowledge acquisition, and intellectual growth' },
 ];
 
-export const OnboardingScreen: React.FC<NavigationProps> = ({ navigation }) => {
+export const OnboardingScreen: React.FC<NavigationProps> = ({ navigation, route }) => {
+  const { date, time, location } = route.params as any;
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const { updatePreferences } = useAppStore();
+  const { updatePreferences, updateBirthData, saveNatalChart, setAppLoading, user } = useAppStore();
 
   const toggleCategory = (categoryId: string) => {
     if (selectedCategories.includes(categoryId)) {
@@ -44,15 +45,56 @@ export const OnboardingScreen: React.FC<NavigationProps> = ({ navigation }) => {
   };
 
   const handleContinue = async () => {
-    if (selectedCategories.length !== 3) {
+    if (selectedCategories.length !== 3 || !date || !time || !location || !user) {
       return;
     }
 
-    // Save selected categories to preferences
-    await updatePreferences({ focusAreas: selectedCategories });
+    setAppLoading(true);
+    try {
+      // Step 1: Save selected categories to preferences
+      await updatePreferences({ focusAreas: selectedCategories });
 
-    // Navigate to birth data collection
-    navigation.navigate('birthData');
+      // Step 2: Format and save birth data
+      const birthData = {
+        birthDate: date.toISOString().split('T')[0], // YYYY-MM-DD
+        birthTime: `${time.getHours().toString().padStart(2, '0')}:${time.getMinutes().toString().padStart(2, '0')}`,
+        timeUnknown: false,
+        birthLocation: location,
+        timezone: location.timezone,
+      };
+
+      console.log('💾 Saving birth data to database...');
+      await updateBirthData(birthData);
+
+      // Step 3: Generate natal chart
+      console.log('🌟 Generating natal chart...');
+      const result = await handleChartGeneration(birthData, {
+        houseSystem: 'placidus',
+        precision: 'professional',
+        includeReports: true,
+        includeAspects: true,
+        includeMinorAspects: false,
+        includeMidpoints: false,
+        forceRegenerate: true,
+      });
+
+      if (result.success && result.data?.chartData) {
+        // Step 4: Save natal chart to database
+        console.log('💾 Saving natal chart to database...');
+        await saveNatalChart(user.id, result.data.chartData, 'placidus');
+
+        // Birth data is now saved - AppNavigator will automatically switch to TabNavigator
+        console.log('✅ Onboarding complete!');
+      } else {
+        console.error('Chart generation failed:', result.message);
+        alert('Failed to generate chart. Please try again.');
+      }
+    } catch (error: any) {
+      console.error('Chart generation/save error:', error);
+      alert(`An error occurred: ${error.message || 'Please try again.'}`);
+    } finally {
+      setAppLoading(false);
+    }
   };
 
   const isSelected = (categoryId: string) => selectedCategories.includes(categoryId);
@@ -69,12 +111,22 @@ export const OnboardingScreen: React.FC<NavigationProps> = ({ navigation }) => {
           <Text style={styles.subtitle}>
             Select 3 areas you'd like to focus on
           </Text>
-          <Text style={styles.counter}>
-            {selectedCategories.length} of 3 selected
-          </Text>
+          <View style={styles.progressContainer}>
+            {[0, 1, 2].map((index) => (
+              <View
+                key={index}
+                style={[
+                  styles.progressBar,
+                  {
+                    opacity: index < selectedCategories.length ? 1 : 0.3,
+                  },
+                ]}
+              />
+            ))}
+          </View>
         </View>
 
-        <View style={styles.categoriesGrid}>
+        <View style={styles.categoriesList}>
           {CATEGORIES.map((category) => {
             const selected = isSelected(category.id);
             return (
@@ -88,9 +140,11 @@ export const OnboardingScreen: React.FC<NavigationProps> = ({ navigation }) => {
                 activeOpacity={0.7}
                 disabled={!selected && selectedCategories.length >= 3}
               >
-                <Text style={styles.categoryEmoji}>{category.emoji}</Text>
-                <Text style={[styles.categoryName, selected && styles.categoryNameSelected]}>
+                <Text style={styles.categoryName}>
                   {category.name}
+                </Text>
+                <Text style={styles.categoryDescription}>
+                  {category.description}
                 </Text>
                 {selected && (
                   <View style={styles.selectedIndicator}>
@@ -143,46 +197,46 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: spacing.md,
   },
-  counter: {
-    ...typography.body,
-    color: colors.primary,
-    textAlign: 'center',
-    fontWeight: '600',
-  },
-  categoriesGrid: {
+  progressContainer: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: spacing.md,
+  },
+  progressBar: {
+    width: 40,
+    height: 8,
+    backgroundColor: colors.text.primary,
+    borderRadius: 2,
+  },
+  categoriesList: {
     gap: spacing.md,
   },
   categoryCard: {
-    width: '48%',
-    aspectRatio: 1.2,
-    backgroundColor: colors.background.secondary,
-    borderRadius: 12,
     padding: spacing.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: 'transparent',
+    backgroundColor: colors.background.card,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: spacing.md,
     position: 'relative',
   },
   categoryCardSelected: {
-    borderColor: colors.primary,
-    backgroundColor: colors.background.card,
-  },
-  categoryEmoji: {
-    fontSize: 48,
-    marginBottom: spacing.sm,
+    borderColor: '#F6D99F',
+    borderWidth: 2,
   },
   categoryName: {
-    ...typography.h4,
-    color: colors.text.secondary,
-    textAlign: 'center',
+    ...typography.h3,
+    fontSize: 20,
+    color: '#F6D99F',
+    fontFamily: 'PTSerif_400Regular',
+    letterSpacing: 0,
+    marginBottom: spacing.xs,
   },
-  categoryNameSelected: {
+  categoryDescription: {
+    ...typography.body,
     color: colors.text.primary,
-    fontWeight: '600',
   },
   selectedIndicator: {
     position: 'absolute',
@@ -191,12 +245,12 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: colors.primary,
+    backgroundColor: '#F6D99F',
     alignItems: 'center',
     justifyContent: 'center',
   },
   selectedIndicatorText: {
-    color: colors.text.primary,
+    color: colors.background.primary,
     fontSize: 14,
     fontWeight: '700',
   },

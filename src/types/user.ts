@@ -4,6 +4,7 @@ export interface UserProfile {
   email: string;
   displayName: string;
   avatar?: string;
+  friendCode?: string;
   timezone: string;
   language: string;
   createdAt: string;

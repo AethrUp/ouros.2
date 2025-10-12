@@ -398,6 +398,9 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Function to get user's connections with profiles
+-- Drop old version first (return type changed to include friend_code)
+DROP FUNCTION IF EXISTS get_user_connections(uuid);
+
 CREATE OR REPLACE FUNCTION get_user_connections(target_user_id UUID)
 RETURNS TABLE (
     connection_id UUID,

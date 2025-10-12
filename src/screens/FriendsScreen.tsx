@@ -248,34 +248,12 @@ export const FriendsScreen: React.FC<NavigationProps> = ({ navigation }) => {
             onPress: () => setShowChartForm(true),
           },
           {
-            icon: 'bookmark-outline',
-            label: 'Saved Charts',
-            onPress: () => navigation.navigate('SavedCharts'),
-          },
-          {
             icon: 'person-add-outline',
             label: 'Invite',
             onPress: () => setShowInviteModal(true),
           },
         ]}
       />
-
-      {/* My Friend Code Card */}
-      {myFriendCode && (
-        <View style={styles.friendCodeCard}>
-          <Text style={styles.friendCodeLabel}>Your Friend Code</Text>
-          <View style={styles.friendCodeRow}>
-            <Text style={styles.friendCodeText}>{myFriendCode}</Text>
-            <TouchableOpacity style={styles.copyButton} onPress={handleCopyFriendCode}>
-              <Ionicons name="copy-outline" size={20} color={colors.primary} />
-              <Text style={styles.copyButtonText}>Copy</Text>
-            </TouchableOpacity>
-          </View>
-          <Text style={styles.friendCodeHint}>
-            Share this code with friends to let them add you
-          </Text>
-        </View>
-      )}
 
       {/* Tabs */}
       <View style={styles.tabs}>
@@ -286,11 +264,6 @@ export const FriendsScreen: React.FC<NavigationProps> = ({ navigation }) => {
           <Text style={[styles.tabText, activeTab === 'connections' && styles.tabTextActive]}>
             Connections
           </Text>
-          {connections.length > 0 && (
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>{connections.length}</Text>
-            </View>
-          )}
           {activeTab === 'connections' && <View style={styles.activeIndicator} />}
         </TouchableOpacity>
 
@@ -415,7 +388,12 @@ export const FriendsScreen: React.FC<NavigationProps> = ({ navigation }) => {
                     >
                       <View style={styles.connectionInfo}>
                         <Text style={styles.connectionName}>{connection.friendDisplayName}</Text>
-                        <Text style={styles.connectionCode}>Code: {connection.friendCode}</Text>
+                        {connection.friendProfile?.birthData && (
+                          <Text style={styles.connectionCode}>
+                            {new Date(connection.friendProfile.birthData.birthDate).toLocaleDateString()}
+                            {connection.friendProfile.birthData.timeUnknown ? '' : ` • ${connection.friendProfile.birthData.birthTime}`}
+                          </Text>
+                        )}
                         {connection.relationshipLabel && (
                           <Text style={styles.connectionLabel}>{connection.relationshipLabel.toUpperCase()}</Text>
                         )}
@@ -434,35 +412,35 @@ export const FriendsScreen: React.FC<NavigationProps> = ({ navigation }) => {
               <>
                 <Text style={styles.sectionTitle}>Received Invitations</Text>
                 {receivedInvitations.map((invitation) => (
-                  <View key={invitation.id} style={styles.invitationCard}>
-                    <View style={styles.invitationHeader}>
-                      <Ionicons name="mail-outline" size={24} color={colors.primary} />
-                      <View style={styles.invitationInfo}>
-                        <Text style={styles.invitationFrom}>
-                          From: {invitation.senderProfile?.display_name || 'Unknown User'}
+                  <View key={invitation.id} style={styles.invitationCardWrapper}>
+                    <View style={styles.connectionCard}>
+                      <View style={styles.connectionInfo}>
+                        <Text style={styles.connectionName}>
+                          {invitation.senderProfile?.displayName || 'Unknown User'}
                         </Text>
                         {invitation.message && (
-                          <Text style={styles.invitationMessage}>"{invitation.message}"</Text>
+                          <Text style={styles.connectionCode}>"{invitation.message}"</Text>
                         )}
+                        <Text style={styles.connectionLabel}>PENDING INVITATION</Text>
                       </View>
-                    </View>
 
-                    <View style={styles.invitationActions}>
-                      <TouchableOpacity
-                        style={[styles.actionButton, styles.acceptButton]}
-                        onPress={() => handleAcceptInvitation(invitation.id)}
-                      >
-                        <Ionicons name="checkmark-circle-outline" size={20} color="#FFF" />
-                        <Text style={styles.acceptButtonText}>Accept</Text>
-                      </TouchableOpacity>
+                      <View style={styles.invitationActions}>
+                        <TouchableOpacity
+                          style={[styles.actionButton, styles.acceptButton]}
+                          onPress={() => handleAcceptInvitation(invitation.id)}
+                        >
+                          <Ionicons name="checkmark-circle-outline" size={20} color="#FFF" />
+                          <Text style={styles.acceptButtonText}>Accept</Text>
+                        </TouchableOpacity>
 
-                      <TouchableOpacity
-                        style={[styles.actionButton, styles.declineButton]}
-                        onPress={() => handleDeclineInvitation(invitation.id)}
-                      >
-                        <Ionicons name="close-circle-outline" size={20} color={colors.error} />
-                        <Text style={styles.declineButtonText}>Decline</Text>
-                      </TouchableOpacity>
+                        <TouchableOpacity
+                          style={[styles.actionButton, styles.declineButton]}
+                          onPress={() => handleDeclineInvitation(invitation.id)}
+                        >
+                          <Ionicons name="close-circle-outline" size={20} color={colors.error} />
+                          <Text style={styles.declineButtonText}>Decline</Text>
+                        </TouchableOpacity>
+                      </View>
                     </View>
                   </View>
                 ))}
@@ -475,16 +453,16 @@ export const FriendsScreen: React.FC<NavigationProps> = ({ navigation }) => {
                   Sent Invitations
                 </Text>
                 {sentInvitations.map((invitation) => (
-                  <View key={invitation.id} style={styles.invitationCard}>
-                    <View style={styles.invitationHeader}>
-                      <Ionicons name="paper-plane-outline" size={24} color={colors.text.secondary} />
-                      <View style={styles.invitationInfo}>
-                        <Text style={styles.invitationFrom}>
-                          To: {invitation.recipientProfile?.display_name || 'Unknown User'}
+                  <View key={invitation.id} style={styles.invitationCardWrapper}>
+                    <View style={styles.connectionCard}>
+                      <View style={styles.connectionInfo}>
+                        <Text style={styles.connectionName}>
+                          {invitation.recipientProfile?.displayName || 'Unknown User'}
                         </Text>
-                        <Text style={styles.invitationStatus}>
-                          Status: {invitation.status.charAt(0).toUpperCase() + invitation.status.slice(1)}
+                        <Text style={styles.connectionCode}>
+                          {invitation.status.charAt(0).toUpperCase() + invitation.status.slice(1)}
                         </Text>
+                        <Text style={styles.connectionLabel}>SENT INVITATION</Text>
                       </View>
                     </View>
                   </View>
@@ -756,41 +734,24 @@ const styles = StyleSheet.create({
     ...typography.h3,
     marginBottom: spacing.md,
   },
-  invitationCard: {
-    backgroundColor: colors.background.card,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: spacing.lg,
+  invitationCardWrapper: {
     marginBottom: spacing.md,
-  },
-  invitationHeader: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: spacing.md,
-  },
-  invitationInfo: {
-    flex: 1,
-    marginLeft: spacing.md,
-  },
-  invitationFrom: {
-    ...typography.body,
-    fontWeight: '600',
-    marginBottom: spacing.xs,
-  },
-  invitationMessage: {
-    ...typography.body,
-    color: colors.text.secondary,
-    fontStyle: 'italic',
-    marginTop: spacing.xs,
-  },
-  invitationStatus: {
-    ...typography.caption,
-    color: colors.text.secondary,
   },
   invitationActions: {
     flexDirection: 'row',
     gap: spacing.sm,
+    marginTop: spacing.md,
+  },
+  actionButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderRadius: 8,
+    gap: spacing.xs,
+    borderWidth: 1,
   },
   acceptButton: {
     backgroundColor: colors.success,
@@ -802,6 +763,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   declineButton: {
+    backgroundColor: 'transparent',
     borderColor: colors.error,
   },
   declineButtonText: {

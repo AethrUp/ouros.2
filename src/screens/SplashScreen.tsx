@@ -8,7 +8,7 @@ export const SplashScreen: React.FC<NavigationProps> = ({ navigation }) => {
   useEffect(() => {
     // Simulate loading/initialization
     const timer = setTimeout(() => {
-      navigation.replace('onboarding');
+      navigation.replace('birthDateTime');
     }, 2000);
 
     return () => clearTimeout(timer);

@@ -8,7 +8,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { NavigationProps } from '../types';
-import { HeaderBar, Button } from '../components';
+import { HeaderBar, Button, TransitEffectivenessGraph, CosmicWeatherChart, ZodiacIcon } from '../components';
 import { colors, spacing, typography } from '../styles';
 import { useAppStore } from '../store';
 import { getDailyHoroscope } from '../handlers/horoscopeGeneration';
@@ -177,6 +177,47 @@ export const HomeScreen: React.FC<NavigationProps> = ({ navigation }) => {
     navigation.navigate('DailyHoroscope');
   };
 
+  // Handle journal prompt press
+  const handleJournalPrompt = async (prompt: string, promptIndex: number) => {
+    try {
+      console.log('📝 Creating journal entry for prompt:', prompt);
+
+      // Save horoscope as a "reading" for proper linking
+      const { saveHoroscopeReading } = await import('../handlers/horoscopeReading');
+      const savedReading = await saveHoroscopeReading({
+        horoscope: dailyHoroscope,
+        prompt: prompt,
+      });
+
+      // Create linked reading object
+      const linkedReading = {
+        id: savedReading.id,
+        reading_type: 'horoscope' as const,
+        title: `Daily Horoscope - ${getCurrentDate()}`,
+        timestamp: new Date().toISOString(),
+        interpretation: dailyHoroscope?.fullContent?.fullReading?.introduction || dailyHoroscope?.content?.summary || '',
+        intention: prompt,
+        metadata: {
+          prompt: prompt,
+          promptIndex: promptIndex,
+          date: getCurrentDate(),
+          hasTransits: !!dailyHoroscope?.fullContent?.transitAnalysis,
+        },
+      };
+
+      // Navigate to journal
+      navigation.navigate('journal', {
+        screen: 'JournalEntry',
+        params: {
+          linkedReading,
+          entryType: 'horoscope',
+        },
+      });
+    } catch (error: any) {
+      console.error('Failed to create journal entry:', error);
+    }
+  };
+
   // Get recent synastry connections (both friends and saved charts)
   const getRecentSynastryConnections = () => {
     const allConnections: Array<{
@@ -186,21 +227,29 @@ export const HomeScreen: React.FC<NavigationProps> = ({ navigation }) => {
       createdAt: string;
       hasReading?: boolean;
       focusArea?: string;
+      sunSign?: string;
     }> = [];
 
     // Add friend connections
     connections.forEach((conn) => {
+      // Get sun sign from friend's natal chart if available (check both lowercase and uppercase)
+      const planets = conn.friendProfile?.natalChart?.planets;
+      const sunSign = planets?.sun?.sign || planets?.Sun?.sign;
       allConnections.push({
         id: conn.connectionId,
         name: conn.friendDisplayName,
         type: 'friend',
         createdAt: conn.createdAt,
+        sunSign: sunSign,
       });
     });
 
     // Add saved charts
     savedCharts.forEach((chart) => {
       const readingForChart = synastryReadings.find((r) => r.synastryChartId === chart.id);
+      // Get sun sign from saved chart's natal chart (check both lowercase and uppercase)
+      const planets = chart.natalChart?.planets;
+      const sunSign = planets?.sun?.sign || planets?.Sun?.sign;
       allConnections.push({
         id: chart.id,
         name: chart.name,
@@ -208,6 +257,7 @@ export const HomeScreen: React.FC<NavigationProps> = ({ navigation }) => {
         createdAt: chart.createdAt,
         hasReading: !!readingForChart,
         focusArea: readingForChart?.focusArea,
+        sunSign: sunSign,
       });
     });
 
@@ -235,6 +285,7 @@ export const HomeScreen: React.FC<NavigationProps> = ({ navigation }) => {
 
     return (
       <View style={styles.synastrySection}>
+        <Text style={styles.cardSectionTitle}>SYNASTRY READINGS</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.synastryScroll}>
           {recentConnections.map((connection) => {
             const isNew = isNewConnection(connection.createdAt);
@@ -287,6 +338,11 @@ export const HomeScreen: React.FC<NavigationProps> = ({ navigation }) => {
                     <Text style={styles.newBadgeText}>NEW</Text>
                   </View>
                 )}
+                {connection.sunSign && (
+                  <View style={styles.zodiacIconContainer}>
+                    <ZodiacIcon sign={connection.sunSign} size={32} color="#FFFFFF" />
+                  </View>
+                )}
                 <Text style={styles.synastryName}>{connection.name}</Text>
                 <Text style={styles.synastryReading} numberOfLines={1}>
                   {readingTitle}
@@ -294,6 +350,15 @@ export const HomeScreen: React.FC<NavigationProps> = ({ navigation }) => {
               </TouchableOpacity>
             );
           })}
+
+          {/* Invite Friend Card */}
+          <TouchableOpacity
+            style={styles.inviteFriendCard}
+            onPress={() => navigation.navigate('friends', { screen: 'FriendsHome' })}
+          >
+            <Ionicons name="person-add" size={32} color={colors.text.primary} style={styles.inviteFriendIcon} />
+            <Text style={styles.inviteFriendText}>Invite Friend</Text>
+          </TouchableOpacity>
         </ScrollView>
       </View>
     );
@@ -333,6 +398,32 @@ export const HomeScreen: React.FC<NavigationProps> = ({ navigation }) => {
             );
           })}
         </ScrollView>
+      </View>
+    );
+  };
+
+  // Render journal prompts
+  const renderJournalPrompts = () => {
+    const journalPrompts = dailyHoroscope?.fullContent?.spiritualGuidance?.journalPrompts || [];
+
+    if (journalPrompts.length === 0) return null;
+
+    return (
+      <View style={styles.journalPromptsSection}>
+        <Text style={styles.journalPromptsTitle}>JOURNAL PROMPTS</Text>
+        {journalPrompts.map((prompt, index) => (
+          <View key={index} style={styles.journalPromptCard}>
+            <Text style={styles.journalPromptText}>{prompt}</Text>
+            <View style={styles.startWritingButtonContainer}>
+              <Button
+                title="Start Writing"
+                onPress={() => handleJournalPrompt(prompt, index)}
+                variant="primary"
+                size="small"
+              />
+            </View>
+          </View>
+        ))}
       </View>
     );
   };
@@ -395,8 +486,33 @@ export const HomeScreen: React.FC<NavigationProps> = ({ navigation }) => {
               </View>
             </View>
 
+            {/* Transit Effectiveness Graph */}
+            {dailyHoroscope.fullContent?.transitAnalysis && (
+              <View style={styles.transitSection}>
+                <Text style={styles.cardSectionTitle}>TODAY'S TRANSITS</Text>
+                <TransitEffectivenessGraph
+                  transits={[
+                    dailyHoroscope.fullContent.transitAnalysis.primary,
+                    ...(dailyHoroscope.fullContent.transitAnalysis.secondary || []),
+                  ]}
+                  maxTransits={3}
+                />
+              </View>
+            )}
+
+            {/* Cosmic Weather Chart */}
+            {dailyHoroscope.preview?.weather && (
+              <View style={styles.cosmicWeatherSection}>
+                <Text style={styles.cardSectionTitle}>COSMIC WEATHER</Text>
+                <CosmicWeatherChart weather={dailyHoroscope.preview.weather} />
+              </View>
+            )}
+
             {/* Category Previews */}
             {renderCategoryPreviews()}
+
+            {/* Journal Prompts */}
+            {renderJournalPrompts()}
           </>
         )}
 
@@ -411,14 +527,6 @@ export const HomeScreen: React.FC<NavigationProps> = ({ navigation }) => {
           >
             <Text style={styles.actionTitle}>Natal Chart</Text>
             <Text style={styles.actionSubtitle}>View your birth chart</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.actionCard}
-            onPress={() => navigation.navigate('journal')}
-          >
-            <Text style={styles.actionTitle}>Journal</Text>
-            <Text style={styles.actionSubtitle}>Reflect on your journey</Text>
           </TouchableOpacity>
 
           <View style={styles.actionRow}>
@@ -541,6 +649,12 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     marginTop: spacing.md,
   },
+  transitSection: {
+    marginBottom: spacing.lg,
+  },
+  cosmicWeatherSection: {
+    marginBottom: spacing.lg,
+  },
   categoriesSection: {
     marginBottom: spacing.lg,
   },
@@ -549,6 +663,14 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     marginBottom: spacing.md,
     paddingHorizontal: spacing.lg,
+  },
+  cardSectionTitle: {
+    ...typography.body,
+    fontSize: 16,
+    letterSpacing: 1,
+    color: '#FFFFFF',
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.md,
   },
   synastrySection: {
     marginBottom: spacing.lg,
@@ -565,6 +687,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     position: 'relative',
+    alignItems: 'center',
+  },
+  zodiacIconContainer: {
+    marginBottom: spacing.xs,
   },
   newBadge: {
     position: 'absolute',
@@ -587,6 +713,7 @@ const styles = StyleSheet.create({
     color: '#F6D99F',
     fontFamily: 'PTSerif_400Regular',
     letterSpacing: 0,
+    textAlign: 'center',
   },
   synastryType: {
     ...typography.caption,
@@ -598,6 +725,28 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#FFFFFF',
     textTransform: 'uppercase',
+    textAlign: 'center',
+  },
+  inviteFriendCard: {
+    width: 160,
+    marginRight: spacing.md,
+    padding: spacing.md,
+    backgroundColor: colors.background.card,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  inviteFriendIcon: {
+    marginBottom: spacing.xs,
+  },
+  inviteFriendText: {
+    ...typography.h3,
+    color: '#F6D99F',
+    fontFamily: 'PTSerif_400Regular',
+    letterSpacing: 0,
+    textAlign: 'center',
   },
   categoryScroll: {
     paddingLeft: spacing.lg,
@@ -672,6 +821,33 @@ const styles = StyleSheet.create({
     fontFamily: 'PTSerif_400Regular',
     letterSpacing: 0,
     textAlign: 'center',
+  },
+  journalPromptsSection: {
+    marginBottom: spacing.lg,
+  },
+  journalPromptsTitle: {
+    ...typography.body,
+    fontSize: 16,
+    letterSpacing: 1,
+    color: '#FFFFFF',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+  },
+  journalPromptCard: {
+    marginHorizontal: spacing.lg,
+    padding: spacing.md,
+    backgroundColor: '#9B85AE40',
+    borderRadius: 12,
+    marginBottom: spacing.md,
+  },
+  journalPromptText: {
+    ...typography.body,
+    lineHeight: 20,
+    marginBottom: spacing.md,
+  },
+  startWritingButtonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
   },
   bottomSpacer: {
     height: spacing.xl * 2,

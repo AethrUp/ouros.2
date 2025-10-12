@@ -11,13 +11,12 @@ import {
 import { NavigationProps } from '../types';
 import { Button } from '../components';
 import { LocationPicker } from '../components/LocationPicker';
-import { useAppStore } from '../store';
 import { LocationData } from '../types/user';
 import { colors, spacing, typography } from '../styles';
 
-export const BirthDataScreen: React.FC<NavigationProps> = ({ navigation }) => {
+export const BirthDataScreen: React.FC<NavigationProps> = ({ navigation, route }) => {
+  const { date, time } = route.params as any;
   const [location, setLocation] = useState<LocationData | null>(null);
-  const { setBirthData } = useAppStore();
 
   const handleLocationSelect = (selectedLocation: LocationData) => {
     setLocation(selectedLocation);
@@ -26,9 +25,8 @@ export const BirthDataScreen: React.FC<NavigationProps> = ({ navigation }) => {
   const handleContinue = async () => {
     if (!location) return;
 
-    // For now, we'll navigate to the next step
-    // In a complete implementation, we'd collect date/time here too
-    navigation.navigate('birthDateTime', { location });
+    // Navigate to onboarding (categories) with all birth data
+    navigation.navigate('onboarding', { date, time, location });
   };
 
   return (

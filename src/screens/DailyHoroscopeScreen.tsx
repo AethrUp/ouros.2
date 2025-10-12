@@ -45,6 +45,7 @@ const DailyHoroscopeScreen = () => {
     profile,
     birthData,
     natalChart,
+    preferences,
     dailyHoroscope,
     cosmicWeather,
     isLoadingDailyReading,
@@ -96,7 +97,7 @@ const DailyHoroscopeScreen = () => {
         birthDate: birthData.birthDate,
         birthTime: birthData.birthTime,
         birthLocation: birthData.birthLocation,
-        selectedCategories: profile.selectedCategories || [],
+        selectedCategories: preferences.focusAreas || [],
       };
 
       const result = await getDailyHoroscope(natalChart, userProfile, dailyHoroscope, { forceRegenerate });
@@ -139,11 +140,11 @@ const DailyHoroscopeScreen = () => {
 
   // Set first selected category as active on mount
   useEffect(() => {
-    const selectedCategories = profile?.selectedCategories || [];
+    const selectedCategories = preferences.focusAreas || [];
     if (selectedCategories.length > 0 && !activeCategory) {
       setActiveCategory(selectedCategories[0]);
     }
-  }, [profile, activeCategory]);
+  }, [preferences, activeCategory]);
 
   // Section configuration
   const sections = [
@@ -537,13 +538,6 @@ const DailyHoroscopeScreen = () => {
           </View>
         )}
 
-        {spiritualGuidance?.ritualSuggestion && (
-          <View style={styles.spiritualCard}>
-            <Text style={[styles.sectionTitle, { marginTop: 0, marginBottom: spacing.sm }]}>Ritual Suggestion</Text>
-            <Text style={styles.bodyText}>{spiritualGuidance.ritualSuggestion}</Text>
-          </View>
-        )}
-
         {/* Cosmic Weather */}
         {weather && (
           <View style={styles.cosmicWeatherSection}>
@@ -610,7 +604,7 @@ const DailyHoroscopeScreen = () => {
 
   // Render category navigation
   const renderCategoryNav = () => {
-    const selectedCategories = profile?.selectedCategories || [];
+    const selectedCategories = preferences.focusAreas || [];
     const allCategories = Object.keys(categoryIcons);
 
     return (

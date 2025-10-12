@@ -8,3 +8,6 @@ export { CompatibilityMeter, CompatibilityMeterGroup } from './synastry/Compatib
 export { SavedChartForm } from './synastry/SavedChartForm';
 export { PartnerSelector } from './synastry/PartnerSelector';
 export { SwipeableChartCard } from './SwipeableChartCard';
+export { TransitEffectivenessGraph } from './TransitEffectivenessGraph';
+export { CosmicWeatherChart } from './CosmicWeatherChart';
+export { ZodiacIcon } from './ZodiacIcon';

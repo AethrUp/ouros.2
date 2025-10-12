@@ -6,7 +6,16 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { NatalChartData } from '../types/user';
 import { DailyHoroscope, HoroscopeGenerationMetadata } from '../types/reading';
-import { createHoroscopePrompt, validateHoroscopeResponse } from '../utils/aiPromptTemplates';
+import {
+  createCoreReadingPrompt,
+  createTransitDataPrompt,
+  createTimeGuidancePrompt,
+  createCosmicWeatherPrompt,
+  validateCoreReadingResponse,
+  validateTransitDataResponse,
+  validateTimeGuidanceResponse,
+  validateCosmicWeatherResponse,
+} from '../utils/aiPromptTemplates';
 import { getNatalTransits, getTropicalTransits } from '../utils/transitCalculation';
 import { supabase } from '../utils/supabase';
 
@@ -88,7 +97,7 @@ export const generateDailyHoroscope = async (
     // DEBUG: Log detailed transit aspects
     console.log('🔍 DEBUG: Detailed Transit Aspects:');
     transitData.aspects.forEach((aspect: any, index: number) => {
-      console.log(`  ${index + 1}. ${aspect.transitingPlanet} ${aspect.aspect} ${aspect.natalPlanet}`, {
+      console.log(`  ${index + 1}. ${aspect.transitPlanet} ${aspect.aspect} ${aspect.natalPlanet}`, {
         orb: aspect.orb,
         isApplying: aspect.isApplying,
         exactDate: aspect.exactDate,
@@ -107,110 +116,153 @@ export const generateDailyHoroscope = async (
 
     console.log('✅ Current positions received');
 
-    // Step 3: Build AI prompt
-    console.log('📝 Building AI prompt...');
-    const userCategories = userProfile.selectedCategories || userProfile.preferences?.selectedCategories;
+    // Step 3: Build 4 AI prompts
+    console.log('📝 Building 4 AI prompts...');
+    const userCategories = userProfile.selectedCategories;
 
-    // DEBUG: Log input data being sent to prompt creation
+    // DEBUG: Log input data
     console.log('🔍 DEBUG: ========== INPUT DATA FOR PROMPT CREATION ==========');
     console.log('🔍 DEBUG: Natal Chart Summary:', {
       planets: Object.keys(natalChart.planets || {}),
       houses: Object.keys(natalChart.houses || {}),
       ascendant: natalChart.ascendant,
-      name: userProfile.name || 'N/A',
-      birthDate: userProfile.birthDate || 'N/A',
-      birthLocation: userProfile.birthLocation || 'N/A',
     });
-    console.log('🔍 DEBUG: Complete Natal Chart Planets:', natalChart.planets);
-    console.log('🔍 DEBUG: Complete Natal Chart Houses:', natalChart.houses);
     console.log('🔍 DEBUG: Transit Data Summary:', {
       totalAspects: transitData.aspects.length,
       majorAspects: transitData.summary.majorAspects,
-      aspectTypes: [...new Set(transitData.aspects.map((a: any) => a.aspect))],
-      transitingPlanets: [...new Set(transitData.aspects.map((a: any) => a.transitingPlanet))],
-      natalPlanets: [...new Set(transitData.aspects.map((a: any) => a.natalPlanet))],
     });
-    console.log('🔍 DEBUG: Complete Transit Aspects:', JSON.stringify(transitData.aspects, null, 2));
-    console.log('🔍 DEBUG: Transit Summary:', transitData.summary);
-    console.log('🔍 DEBUG: Current Planetary Positions:', currentPositions);
     console.log('🔍 DEBUG: User Categories:', userCategories);
     console.log('🔍 DEBUG: Date:', today);
     console.log('🔍 DEBUG: ========== END OF INPUT DATA ==========');
 
-    const prompt = createHoroscopePrompt(
-      natalChart,
-      transitData,
-      currentPositions,
-      today,
-      userCategories
-    );
+    const corePrompt = createCoreReadingPrompt(natalChart, transitData, currentPositions, today, userCategories);
+    const transitPrompt = createTransitDataPrompt(natalChart, transitData, currentPositions, today, userCategories);
+    const timePrompt = createTimeGuidancePrompt(natalChart, transitData, currentPositions, today, userCategories);
+    const weatherPrompt = createCosmicWeatherPrompt(natalChart, transitData, currentPositions, today, userCategories);
 
-    // DEBUG: Log the complete prompt
-    console.log('🔍 DEBUG: ========== FULL PROMPT SENT TO LLM ==========');
-    console.log(prompt);
-    console.log('🔍 DEBUG: ========== END OF PROMPT ==========');
-    console.log('🔍 DEBUG: Prompt length:', prompt.length, 'characters');
-
-    // Step 4: Call Anthropic API
-    console.log('🤖 Calling Anthropic Claude API...');
-    console.log('🔍 DEBUG: API Request Details:', {
-      model: 'claude-sonnet-4-5-20250929',
-      max_tokens: 12000,
-      message_role: 'user',
-      content_length: prompt.length,
+    console.log('🔍 DEBUG: Prompt lengths:', {
+      core: corePrompt.length,
+      transit: transitPrompt.length,
+      time: timePrompt.length,
+      weather: weatherPrompt.length,
+      total: corePrompt.length + transitPrompt.length + timePrompt.length + weatherPrompt.length,
     });
+
+    // Step 4: Make 4 parallel API calls
+    console.log('🤖 Calling Anthropic API (4 parallel calls)...');
     const startTime = Date.now();
 
-    const message = await anthropic.messages.create({
-      model: 'claude-sonnet-4-5-20250929',
-      max_tokens: 12000,
-      messages: [
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ],
-    });
+    const [coreMsg, transitMsg, timeMsg, weatherMsg] = await Promise.all([
+      anthropic.messages.create({
+        model: 'claude-sonnet-4-5-20250929',
+        max_tokens: 4000,
+        messages: [{ role: 'user', content: corePrompt }],
+      }),
+      anthropic.messages.create({
+        model: 'claude-sonnet-4-5-20250929',
+        max_tokens: 4000,
+        messages: [{ role: 'user', content: transitPrompt }],
+      }),
+      anthropic.messages.create({
+        model: 'claude-sonnet-4-5-20250929',
+        max_tokens: 2000,
+        messages: [{ role: 'user', content: timePrompt }],
+      }),
+      anthropic.messages.create({
+        model: 'claude-sonnet-4-5-20250929',
+        max_tokens: 3000,
+        messages: [{ role: 'user', content: weatherPrompt }],
+      }),
+    ]);
 
     const apiDuration = Date.now() - startTime;
-    console.log(`✅ AI response received in ${apiDuration}ms`);
+    console.log(`✅ All 4 AI responses received in ${apiDuration}ms`);
 
-    // Step 5: Parse and validate response
-    const responseText = message.content[0].type === 'text' ? message.content[0].text : '';
+    // Step 5: Parse 4 JSON responses
+    console.log('🔍 Parsing 4 JSON responses...');
 
-    console.log('🔍 DEBUG: Raw AI response length:', responseText.length);
-    console.log('🔍 DEBUG: First 200 characters:', responseText.substring(0, 200));
-    console.log('🔍 DEBUG: Last 200 characters:', responseText.substring(Math.max(0, responseText.length - 200)));
-    console.log('🔍 DEBUG: Full response:', responseText);
-
-    let horoscopeData: any;
-    try {
-      // Strip markdown code fences if present
-      let jsonText = responseText.trim();
-
-      // Check if response is wrapped in markdown code fences
-      if (jsonText.startsWith('```')) {
-        // Remove opening fence (```json or ```)
-        jsonText = jsonText.replace(/^```(?:json)?\s*\n?/, '');
-        // Remove closing fence
-        jsonText = jsonText.replace(/\n?```\s*$/, '');
+    // Helper function to strip markdown code fences
+    const stripMarkdown = (text: string): string => {
+      let cleaned = text.trim();
+      if (cleaned.startsWith('```')) {
+        cleaned = cleaned.replace(/^```(?:json)?\s*\n?/, '');
+        cleaned = cleaned.replace(/\n?```\s*$/, '');
       }
+      return cleaned;
+    };
 
-      horoscopeData = JSON.parse(jsonText);
-    } catch (parseError) {
-      console.error('❌ Failed to parse AI response as JSON:', parseError);
-      console.error('❌ DEBUG: Full response text that failed to parse:', responseText);
-      throw new Error('AI response is not valid JSON');
+    let coreData: any, transitDataParsed: any, timeData: any, weatherData: any;
+    try {
+      const coreText = coreMsg.content[0].type === 'text' ? coreMsg.content[0].text : '';
+      const transitText = transitMsg.content[0].type === 'text' ? transitMsg.content[0].text : '';
+      const timeText = timeMsg.content[0].type === 'text' ? timeMsg.content[0].text : '';
+      const weatherText = weatherMsg.content[0].type === 'text' ? weatherMsg.content[0].text : '';
+
+      console.log('🔍 DEBUG: Response lengths:', {
+        core: coreText.length,
+        transit: transitText.length,
+        time: timeText.length,
+        weather: weatherText.length,
+      });
+
+      coreData = JSON.parse(stripMarkdown(coreText));
+      transitDataParsed = JSON.parse(stripMarkdown(transitText));
+      timeData = JSON.parse(stripMarkdown(timeText));
+      weatherData = JSON.parse(stripMarkdown(weatherText));
+
+      console.log('✅ All 4 responses parsed successfully');
+    } catch (parseError: any) {
+      console.error('❌ Failed to parse one or more AI responses:', parseError);
+      throw new Error('One or more AI responses are not valid JSON');
     }
 
-    // Validate response structure
-    const validation = validateHoroscopeResponse(horoscopeData);
-    if (!validation.valid) {
-      console.error('❌ AI response validation failed:', validation.errors);
-      throw new Error(`Invalid AI response structure: ${validation.errors.join(', ')}`);
+    // Step 6: Validate 4 responses
+    console.log('🔍 Validating 4 responses...');
+    const validations = [
+      { name: 'Core Reading', result: validateCoreReadingResponse(coreData) },
+      { name: 'Transit Data', result: validateTransitDataResponse(transitDataParsed) },
+      { name: 'Time Guidance', result: validateTimeGuidanceResponse(timeData) },
+      { name: 'Cosmic Weather', result: validateCosmicWeatherResponse(weatherData) },
+    ];
+
+    const failedValidations = validations.filter(v => !v.result.valid);
+    if (failedValidations.length > 0) {
+      console.error('❌ Validation failed for:', failedValidations.map(v => v.name).join(', '));
+      failedValidations.forEach(v => {
+        console.error(`  ${v.name} errors:`, v.result.errors);
+      });
+      const allErrors = failedValidations.flatMap(v => v.result.errors);
+      throw new Error(`Invalid AI responses: ${allErrors.join(', ')}`);
     }
 
-    console.log('✅ AI response validated successfully');
+    console.log('✅ All responses validated successfully');
+
+    // Step 7: Merge into single horoscope object
+    console.log('🔧 Merging 4 responses into single horoscope...');
+    const horoscopeData = {
+      // From Call 1: Core Reading
+      title: coreData.title,
+      summary: coreData.summary,
+      fullReading: coreData.fullReading,
+      dailyFocus: coreData.dailyFocus,
+      advice: coreData.advice,
+
+      // From Call 2: Transit Data
+      transitAnalysis: transitDataParsed.transitAnalysis,
+      transitInsights: transitDataParsed.transitInsights,
+
+      // From Call 3: Time Guidance
+      timeGuidance: timeData.timeGuidance,
+      explore: timeData.explore,
+      limit: timeData.limit,
+
+      // From Call 4: Cosmic Weather
+      weather: weatherData.weather,
+      spiritualGuidance: weatherData.spiritualGuidance,
+      categoryAdvice: weatherData.categoryAdvice,
+    };
+
+    console.log('✅ Horoscope data merged successfully');
 
     // Step 6: Structure horoscope data according to DAILY_READING_DATA_STRUCTURE
     const dailyHoroscope: DailyHoroscope = {
@@ -250,15 +302,27 @@ export const generateDailyHoroscope = async (
       lastUpdated: new Date().toISOString(),
     };
 
-    // Step 7: Create metadata
+    // Step 8: Create metadata (combining all 4 calls)
     const metadata: HoroscopeGenerationMetadata = {
       source: 'anthropic_ai',
-      model: message.model,
+      model: coreMsg.model,
       timestamp: new Date().toISOString(),
       usage: {
-        inputTokens: message.usage.input_tokens,
-        outputTokens: message.usage.output_tokens,
-        totalTokens: message.usage.input_tokens + message.usage.output_tokens,
+        inputTokens:
+          coreMsg.usage.input_tokens +
+          transitMsg.usage.input_tokens +
+          timeMsg.usage.input_tokens +
+          weatherMsg.usage.input_tokens,
+        outputTokens:
+          coreMsg.usage.output_tokens +
+          transitMsg.usage.output_tokens +
+          timeMsg.usage.output_tokens +
+          weatherMsg.usage.output_tokens,
+        totalTokens:
+          (coreMsg.usage.input_tokens + coreMsg.usage.output_tokens) +
+          (transitMsg.usage.input_tokens + transitMsg.usage.output_tokens) +
+          (timeMsg.usage.input_tokens + timeMsg.usage.output_tokens) +
+          (weatherMsg.usage.input_tokens + weatherMsg.usage.output_tokens),
       },
       dataQuality: {
         astrologyApiUsed: true,
@@ -300,7 +364,11 @@ export const generateDailyHoroscope = async (
           full_reading: horoscopeData.fullReading || null,
           transit_analysis: horoscopeData.transitAnalysis || null,
           time_guidance: horoscopeData.timeGuidance || null,
-          spiritual_guidance: horoscopeData.spiritualGuidance || null,
+          spiritual_guidance: horoscopeData.spiritualGuidance ? {
+            meditation: horoscopeData.spiritualGuidance.meditation,
+            affirmation: horoscopeData.spiritualGuidance.affirmation,
+            journalPrompts: horoscopeData.spiritualGuidance.journalPrompts,
+          } : null,
           transit_insights: horoscopeData.transitInsights || [],
           astronomical_data: {
             transits: transitData,
@@ -416,14 +484,14 @@ const loadHoroscopeFromSupabase = async (
         summary: data.summary,
         weather: {
           moon: typeof data.weather_moon === 'string'
-            ? data.weather_moon
-            : JSON.parse(data.weather_moon || '{}'),
+            ? JSON.parse(data.weather_moon || '{}')
+            : data.weather_moon || {},
           venus: typeof data.weather_venus === 'string'
-            ? data.weather_venus
-            : JSON.parse(data.weather_venus || '{}'),
+            ? JSON.parse(data.weather_venus || '{}')
+            : data.weather_venus || {},
           mercury: typeof data.weather_mercury === 'string'
-            ? data.weather_mercury
-            : JSON.parse(data.weather_mercury || '{}'),
+            ? JSON.parse(data.weather_mercury || '{}')
+            : data.weather_mercury || {},
         },
         categoryAdvice: data.category_advice || {},
       },
@@ -444,14 +512,14 @@ const loadHoroscopeFromSupabase = async (
         summary: data.summary,
         weather: {
           moon: typeof data.weather_moon === 'string'
-            ? data.weather_moon
-            : JSON.parse(data.weather_moon || '{}'),
+            ? JSON.parse(data.weather_moon || '{}')
+            : data.weather_moon || {},
           venus: typeof data.weather_venus === 'string'
-            ? data.weather_venus
-            : JSON.parse(data.weather_venus || '{}'),
+            ? JSON.parse(data.weather_venus || '{}')
+            : data.weather_venus || {},
           mercury: typeof data.weather_mercury === 'string'
-            ? data.weather_mercury
-            : JSON.parse(data.weather_mercury || '{}'),
+            ? JSON.parse(data.weather_mercury || '{}')
+            : data.weather_mercury || {},
         },
         categoryAdvice: data.category_advice || {},
         fullReading: data.full_reading || null,

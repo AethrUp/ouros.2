@@ -10,17 +10,13 @@ import {
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { NavigationProps } from '../types';
 import { Button } from '../components';
-import { useAppStore } from '../store';
 import { colors, spacing, typography, theme } from '../styles';
-import { handleChartGeneration } from '../handlers/chartGeneration';
 
 export const BirthDateTimeScreen: React.FC<NavigationProps> = ({ navigation, route }) => {
-  const { location } = route.params as any;
   const [date, setDate] = useState<Date | null>(null);
   const [time, setTime] = useState<Date | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
-  const { updateBirthData, saveNatalChart, setAppLoading, user } = useAppStore();
 
   const formatDate = (date: Date | null) => {
     if (!date) return 'DATE';
@@ -54,55 +50,10 @@ export const BirthDateTimeScreen: React.FC<NavigationProps> = ({ navigation, rou
   };
 
   const handleContinue = async () => {
-    if (!date || !time || !location || !user) return;
+    if (!date || !time) return;
 
-    // Format birth data
-    const birthData = {
-      birthDate: date.toISOString().split('T')[0], // YYYY-MM-DD
-      birthTime: `${time.getHours().toString().padStart(2, '0')}:${time.getMinutes().toString().padStart(2, '0')}`,
-      timeUnknown: false,
-      birthLocation: location,
-      timezone: location.timezone,
-    };
-
-    setAppLoading(true);
-    try {
-      // Step 1: Save birth data to database
-      console.log('💾 Saving birth data to database...');
-      await updateBirthData(birthData);
-
-      // Step 2: Generate natal chart
-      console.log('🌟 Generating natal chart...');
-      const result = await handleChartGeneration(birthData, {
-        houseSystem: 'placidus',
-        precision: 'professional',
-        includeReports: true,
-        includeAspects: true,
-        includeMinorAspects: false,
-        includeMidpoints: false,
-        forceRegenerate: true,
-      });
-
-      if (result.success && result.data?.chartData) {
-        // Step 3: Save natal chart to database
-        console.log('💾 Saving natal chart to database...');
-        await saveNatalChart(user.id, result.data.chartData, 'placidus');
-
-        // Navigate to home after successful chart generation and save
-        navigation.reset({
-          index: 0,
-          routes: [{ name: 'home' }],
-        });
-      } else {
-        console.error('Chart generation failed:', result.message);
-        alert('Failed to generate chart. Please try again.');
-      }
-    } catch (error: any) {
-      console.error('Chart generation/save error:', error);
-      alert(`An error occurred: ${error.message || 'Please try again.'}`);
-    } finally {
-      setAppLoading(false);
-    }
+    // Pass date and time to the next screen (birthData)
+    navigation.navigate('birthData', { date, time });
   };
 
   const canContinue = date !== null && time !== null;
@@ -114,8 +65,11 @@ export const BirthDateTimeScreen: React.FC<NavigationProps> = ({ navigation, rou
 
         <View style={styles.pickerContainer}>
           <TouchableOpacity
-            style={styles.pickerButton}
-            onPress={() => setShowDatePicker(true)}
+            style={styles.datePickerButton}
+            onPress={() => {
+              setShowTimePicker(false);
+              setShowDatePicker(true);
+            }}
           >
             <Text style={[styles.pickerText, date && styles.pickerTextSelected]}>
               {formatDate(date)}
@@ -123,8 +77,11 @@ export const BirthDateTimeScreen: React.FC<NavigationProps> = ({ navigation, rou
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={styles.pickerButton}
-            onPress={() => setShowTimePicker(true)}
+            style={styles.timePickerButton}
+            onPress={() => {
+              setShowDatePicker(false);
+              setShowTimePicker(true);
+            }}
           >
             <Text style={[styles.pickerText, time && styles.pickerTextSelected]}>
               {formatTime(time)}
@@ -189,7 +146,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: spacing.md,
   },
-  pickerButton: {
+  datePickerButton: {
+    flex: 2,
+    backgroundColor: colors.background.secondary,
+    borderRadius: 10,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 56,
+  },
+  timePickerButton: {
     flex: 1,
     backgroundColor: colors.background.secondary,
     borderRadius: 10,

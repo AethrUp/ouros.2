@@ -546,9 +546,21 @@ function mapInvitation(data: any): ConnectionInvitation {
   return {
     id: data.id,
     senderId: data.sender_id,
-    senderProfile: data.senderProfile,
+    senderProfile: data.senderProfile ? {
+      id: data.senderProfile.id,
+      email: data.senderProfile.email,
+      displayName: data.senderProfile.display_name,
+      avatar: data.senderProfile.avatar,
+      friendCode: data.senderProfile.friend_code,
+    } : undefined,
     recipientId: data.recipient_id,
-    recipientProfile: data.recipientProfile,
+    recipientProfile: data.recipientProfile ? {
+      id: data.recipientProfile.id,
+      email: data.recipientProfile.email,
+      displayName: data.recipientProfile.display_name,
+      avatar: data.recipientProfile.avatar,
+      friendCode: data.recipientProfile.friend_code,
+    } : undefined,
     status: data.status,
     message: data.message,
     createdAt: data.created_at,
