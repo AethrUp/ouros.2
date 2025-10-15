@@ -8,7 +8,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { NavigationProps } from '../types';
-import { HeaderBar, Button, TransitEffectivenessGraph, CosmicWeatherChart, ZodiacIcon } from '../components';
+import { HeaderBar, Button, TransitEffectivenessGraph, TransitStrengthBar, CosmicWeatherChart, ZodiacIcon } from '../components';
 import { colors, spacing, typography } from '../styles';
 import { useAppStore } from '../store';
 import { getDailyHoroscope } from '../handlers/horoscopeGeneration';
@@ -471,6 +471,14 @@ export const HomeScreen: React.FC<NavigationProps> = ({ navigation }) => {
           <>
             {/* Main Horoscope Card */}
             <View style={styles.horoscopeCard}>
+              {/* Transit Strength Bar */}
+              {dailyHoroscope.fullContent?.astronomicalData?.transits?.aspects && (
+                <TransitStrengthBar
+                  transits={dailyHoroscope.fullContent.astronomicalData.transits.aspects}
+                  maxTransits={3}
+                />
+              )}
+
               <Text style={styles.horoscopeTitle}>{dailyHoroscope.preview?.title}</Text>
               <Text style={styles.horoscopeSummary} numberOfLines={4}>
                 {dailyHoroscope.preview?.summary}

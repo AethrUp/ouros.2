@@ -143,21 +143,31 @@ export const TabNavigator: React.FC = () => {
       screenOptions={{
         headerShown: false,
       }}
-      tabBar={(props) => (
-        <TabNavigation
-          activeTab={activeTab}
-          onTabChange={(tab) => {
-            setActiveTab(tab);
-            const tabIndex = tabs.findIndex((t) => t.id === tab);
-            if (tabIndex !== -1) {
-              props.navigation.navigate(tabs[tabIndex].id);
-            }
-          }}
-          tabs={tabs.map(({ screen, ...rest }) => rest)}
-          showBadges={true}
-          badgeCounts={{}}
-        />
-      )}
+      tabBar={(props) => {
+        // Check if we're on a screen that should hide the tab bar
+        const route = props.state.routes[props.state.index];
+        const nestedRoute = route.state?.routes?.[route.state.index];
+        const shouldHideTabBar = nestedRoute?.name === 'DailyHoroscope';
+
+        // Hide tab bar on specific screens
+        if (shouldHideTabBar) return null;
+
+        return (
+          <TabNavigation
+            activeTab={activeTab}
+            onTabChange={(tab) => {
+              setActiveTab(tab);
+              const tabIndex = tabs.findIndex((t) => t.id === tab);
+              if (tabIndex !== -1) {
+                props.navigation.navigate(tabs[tabIndex].id);
+              }
+            }}
+            tabs={tabs.map(({ screen, ...rest }) => rest)}
+            showBadges={true}
+            badgeCounts={{}}
+          />
+        );
+      }}
     >
       {tabs.map((tab) => (
         <Tab.Screen

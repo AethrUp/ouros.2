@@ -7,13 +7,23 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
+  Dimensions,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
+import Svg, { Polyline, Path } from 'react-native-svg';
 import { colors, spacing, typography } from '../styles';
 import { useAppStore } from '../store';
 import { getDailyHoroscope } from '../handlers/horoscopeGeneration';
+
+// Bootstrap Icons SVG paths
+const BootstrapIcons = {
+  moonStars: 'M6 .278a.768.768 0 0 1 .08.858 7.208 7.208 0 0 0-.878 3.46c0 4.021 3.278 7.277 7.318 7.277.527 0 1.04-.055 1.533-.16a.787.787 0 0 1 .81.316.733.733 0 0 1-.031.893A8.349 8.349 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.752.752 0 0 1 6 .278zM4.858 1.311A7.269 7.269 0 0 0 1.025 7.71c0 4.02 3.279 7.276 7.319 7.276a7.316 7.316 0 0 0 5.205-2.162c-.337.042-.68.063-1.029.063-4.61 0-8.343-3.714-8.343-8.29 0-1.167.242-2.278.681-3.286z',
+  brightnessAltHighFill: 'M8 3a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 3zm8 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5zm-13.5.5a.5.5 0 0 0 0-1h-2a.5.5 0 0 0 0 1h2zm11.157-6.157a.5.5 0 0 1 0 .707l-1.414 1.414a.5.5 0 1 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0zm-9.9 2.121a.5.5 0 0 0 .707-.707L3.05 5.343a.5.5 0 1 0-.707.707l1.414 1.414zM8 7a4 4 0 0 0-4 4 .5.5 0 0 0 .5.5h7a.5.5 0 0 0 .5-.5 4 4 0 0 0-4-4z',
+  sunFill: 'M8 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0zm0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13zm8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5zM3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8zm10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0zm-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0zm9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707zM4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .708z',
+  brightnessAltLow: 'M8 3a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 3zm8 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5zm-13.5.5a.5.5 0 0 0 0-1h-2a.5.5 0 0 0 0 1h2zm11.157-6.157a.5.5 0 0 1 0 .707l-1.414 1.414a.5.5 0 1 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0zm-9.9 2.121a.5.5 0 0 0 .707-.707L3.05 5.343a.5.5 0 1 0-.707.707l1.414 1.414zM8 7a4 4 0 0 0-4 4 .5.5 0 0 0 .5.5h7a.5.5 0 0 0 .5-.5 4 4 0 0 0-4-4zm0 4.5a3 3 0 0 1 2.959-2.5A3.5 3.5 0 0 1 8 11.5z',
+};
 
 // Category icon mappings
 const categoryIcons: Record<string, keyof typeof Ionicons.glyphMap> = {
@@ -31,13 +41,89 @@ const categoryIcons: Record<string, keyof typeof Ionicons.glyphMap> = {
   social: 'people-circle',
 };
 
+// Bootstrap Icon Component
+const BootstrapIcon: React.FC<{ name: keyof typeof BootstrapIcons; size?: number; color?: string }> = ({
+  name,
+  size = 16,
+  color = '#FFFFFF'
+}) => {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 16 16" fill={color}>
+      <Path d={BootstrapIcons[name]} />
+    </Svg>
+  );
+};
+
+// Transit Timeline Component
+const TransitTimeline: React.FC<{ transit: any }> = ({ transit }) => {
+  const screenWidth = Dimensions.get('window').width;
+  const chartWidth = screenWidth - spacing.lg * 2;
+  const chartHeight = 80;
+  const verticalPadding = 8; // Padding to prevent clipping at top and bottom
+  const strengthCurve = transit.timingData?.strengthCurve || [];
+
+  if (strengthCurve.length === 0) return null;
+
+  // Find min and max values for dynamic scaling
+  const minStrength = Math.min(...strengthCurve);
+  const maxStrength = Math.max(...strengthCurve);
+  const range = maxStrength - minStrength;
+
+  // Calculate points for the polyline with dynamic scaling and padding
+  const points = strengthCurve
+    .map((strength: number, index: number) => {
+      const x = (index / (strengthCurve.length - 1)) * chartWidth;
+      // Scale relative to min/max instead of 0-100
+      const normalizedStrength = range > 0 ? (strength - minStrength) / range : 0.5;
+      // Apply vertical padding to prevent clipping
+      const availableHeight = chartHeight - (verticalPadding * 2);
+      const y = chartHeight - verticalPadding - (normalizedStrength * availableHeight);
+      return `${x},${y}`;
+    })
+    .join(' ');
+
+  // Time of day icons at key hours (0, 6, 12, 18)
+  const timeIcons = [
+    { hour: 0, icon: 'moonStars' as const, label: '12AM' },
+    { hour: 6, icon: 'brightnessAltHighFill' as const, label: '6AM' },
+    { hour: 12, icon: 'sunFill' as const, label: '12PM' },
+    { hour: 18, icon: 'brightnessAltLow' as const, label: '6PM' },
+  ];
+
+  return (
+    <View style={styles.timelineContainer}>
+      {/* Time Icons */}
+      <View style={styles.timeIconsContainer}>
+        {timeIcons.map((time) => (
+          <View key={time.hour} style={styles.timeIconItem}>
+            <BootstrapIcon name={time.icon} size={18} color="#FFFFFF" />
+          </View>
+        ))}
+      </View>
+
+      {/* Line Chart */}
+      <Svg width={chartWidth} height={chartHeight} style={styles.timelineChart}>
+        <Polyline
+          points={points}
+          fill="none"
+          stroke="#F6D99F"
+          strokeWidth="2"
+          opacity={1}
+        />
+      </Svg>
+
+      {/* Graph Label */}
+      <Text style={styles.graphLabel}>24 HOUR TRANSIT INFLUENCE</Text>
+    </View>
+  );
+};
+
 const DailyHoroscopeScreen = () => {
   const navigation = useNavigation();
   const scrollViewRef = useRef<ScrollView>(null);
+  const sectionNavScrollRef = useRef<ScrollView>(null);
   const isMountedRef = useRef(true);
-  const [activeTab, setActiveTab] = useState(0);
-  const [sectionPositions, setSectionPositions] = useState<Record<string, number>>({});
-  const [isNavigating, setIsNavigating] = useState(false);
+  const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
   // Get data from store
@@ -47,7 +133,6 @@ const DailyHoroscopeScreen = () => {
     natalChart,
     preferences,
     dailyHoroscope,
-    cosmicWeather,
     isLoadingDailyReading,
     isGeneratingHoroscope,
     dailyReadingError,
@@ -146,54 +231,114 @@ const DailyHoroscopeScreen = () => {
     }
   }, [preferences, activeCategory]);
 
-  // Section configuration
-  const sections = [
-    { id: 'fullReading', label: 'Full Reading', shortLabel: 'READING' },
-    { id: 'transits', label: 'Planetary Transits', shortLabel: 'TRANSITS' },
-    { id: 'guidance', label: 'Daily Guidance', shortLabel: 'GUIDANCE' },
-    { id: 'spiritual', label: 'Spiritual Practice', shortLabel: 'SPIRITUAL' },
-  ];
+  // Build dynamic sections based on available data
+  const buildSections = () => {
+    const sections: Array<{ id: string; label: string }> = [];
+    const transitAnalysis = fullContent.transitAnalysis;
+    const transitInsights = fullContent.transitInsights || [];
 
-  // Measure section positions for scroll navigation
-  const measureSection = (sectionId: string, event: any) => {
-    const { y } = event.nativeEvent.layout;
-    setSectionPositions((prev) => ({
-      ...prev,
-      [sectionId]: y,
-    }));
+    // 1. Main Reading
+    sections.push({ id: 'mainReading', label: 'MAIN READING' });
+
+    // 2-4. Time sections (Morning, Afternoon, Evening)
+    sections.push({ id: 'morning', label: 'MORNING' });
+    sections.push({ id: 'afternoon', label: 'AFTERNOON' });
+    sections.push({ id: 'evening', label: 'EVENING' });
+
+    // 5+. Transits (dynamic based on data)
+    if (transitAnalysis?.primary) {
+      sections.push({ id: 'transit-primary', label: 'TRANSIT 1' });
+    }
+    if (transitAnalysis?.secondary) {
+      transitAnalysis.secondary.forEach((_, index) => {
+        sections.push({ id: `transit-secondary-${index}`, label: `TRANSIT ${index + 2}` });
+      });
+    }
+
+    // Insights (Energy, Influence, Emotion, Opportunities, Challenges)
+    if (transitInsights.length > 0) {
+      sections.push({ id: 'insights', label: 'INSIGHTS' });
+    }
+
+    // Guidance (Focus, Explore, Be Mindful)
+    if (fullContent.dailyFocus || fullContent.explore?.length > 0 || fullContent.limit?.length > 0) {
+      sections.push({ id: 'guidance', label: 'GUIDANCE' });
+    }
+
+    // Spiritual (Meditation, Affirmation, Prompts)
+    if (fullContent.spiritualGuidance) {
+      sections.push({ id: 'spiritual', label: 'SPIRITUAL' });
+    }
+
+    // Categories
+    const selectedCategories = preferences.focusAreas || [];
+    if (selectedCategories.length > 0) {
+      sections.push({ id: 'categories', label: 'CATEGORIES' });
+    }
+
+    return sections;
   };
 
-  // Scroll to section when dot is pressed
-  const handleSectionPress = (index: number, sectionId: string) => {
-    setActiveTab(index);
-    setIsNavigating(true);
+  const sections = buildSections();
 
-    setTimeout(() => {
-      setIsNavigating(false);
-    }, 600);
+  // Auto-scroll section navigation to show active section
+  useEffect(() => {
+    if (sectionNavScrollRef.current && sections.length > 0) {
+      // Calculate approximate position of active section
+      // Each section item is roughly 100-120px wide (padding + text)
+      const itemWidth = 110;
+      const scrollPosition = currentSectionIndex * itemWidth - 100; // Offset to center
 
-    const position = sectionPositions[sectionId];
-    if (scrollViewRef.current && position !== undefined) {
-      scrollViewRef.current.scrollTo({ y: position - 100, animated: true });
+      sectionNavScrollRef.current.scrollTo({
+        x: Math.max(0, scrollPosition),
+        animated: true,
+      });
+    }
+  }, [currentSectionIndex]);
+
+  // Navigate to specific section
+  const handleSectionPress = (index: number) => {
+    setCurrentSectionIndex(index);
+  };
+
+  // Navigate to previous section (with looping)
+  const handlePrevious = () => {
+    setCurrentSectionIndex((prev) => (prev === 0 ? sections.length - 1 : prev - 1));
+  };
+
+  // Navigate to next section (with looping)
+  const handleNext = () => {
+    setCurrentSectionIndex((prev) => (prev === sections.length - 1 ? 0 : prev + 1));
+  };
+
+  // Scroll section navigation left (by ~3 label widths)
+  const scrollSectionNavLeft = () => {
+    if (sectionNavScrollRef.current) {
+      // Approximate width of 3 labels (each ~80-85px with reduced spacing)
+      const scrollAmount = 250;
+      sectionNavScrollRef.current.scrollTo({
+        x: Math.max(0, (currentScrollX || 0) - scrollAmount),
+        animated: true,
+      });
     }
   };
 
-  // Update active tab based on scroll position
-  const handleScroll = (event: any) => {
-    if (isNavigating) return;
-
-    const scrollY = event.nativeEvent.contentOffset.y;
-    let newActiveTab = 0;
-
-    Object.entries(sectionPositions).forEach(([sectionId, position], index) => {
-      if (scrollY >= position - 150) {
-        newActiveTab = index;
-      }
-    });
-
-    if (newActiveTab !== activeTab) {
-      setActiveTab(newActiveTab);
+  // Scroll section navigation right (by ~3 label widths)
+  const scrollSectionNavRight = () => {
+    if (sectionNavScrollRef.current) {
+      // Approximate width of 3 labels
+      const scrollAmount = 250;
+      sectionNavScrollRef.current.scrollTo({
+        x: (currentScrollX || 0) + scrollAmount,
+        animated: true,
+      });
     }
+  };
+
+  // Track current scroll position
+  const [currentScrollX, setCurrentScrollX] = React.useState(0);
+  const handleSectionNavScroll = (event: any) => {
+    setCurrentScrollX(event.nativeEvent.contentOffset.x);
   };
 
   // Get current date for header
@@ -298,14 +443,13 @@ const DailyHoroscopeScreen = () => {
     );
   }
 
-  // Render full reading section
-  const renderFullReading = () => {
+  // Render main reading section (intro, title, summary, conclusion)
+  const renderMainReading = () => {
     const fullReading = fullContent.fullReading;
-    const timeGuidance = fullContent.timeGuidance;
 
     if (!fullReading) {
       return (
-        <View onLayout={(e) => measureSection('fullReading', e)} style={styles.section}>
+        <View style={styles.section}>
           <Text style={styles.sectionTitle}>Daily Reading</Text>
           <Text style={styles.bodyText}>{content.summary || preview.summary || 'Loading your personalized reading...'}</Text>
           {content.advice && <Text style={styles.bodyText}>{content.advice}</Text>}
@@ -314,7 +458,7 @@ const DailyHoroscopeScreen = () => {
     }
 
     return (
-      <View onLayout={(e) => measureSection('fullReading', e)} style={styles.section}>
+      <View style={styles.section}>
         {/* Introduction */}
         {fullReading.introduction && (
           <View style={styles.introductionSection}>
@@ -326,59 +470,12 @@ const DailyHoroscopeScreen = () => {
           </View>
         )}
 
-        {/* Body Paragraphs with Time Headings */}
-        <View style={styles.timeSectionsContainer}>
-          {fullReading.bodyParagraphs &&
-            fullReading.bodyParagraphs.map((paragraph, index) => {
-              const timeHeadings = ['Morning', 'Afternoon', 'Evening'];
-              const timeKeys = ['morning', 'afternoon', 'evening'] as const;
-              const guidance = timeGuidance?.[timeKeys[index]];
-
-              return (
-                <View key={index} style={styles.timeSection}>
-                  <Text style={[styles.sectionTitle, { marginTop: 0 }]}>{timeHeadings[index]}</Text>
-                  {guidance?.energy && (
-                    <Text style={[styles.subsectionTitle, { color: colors.text.primary + '80', marginTop: 0, marginBottom: spacing.sm }]}>
-                      Energy: {guidance.energy}
-                    </Text>
-                  )}
-                  <Text style={styles.bodyText}>{paragraph}</Text>
-
-                  {/* Guidance columns */}
-                  {guidance && (guidance.bestFor?.length > 0 || guidance.avoid?.length > 0) && (
-                    <View style={styles.guidanceColumns}>
-                      {guidance.bestFor?.length > 0 && (
-                        <View style={styles.guidanceColumn}>
-                          <Text style={[styles.subsectionTitle, { color: colors.text.primary + '80', marginTop: 0, marginBottom: spacing.sm }]}>
-                            Best For
-                          </Text>
-                          {guidance.bestFor.map((item, idx) => (
-                            <View key={idx} style={styles.guidanceItemContainer}>
-                              <Text style={styles.guidanceBullet}>✦</Text>
-                              <Text style={styles.guidanceItemText}>{item}</Text>
-                            </View>
-                          ))}
-                        </View>
-                      )}
-                      {guidance.avoid?.length > 0 && (
-                        <View style={styles.guidanceColumn}>
-                          <Text style={[styles.subsectionTitle, { color: colors.text.primary + '80', marginTop: 0, marginBottom: spacing.sm }]}>
-                            Avoid
-                          </Text>
-                          {guidance.avoid.map((item, idx) => (
-                            <View key={idx} style={styles.guidanceItemContainer}>
-                              <Text style={styles.guidanceBullet}>✦</Text>
-                              <Text style={styles.guidanceItemText}>{item}</Text>
-                            </View>
-                          ))}
-                        </View>
-                      )}
-                    </View>
-                  )}
-                </View>
-              );
-            })}
-        </View>
+        {/* Summary */}
+        {content.summary && (
+          <View style={{ marginTop: spacing.md }}>
+            <Text style={styles.bodyText}>{content.summary}</Text>
+          </View>
+        )}
 
         {/* Conclusion */}
         {fullReading.conclusion && (
@@ -390,68 +487,142 @@ const DailyHoroscopeScreen = () => {
     );
   };
 
-  // Render transit analysis section
-  const renderTransits = () => {
-    const transitAnalysis = fullContent.transitAnalysis;
-    const transitInsights = fullContent.transitInsights || content.transitInsights || [];
+  // Render individual time section (Morning, Afternoon, or Evening)
+  const renderTimeSection = (timeIndex: number) => {
+    const fullReading = fullContent.fullReading;
+    const timeGuidance = fullContent.timeGuidance;
+    const timeHeadings = ['Morning', 'Afternoon', 'Evening'];
+    const timeKeys = ['morning', 'afternoon', 'evening'] as const;
+
+    if (!fullReading?.bodyParagraphs || !fullReading.bodyParagraphs[timeIndex]) {
+      return (
+        <View style={styles.section}>
+          <Text style={[styles.titleText, { paddingHorizontal: 0, marginTop: 0, marginBottom: spacing.sm }]}>{timeHeadings[timeIndex]}</Text>
+          <Text style={styles.bodyText}>No guidance available for this time period.</Text>
+        </View>
+      );
+    }
+
+    const paragraph = fullReading.bodyParagraphs[timeIndex];
+    const guidance = timeGuidance?.[timeKeys[timeIndex]];
 
     return (
-      <View onLayout={(e) => measureSection('transits', e)} style={styles.section}>
-        <View style={styles.sectionDivider} />
-        <Text style={[styles.titleText, { paddingHorizontal: 0, marginTop: spacing.lg, marginBottom: spacing.sm }]}>Planetary Transits</Text>
+      <View style={styles.section}>
+        <Text style={[styles.titleText, { paddingHorizontal: 0, marginTop: 0, marginBottom: spacing.sm }]}>{timeHeadings[timeIndex]}</Text>
+        {guidance?.energy && (
+          <Text style={[styles.sectionTitle, { marginTop: 0, marginBottom: spacing.sm }]}>
+            Energy: {guidance.energy}
+          </Text>
+        )}
+        <Text style={styles.bodyText}>{paragraph}</Text>
 
-        {/* Primary Transit */}
-        {transitAnalysis?.primary && (
-          <View style={styles.transitItem}>
-            <Text style={[styles.sectionTitle, { marginTop: 0 }]}>{transitAnalysis.primary.aspect}</Text>
-            {transitAnalysis.primary.timing && <Text style={[styles.transitTiming, { fontStyle: 'italic' }]}>{transitAnalysis.primary.timing}</Text>}
-            <Text style={styles.bodyText}>{transitAnalysis.primary.interpretation}</Text>
-            {transitAnalysis.primary.advice && <Text style={styles.bodyText}>{transitAnalysis.primary.advice}</Text>}
+        {/* Guidance columns */}
+        {guidance && (guidance.bestFor?.length > 0 || guidance.avoid?.length > 0) && (
+          <View style={styles.guidanceColumns}>
+            {guidance.bestFor?.length > 0 && (
+              <View style={styles.guidanceColumn}>
+                <Text style={[styles.subsectionTitle, { color: colors.text.primary + '80', marginTop: 0, marginBottom: spacing.sm }]}>
+                  Best For
+                </Text>
+                {guidance.bestFor.map((item, idx) => (
+                  <View key={idx} style={styles.guidanceItemContainer}>
+                    <Text style={styles.guidanceBullet}>✦</Text>
+                    <Text style={styles.guidanceItemText}>{item}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
+            {guidance.avoid?.length > 0 && (
+              <View style={styles.guidanceColumn}>
+                <Text style={[styles.subsectionTitle, { color: colors.text.primary + '80', marginTop: 0, marginBottom: spacing.sm }]}>
+                  Avoid
+                </Text>
+                {guidance.avoid.map((item, idx) => (
+                  <View key={idx} style={styles.guidanceItemContainer}>
+                    <Text style={styles.guidanceBullet}>✦</Text>
+                    <Text style={styles.guidanceItemText}>{item}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
           </View>
         )}
-
-        {/* Secondary Transits */}
-        {transitAnalysis?.secondary &&
-          transitAnalysis.secondary.map((transit, index) => (
-            <View key={index} style={styles.transitItem}>
-              <Text style={[styles.sectionTitle, { marginTop: 0 }]}>{transit.aspect}</Text>
-              {transit.timing && <Text style={[styles.transitTiming, { fontStyle: 'italic' }]}>{transit.timing}</Text>}
-              <Text style={styles.bodyText}>{transit.interpretation}</Text>
-              {transit.advice && <Text style={styles.bodyText}>{transit.advice}</Text>}
-            </View>
-          ))}
-
-        {/* Transit Insights */}
-        {transitInsights.length > 0 && (
-          <View style={styles.insightsContainer}>
-            {transitInsights.map((insight, index) => {
-              const categories = ['Energy', 'Influence', 'Emotion', 'Opportunities', 'Challenges'];
-              const category = categories[index] || '';
-
-              return (
-                <View key={index} style={styles.insightItem}>
-                  {category && <Text style={[styles.sectionTitle, { marginTop: 0, marginBottom: spacing.xs }]}>{category}</Text>}
-                  <Text style={styles.bodyText}>{insight}</Text>
-                </View>
-              );
-            })}
-          </View>
-        )}
-        <View style={styles.sectionDivider} />
       </View>
     );
   };
 
-  // Render guidance section
+  // Render individual transit
+  const renderTransit = (transitId: string) => {
+    const transitAnalysis = fullContent.transitAnalysis;
+    let transit: any = null;
+    let transitNumber = 1;
+
+    if (transitId === 'transit-primary' && transitAnalysis?.primary) {
+      transit = transitAnalysis.primary;
+      transitNumber = 1;
+    } else if (transitId.startsWith('transit-secondary-')) {
+      const index = parseInt(transitId.replace('transit-secondary-', ''));
+      if (transitAnalysis?.secondary && transitAnalysis.secondary[index]) {
+        transit = transitAnalysis.secondary[index];
+        transitNumber = index + 2;
+      }
+    }
+
+    if (!transit) {
+      return (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Transit {transitNumber}</Text>
+          <Text style={styles.bodyText}>No transit data available.</Text>
+        </View>
+      );
+    }
+
+    return (
+      <View style={styles.section}>
+        <Text style={[styles.titleText, { paddingHorizontal: 0, marginBottom: spacing.sm }]}>Transit {transitNumber}</Text>
+
+        {/* Transit Timeline */}
+        <TransitTimeline transit={transit} />
+
+        <Text style={[styles.sectionTitle, { marginTop: spacing.xs }]}>{transit.aspect}</Text>
+        {transit.timing && <Text style={[styles.transitTiming, { fontStyle: 'italic' }]}>{transit.timing}</Text>}
+        <Text style={styles.bodyText}>{transit.interpretation}</Text>
+        {transit.advice && <Text style={styles.bodyText}>{transit.advice}</Text>}
+      </View>
+    );
+  };
+
+  // Render insights section (Energy, Influence, Emotion, Opportunities, Challenges)
+  const renderInsights = () => {
+    const transitInsights = fullContent.transitInsights || [];
+    const categories = ['Energy', 'Influence', 'Emotion', 'Opportunities', 'Challenges'];
+
+    return (
+      <View style={styles.section}>
+        <Text style={[styles.titleText, { paddingHorizontal: 0, marginBottom: spacing.sm }]}>Insights</Text>
+        {transitInsights.map((insight, index) => {
+          const category = categories[index] || '';
+          return (
+            <View key={index} style={styles.insightItem}>
+              {category && <Text style={[styles.sectionTitle, { marginTop: 0, marginBottom: spacing.xs }]}>{category}</Text>}
+              <Text style={styles.bodyText}>{insight}</Text>
+            </View>
+          );
+        })}
+      </View>
+    );
+  };
+
+  // Render guidance section (Focus, Explore, Be Mindful)
   const renderGuidance = () => {
     const explore = fullContent.explore || content.explore || [];
     const limit = fullContent.limit || content.limit || [];
     const dailyFocus = fullContent.dailyFocus || content.dailyFocus;
 
     return (
-      <View onLayout={(e) => measureSection('guidance', e)} style={styles.section}>
-        <Text style={[styles.titleText, { marginTop: spacing.lg, marginBottom: spacing.sm, color: colors.text.primary, paddingHorizontal: 0 }]}>
-          Daily Guidance
+      <View style={styles.section}>
+        <Text style={[styles.titleText, { marginBottom: spacing.sm, color: colors.text.primary, paddingHorizontal: 0 }]}>
+          Guidance
         </Text>
 
         {dailyFocus && (
@@ -461,41 +632,38 @@ const DailyHoroscopeScreen = () => {
           </View>
         )}
 
-        <View style={styles.exploreContainer}>
-          {explore.length > 0 && (
-            <View style={styles.exploreSection}>
-              <Text style={[styles.sectionTitle, { marginTop: 0 }]}>Explore Today</Text>
-              {explore.map((item, index) => (
-                <Text key={index} style={[styles.bodyText, { marginBottom: spacing.xs }]}>
-                  ✦ {item}
-                </Text>
-              ))}
-            </View>
-          )}
+        {explore.length > 0 && (
+          <View style={styles.exploreSection}>
+            <Text style={[styles.sectionTitle, { marginTop: dailyFocus ? spacing.md : 0 }]}>Explore Today</Text>
+            {explore.map((item, index) => (
+              <Text key={index} style={[styles.bodyText, { marginBottom: spacing.xs }]}>
+                ✦ {item}
+              </Text>
+            ))}
+          </View>
+        )}
 
-          {limit.length > 0 && (
-            <View style={[styles.exploreSection, { marginBottom: spacing.lg }]}>
-              <Text style={[styles.sectionTitle, { marginTop: spacing.md }]}>Be Mindful Of</Text>
-              {limit.map((item, index) => (
-                <Text key={index} style={[styles.bodyText, { marginBottom: spacing.xs }]}>
-                  ✦ {item}
-                </Text>
-              ))}
-            </View>
-          )}
-        </View>
+        {limit.length > 0 && (
+          <View style={styles.exploreSection}>
+            <Text style={[styles.sectionTitle, { marginTop: spacing.md }]}>Be Mindful Of</Text>
+            {limit.map((item, index) => (
+              <Text key={index} style={[styles.bodyText, { marginBottom: spacing.xs }]}>
+                ✦ {item}
+              </Text>
+            ))}
+          </View>
+        )}
       </View>
     );
   };
 
-  // Render spiritual section
+  // Render spiritual section (Meditation, Affirmation, Prompts)
   const renderSpiritual = () => {
     const spiritualGuidance = fullContent.spiritualGuidance;
-    const weather = preview.weather || content.weather || cosmicWeather;
 
     return (
-      <View onLayout={(e) => measureSection('spiritual', e)} style={styles.section}>
-        <Text style={[styles.sectionTitle, { marginTop: 0 }]}>Spiritual Practice</Text>
+      <View style={styles.section}>
+        <Text style={[styles.titleText, { paddingHorizontal: 0, marginBottom: spacing.sm }]}>Spiritual Practice</Text>
 
         {spiritualGuidance?.meditation && (
           <View style={styles.spiritualCard}>
@@ -537,121 +705,109 @@ const DailyHoroscopeScreen = () => {
             ))}
           </View>
         )}
+      </View>
+    );
+  };
 
-        {/* Cosmic Weather */}
-        {weather && (
-          <View style={styles.cosmicWeatherSection}>
-            <Text style={[styles.titleText, { paddingHorizontal: 0, marginBottom: spacing.sm, color: colors.text.primary }]}>Cosmic Weather</Text>
+  // Render categories section
+  const renderCategories = () => {
+    const selectedCategories = preferences.focusAreas || [];
+    const allCategories = Object.keys(categoryIcons);
+    const categoryAdvice = dailyHoroscope?.content?.categoryAdvice;
 
-            {weather.moon && (
-              <View style={styles.symbolRow}>
-                <Text style={styles.symbolIcon}>{typeof weather.moon === 'object' && weather.moon.symbol ? weather.moon.symbol : '☽'}</Text>
-                <View style={styles.symbolContent}>
-                  <Text style={styles.symbolTitle}>
-                    {typeof weather.moon === 'object' && weather.moon.title ? weather.moon.title : 'Lunar influence for today'}
-                  </Text>
-                  <Text style={styles.symbolDescription}>
-                    {typeof weather.moon === 'object' && weather.moon.description
-                      ? weather.moon.description
-                      : typeof weather.moon === 'string'
-                      ? weather.moon
-                      : 'The moon brings intuitive wisdom and emotional clarity.'}
-                  </Text>
-                </View>
-              </View>
-            )}
+    return (
+      <View style={styles.section}>
+        <Text style={[styles.titleText, { paddingHorizontal: 0, marginBottom: spacing.md }]}>Categories</Text>
 
-            {weather.venus && (
-              <View style={styles.symbolRow}>
-                <Text style={styles.symbolIcon}>{typeof weather.venus === 'object' && weather.venus.symbol ? weather.venus.symbol : '♀'}</Text>
-                <View style={styles.symbolContent}>
-                  <Text style={styles.symbolTitle}>
-                    {typeof weather.venus === 'object' && weather.venus.title ? weather.venus.title : 'Venus brings harmony'}
-                  </Text>
-                  <Text style={styles.symbolDescription}>
-                    {typeof weather.venus === 'object' && weather.venus.description
-                      ? weather.venus.description
-                      : typeof weather.venus === 'string'
-                      ? weather.venus
-                      : 'Venus enhances love, creativity, and beauty in your day.'}
-                  </Text>
-                </View>
-              </View>
-            )}
+        {/* Category Navigation */}
+        <View style={styles.categoryNav}>
+          {allCategories.map((category) => {
+            const isSelected = selectedCategories.includes(category);
+            const isActive = activeCategory === category;
 
-            {weather.mercury && (
-              <View style={styles.symbolRow}>
-                <Text style={styles.symbolIcon}>{typeof weather.mercury === 'object' && weather.mercury.symbol ? weather.mercury.symbol : '☿'}</Text>
-                <View style={styles.symbolContent}>
-                  <Text style={styles.symbolTitle}>
-                    {typeof weather.mercury === 'object' && weather.mercury.title ? weather.mercury.title : 'Mercury enhances communication'}
-                  </Text>
-                  <Text style={styles.symbolDescription}>
-                    {typeof weather.mercury === 'object' && weather.mercury.description
-                      ? weather.mercury.description
-                      : typeof weather.mercury === 'string'
-                      ? weather.mercury
-                      : 'Mercury supports clear thinking and meaningful connections.'}
-                  </Text>
-                </View>
-              </View>
-            )}
+            return (
+              <TouchableOpacity
+                key={category}
+                style={styles.categoryNavItem}
+                onPress={() => isSelected && setActiveCategory(category)}
+                disabled={!isSelected}
+              >
+                <Ionicons
+                  name={categoryIcons[category]}
+                  size={20}
+                  color={isSelected ? colors.text.primary : colors.text.secondary}
+                  style={!isSelected && styles.categoryIconDisabled}
+                />
+                {isActive && <View style={styles.categoryNavUnderline} />}
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+
+        {/* Active Category Advice */}
+        {activeCategory && categoryAdvice && categoryAdvice[activeCategory] && (
+          <View style={styles.categorySection}>
+            <Text style={styles.categoryTitle}>
+              {categoryAdvice[activeCategory].title
+                ? categoryAdvice[activeCategory].title.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '').trim()
+                : `${activeCategory.charAt(0).toUpperCase() + activeCategory.slice(1)}`}
+            </Text>
+            <Text style={styles.categoryContent}>{categoryAdvice[activeCategory].content}</Text>
           </View>
         )}
       </View>
     );
   };
 
-  // Render category navigation
-  const renderCategoryNav = () => {
-    const selectedCategories = preferences.focusAreas || [];
-    const allCategories = Object.keys(categoryIcons);
+  // Render current section based on section ID
+  const renderCurrentSection = () => {
+    const currentSection = sections[currentSectionIndex];
+    if (!currentSection) return null;
 
-    return (
-      <View style={styles.categoryNav}>
-        {allCategories.map((category) => {
-          const isSelected = selectedCategories.includes(category);
-          const isActive = activeCategory === category;
+    const sectionId = currentSection.id;
 
-          return (
-            <TouchableOpacity
-              key={category}
-              style={styles.categoryNavItem}
-              onPress={() => isSelected && setActiveCategory(category)}
-              disabled={!isSelected}
-            >
-              <Ionicons
-                name={categoryIcons[category]}
-                size={20}
-                color={isSelected ? colors.text.primary : colors.text.secondary}
-                style={!isSelected && styles.categoryIconDisabled}
-              />
-              {isActive && <View style={styles.categoryNavUnderline} />}
-            </TouchableOpacity>
-          );
-        })}
-      </View>
-    );
-  };
+    // Main Reading
+    if (sectionId === 'mainReading') {
+      return renderMainReading();
+    }
 
-  // Render active category advice
-  const renderActiveCategoryAdvice = () => {
-    if (!activeCategory) return null;
+    // Time Sections
+    if (sectionId === 'morning') {
+      return renderTimeSection(0);
+    }
+    if (sectionId === 'afternoon') {
+      return renderTimeSection(1);
+    }
+    if (sectionId === 'evening') {
+      return renderTimeSection(2);
+    }
 
-    const categoryAdvice = dailyHoroscope?.content?.categoryAdvice;
-    if (!categoryAdvice || !categoryAdvice[activeCategory]) return null;
+    // Transits
+    if (sectionId.startsWith('transit-')) {
+      return renderTransit(sectionId);
+    }
 
-    const advice = categoryAdvice[activeCategory];
-    const cleanTitle = advice.title
-      ? advice.title.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '').trim()
-      : `${activeCategory.charAt(0).toUpperCase() + activeCategory.slice(1)}`;
+    // Insights
+    if (sectionId === 'insights') {
+      return renderInsights();
+    }
 
-    return (
-      <View style={styles.categorySection}>
-        <Text style={styles.categoryTitle}>{cleanTitle}</Text>
-        <Text style={styles.categoryContent}>{advice.content}</Text>
-      </View>
-    );
+    // Guidance
+    if (sectionId === 'guidance') {
+      return renderGuidance();
+    }
+
+    // Spiritual
+    if (sectionId === 'spiritual') {
+      return renderSpiritual();
+    }
+
+    // Categories
+    if (sectionId === 'categories') {
+      return renderCategories();
+    }
+
+    return null;
   };
 
   return (
@@ -667,30 +823,74 @@ const DailyHoroscopeScreen = () => {
         </TouchableOpacity>
       </View>
 
-      {/* Progress Navigation */}
-      <View style={styles.progressNavigation}>
-        {sections.map((section, index) => (
-          <TouchableOpacity key={section.id} style={styles.progressItem} onPress={() => handleSectionPress(index, section.id)}>
-            <Text style={[styles.progressLabel, activeTab === index && styles.activeProgressLabel]}>{section.shortLabel}</Text>
-            {activeTab === index && <View style={styles.activeUnderline} />}
-          </TouchableOpacity>
-        ))}
+      {/* Scrollable Section Navigation */}
+      <View style={styles.sectionNavContainer}>
+        {/* Left Chevron - Scrolls labels left */}
+        <TouchableOpacity
+          onPress={scrollSectionNavLeft}
+          style={styles.navChevron}
+        >
+          <Ionicons name="chevron-back" size={20} color={colors.text.primary} />
+        </TouchableOpacity>
+
+        {/* Horizontal Scrollable Section List */}
+        <ScrollView
+          ref={sectionNavScrollRef}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.sectionNavScroll}
+          contentContainerStyle={styles.sectionNavContent}
+          onScroll={handleSectionNavScroll}
+          scrollEventThrottle={16}
+        >
+          {sections.map((section, index) => (
+            <TouchableOpacity
+              key={section.id}
+              style={styles.sectionNavItem}
+              onPress={() => handleSectionPress(index)}
+            >
+              <Text style={[
+                styles.sectionNavLabel,
+                currentSectionIndex === index && styles.activeSectionNavLabel
+              ]}>
+                {section.label}
+              </Text>
+              {currentSectionIndex === index && <View style={styles.sectionNavUnderline} />}
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+
+        {/* Right Chevron - Scrolls labels right */}
+        <TouchableOpacity
+          onPress={scrollSectionNavRight}
+          style={styles.navChevron}
+        >
+          <Ionicons name="chevron-forward" size={20} color={colors.text.primary} />
+        </TouchableOpacity>
       </View>
 
-      {/* Content */}
-      <ScrollView ref={scrollViewRef} style={styles.scrollContainer} showsVerticalScrollIndicator={false} onScroll={handleScroll} scrollEventThrottle={16}>
-        {renderFullReading()}
-        {renderTransits()}
-        {renderGuidance()}
-        {renderSpiritual()}
-
-        <View style={styles.dividerLine} />
-
-        {renderCategoryNav()}
-        {renderActiveCategoryAdvice()}
-
+      {/* Content - Current Section Only */}
+      <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
+        {renderCurrentSection()}
         <View style={styles.bottomSpacer} />
       </ScrollView>
+
+      {/* Previous/Next Navigation Buttons */}
+      <View style={styles.navButtonsContainer}>
+        <TouchableOpacity
+          onPress={handlePrevious}
+          style={styles.navButton}
+        >
+          <Text style={styles.navButtonText}>PREVIOUS</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={handleNext}
+          style={styles.navButton}
+        >
+          <Text style={styles.navButtonText}>NEXT</Text>
+        </TouchableOpacity>
+      </View>
 
       <StatusBar style="light" />
     </SafeAreaView>
@@ -780,37 +980,65 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     marginBottom: spacing.md,
   },
-  progressNavigation: {
+  sectionNavContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border + '30',
+    paddingVertical: spacing.sm,
+  },
+  navChevron: {
+    paddingHorizontal: spacing.sm,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  sectionNavScroll: {
+    flex: 1,
+  },
+  sectionNavContent: {
+    paddingHorizontal: spacing.xs,
+    alignItems: 'center',
+  },
+  sectionNavItem: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.sm,
+    marginHorizontal: 2,
+    position: 'relative',
+  },
+  sectionNavLabel: {
+    ...typography.caption,
+    color: colors.text.secondary,
+    letterSpacing: 1,
+  },
+  activeSectionNavLabel: {
+    color: colors.text.primary,
+    fontWeight: '600',
+  },
+  sectionNavUnderline: {
+    position: 'absolute',
+    bottom: 0,
+    left: spacing.sm,
+    right: spacing.sm,
+    height: 2,
+    backgroundColor: colors.text.primary,
+  },
+  navButtonsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border + '30',
-    marginBottom: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: colors.border + '30',
   },
-  progressItem: {
-    alignItems: 'center',
-    flex: 1,
-    position: 'relative',
-  },
-  progressLabel: {
-    ...typography.caption,
-    color: colors.text.secondary,
-    letterSpacing: 1,
-    textAlign: 'center',
+  navButton: {
     paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
   },
-  activeProgressLabel: {
+  navButtonText: {
+    ...typography.body,
     color: colors.text.primary,
-  },
-  activeUnderline: {
-    position: 'absolute',
-    bottom: 0,
-    height: 2,
-    width: '80%',
-    backgroundColor: colors.text.primary,
+    letterSpacing: 1,
   },
   scrollContainer: {
     flex: 1,
@@ -913,43 +1141,8 @@ const styles = StyleSheet.create({
   promptIcon: {
     marginLeft: spacing.sm,
   },
-  cosmicWeatherSection: {
-    borderTopWidth: 1,
-    borderTopColor: colors.text.primary,
-  },
-  symbolRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: spacing.lg,
-  },
-  symbolIcon: {
-    color: colors.text.primary,
-    marginRight: spacing.lg,
-    width: 32,
-    textAlign: 'center',
-  },
-  symbolContent: {
-    flex: 1,
-  },
-  symbolTitle: {
-    ...typography.h3,
-    marginBottom: spacing.xs,
-  },
-  symbolDescription: {
-    ...typography.body,
-    lineHeight: 20,
-  },
-  sectionDivider: {
-    height: 1,
-    backgroundColor: colors.text.primary,
-  },
   bottomSpacer: {
     height: spacing.xl * 2,
-  },
-  dividerLine: {
-    height: 1,
-    backgroundColor: colors.border,
-    marginBottom: spacing.md,
   },
   categoryNav: {
     flexDirection: 'row',
@@ -989,6 +1182,33 @@ const styles = StyleSheet.create({
     ...typography.body,
     color: colors.text.primary,
     lineHeight: 20,
+  },
+  timelineContainer: {
+    marginTop: spacing.sm,
+    marginBottom: 0,
+    alignItems: 'center',
+    width: '100%',
+  },
+  timelineChart: {
+    marginTop: spacing.xs,
+  },
+  timeIconsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    paddingHorizontal: 0,
+    marginBottom: spacing.xs,
+  },
+  timeIconItem: {
+    alignItems: 'center',
+  },
+  graphLabel: {
+    ...typography.caption,
+    color: 'rgba(255, 255, 255, 0.5)',
+    textAlign: 'left',
+    width: '100%',
+    marginTop: spacing.xs,
+    letterSpacing: 1,
   },
 });
 
