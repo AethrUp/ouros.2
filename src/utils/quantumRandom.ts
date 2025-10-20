@@ -25,16 +25,26 @@ export const getQuantumRandom = async (count: number): Promise<number[]> => {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000);
 
+    // Get API key from environment
+    const apiKey = process.env.EXPO_PUBLIC_QUANTUM_API_KEY;
+
     // ANU Quantum Random Number Generator API
-    // Free tier: ~100 requests/minute
+    // Paid tier with API key authentication
     // Returns uint8 array (0-255)
+    const headers: Record<string, string> = {
+      'Accept': 'application/json',
+    };
+
+    // Add API key to headers if available
+    if (apiKey && apiKey !== 'your_quantum_api_key_here') {
+      headers['X-API-Key'] = apiKey;
+    }
+
     const response = await fetch(
       `https://qrng.anu.edu.au/API/jsonI.php?length=${count}&type=uint8`,
       {
         method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-        },
+        headers,
         signal: controller.signal
       }
     );
@@ -113,9 +123,22 @@ export const testQuantumAPI = async (): Promise<{
   const startTime = Date.now();
 
   try {
+    // Get API key from environment
+    const apiKey = process.env.EXPO_PUBLIC_QUANTUM_API_KEY;
+
+    const headers: Record<string, string> = {
+      'Accept': 'application/json',
+    };
+
+    // Add API key to headers if available
+    if (apiKey && apiKey !== 'your_quantum_api_key_here') {
+      headers['X-API-Key'] = apiKey;
+    }
+
     const response = await fetch(
       'https://qrng.anu.edu.au/API/jsonI.php?length=1&type=uint8',
       {
+        headers,
         signal: AbortSignal.timeout(3000)
       }
     );

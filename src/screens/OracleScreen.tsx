@@ -6,10 +6,13 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { NavigationProps } from '../types';
-import { HeaderBar } from '../components';
+import { HeaderBar, TarotIcon, IChingIcon, DreamIcon, Badge } from '../components';
 import { colors, spacing, typography } from '../styles';
+import { useSubscriptionTier } from '../hooks/useFeatureAccess';
 
 export const OracleScreen: React.FC<NavigationProps> = ({ navigation }) => {
+  const { isFree } = useSubscriptionTier();
+
   return (
     <View style={styles.container}>
       <HeaderBar title="ORACLE" />
@@ -20,10 +23,15 @@ export const OracleScreen: React.FC<NavigationProps> = ({ navigation }) => {
           style={styles.optionCard}
           onPress={() => navigation.navigate('Tarot')}
         >
-          <Text style={styles.optionTitle}>Tarot</Text>
-          <Text style={styles.optionDescription}>
-            Draw cards to gain insight into your questions and challenges
-          </Text>
+          <View style={styles.iconContainer}>
+            <TarotIcon size={72} color="#F6D99F" />
+          </View>
+          <View style={styles.textContainer}>
+            <Text style={styles.optionTitle}>Tarot</Text>
+            <Text style={styles.optionDescription}>
+              Draw cards to gain insight into your questions and challenges
+            </Text>
+          </View>
         </TouchableOpacity>
 
         {/* I Ching Option */}
@@ -31,10 +39,15 @@ export const OracleScreen: React.FC<NavigationProps> = ({ navigation }) => {
           style={styles.optionCard}
           onPress={() => navigation.navigate('IChing')}
         >
-          <Text style={styles.optionTitle}>I Ching</Text>
-          <Text style={styles.optionDescription}>
-            Cast coins to consult the ancient Book of Changes
-          </Text>
+          <View style={styles.iconContainer}>
+            <IChingIcon size={72} color="#F6D99F" />
+          </View>
+          <View style={styles.textContainer}>
+            <Text style={styles.optionTitle}>I Ching</Text>
+            <Text style={styles.optionDescription}>
+              Cast coins to consult the ancient Book of Changes
+            </Text>
+          </View>
         </TouchableOpacity>
 
         {/* Dream Interpretation Option */}
@@ -42,10 +55,16 @@ export const OracleScreen: React.FC<NavigationProps> = ({ navigation }) => {
           style={styles.optionCard}
           onPress={() => navigation.navigate('DreamInterpretation')}
         >
-          <Text style={styles.optionTitle}>Dream Interpretation</Text>
-          <Text style={styles.optionDescription}>
-            Explore the symbolism and meaning within your dreams
-          </Text>
+          {isFree && <Badge variant="premium" />}
+          <View style={styles.iconContainer}>
+            <DreamIcon size={72} color="#F6D99F" />
+          </View>
+          <View style={styles.textContainer}>
+            <Text style={styles.optionTitle}>Dream Interpretation</Text>
+            <Text style={styles.optionDescription}>
+              Explore the symbolism and meaning within your dreams
+            </Text>
+          </View>
         </TouchableOpacity>
       </View>
     </View>
@@ -65,12 +84,22 @@ const styles = StyleSheet.create({
   },
   optionCard: {
     width: '100%',
-    padding: spacing.xl,
+    paddingVertical: spacing.xl,
+    paddingHorizontal: spacing.md,
     backgroundColor: colors.background.card,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: colors.border,
     marginBottom: spacing.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  iconContainer: {
+    marginRight: spacing.lg,
+  },
+  textContainer: {
+    flex: 1,
   },
   optionTitle: {
     ...typography.h2,

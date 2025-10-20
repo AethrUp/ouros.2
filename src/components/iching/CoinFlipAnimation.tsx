@@ -73,6 +73,11 @@ const AnimatedCoin: React.FC<CoinProps> = ({ isHeads, delay = 0, animate, animat
 
       // Crossfade to result after animation finishes
       setTimeout(() => {
+        // Smoothly reset rotation to ensure result image displays flat
+        rotation.value = withTiming(0, {
+          duration: 300,
+          easing: Easing.out(Easing.ease),
+        });
         setShowResult(true);
         // Fade in the result image
         resultOpacity.value = withTiming(1, {

@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { NavigationProps } from '../types';
-import { LoadingSpinner } from '../components';
 import { colors, spacing, typography } from '../styles';
 
 export const SplashScreen: React.FC<NavigationProps> = ({ navigation }) => {

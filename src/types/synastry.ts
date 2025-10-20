@@ -211,6 +211,7 @@ export interface TriggeredSynastryAspect {
   advice: string;
 }
 
+// Legacy format - kept for backwards compatibility
 export interface DailySynastryForecast {
   id: string;
   date: string;
@@ -238,22 +239,13 @@ export interface DailySynastryForecast {
 
   // Preview (lightweight - for cards)
   preview: {
-    title: string;
+    topTheme: string;
     summary: string;
     energyRating: 'harmonious' | 'intense' | 'challenging' | 'transformative';
-    topTheme: string;
   };
 
-  // Full content
-  fullContent: {
-    morningForecast: string;
-    afternoonForecast: string;
-    eveningForecast: string;
-    advice: string[];
-    activitiesSuggested: string[];
-    activitiesToAvoid: string[];
-    transitAnalysis: string;
-  };
+  // Full content - can be legacy format or new structured format
+  fullContent: DailySynastryForecastContent | DailySynastryForecastContentV2;
 
   // Metadata
   hasFullForecast: boolean;
@@ -263,6 +255,68 @@ export interface DailySynastryForecast {
 
   // Expanded data
   synastryChart?: SynastryChart;
+}
+
+// Legacy content format
+export interface DailySynastryForecastContent {
+  morningForecast: string;
+  afternoonForecast: string;
+  eveningForecast: string;
+  advice: string[];
+  activitiesSuggested: string[];
+  activitiesToAvoid: string[];
+  transitAnalysis: string;
+}
+
+// New structured content format (V2)
+export interface DailySynastryForecastContentV2 {
+  introduction: string;
+
+  timeBasedForecasts: {
+    morning: TimeBasedForecast;
+    afternoon: TimeBasedForecast;
+    evening: TimeBasedForecast;
+  };
+
+  transitAnalysis: {
+    primary: TransitAnalysisItem;
+    secondary?: TransitAnalysisItem[];
+  };
+
+  relationshipInsights: string[]; // 5 insights: connection quality, communication, emotional tone, growth, challenges
+
+  guidance: {
+    focusOn: string;
+    exploreTogether: string[];
+    beMindfulOf: string[];
+  };
+
+  connectionPractice: {
+    exercise: string;
+    affirmation: string;
+    reflectionPrompts: string[];
+  };
+
+  conclusion: string;
+}
+
+export interface TimeBasedForecast {
+  energy: string;
+  narrative: string;
+  bestFor: string[];
+  avoid: string[];
+}
+
+export interface TransitAnalysisItem {
+  aspect: string;
+  interpretation: string;
+  timing: string;
+  advice: string;
+  timingData?: {
+    peakTime?: string;
+    duration?: string;
+    strengthCurve?: number[]; // 24-hour strength values for visualization
+  };
 }
 
 // =====================================================

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -7,8 +7,9 @@ import {
   ScrollView,
   Alert,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { NavigationProps } from '../types';
-import { HeaderBar, LoadingSpinner } from '../components';
+import { HeaderBar, LoadingScreen, PlanetIcon, NatalChartWheel } from '../components';
 import { useAppStore } from '../store';
 import { handleChartGeneration } from '../handlers/chartGeneration';
 import { colors, spacing, typography } from '../styles';
@@ -18,22 +19,18 @@ const ZODIAC_SIGNS = [
   'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces',
 ];
 
-const PLANET_SYMBOLS: Record<string, string> = {
-  sun: '☉',
-  moon: '☽',
-  mercury: '☿',
-  venus: '♀',
-  mars: '♂',
-  jupiter: '♃',
-  saturn: '♄',
-  uranus: '♅',
-  neptune: '♆',
-  pluto: '♇',
+// Helper function to get house suffix (1st, 2nd, 3rd, etc.)
+const getHouseSuffix = (house: number): string => {
+  const suffixes = ['th', 'st', 'nd', 'rd'];
+  const v = house % 100;
+  return suffixes[(v - 20) % 10] || suffixes[v] || suffixes[0];
 };
 
 export const NatalChartScreen: React.FC<NavigationProps> = ({ navigation }) => {
   const { natalChart, birthData, setNatalChart, selectPlanet, selectHouse } = useAppStore();
   const [isGenerating, setIsGenerating] = useState(false);
+  const [currentTabIndex, setCurrentTabIndex] = useState(1); // Default to TABLE tab
+  const tabScrollRef = useRef<ScrollView>(null);
 
   const handleGenerateChart = async () => {
     if (!birthData) {
@@ -81,7 +78,6 @@ export const NatalChartScreen: React.FC<NavigationProps> = ({ navigation }) => {
       }
       signGroups[sign].push({
         name: planetKey.toUpperCase(),
-        symbol: PLANET_SYMBOLS[planetKey] || '●',
         sign: sign,
         house: data.house,
         key: planetKey,
@@ -103,6 +99,204 @@ export const NatalChartScreen: React.FC<NavigationProps> = ({ navigation }) => {
 
   const tableData = getTableData();
 
+  // Tab configuration
+  const tabs = [
+    { id: 'interp', label: 'INTERP.' },
+    { id: 'table', label: 'TABLE' },
+    { id: 'wheel', label: 'WHEEL' },
+  ];
+
+  // Render content based on selected tab
+  const renderTabContent = () => {
+    const currentTab = tabs[currentTabIndex].id;
+
+    switch (currentTab) {
+      case 'interp':
+        // Check if we have any interpretations
+        const hasWholeChartInterpretation = natalChart?.wholeChartInterpretation;
+        const hasPlanetInterpretations = natalChart?.planets &&
+          Object.values(natalChart.planets).some(
+            planet => planet.personalizedDescription?.detailed
+          );
+
+        if (!hasWholeChartInterpretation && !hasPlanetInterpretations) {
+          return (
+            <View style={styles.tabContent}>
+              <Text style={styles.placeholderText}>No Interpretations Available</Text>
+              <Text style={styles.placeholderSubtext}>
+                Regenerate your chart to get personalized interpretations
+              </Text>
+            </View>
+          );
+        }
+
+        return (
+          <ScrollView
+            style={styles.interpretationScrollView}
+            contentContainerStyle={styles.interpretationContent}
+            showsVerticalScrollIndicator={false}
+          >
+            {/* Whole Chart Interpretation */}
+            {hasWholeChartInterpretation && (
+              <View style={styles.wholeChartCard}>
+                <View style={styles.wholeChartHeader}>
+                  <Ionicons name="star" size={24} color="#F6D99F" />
+                  <Text style={styles.wholeChartTitle}>Your Natal Chart</Text>
+                </View>
+
+                {/* Section 1: Core Nature */}
+                <View style={styles.interpretationSection}>
+                  <Text style={styles.sectionTitle}>Your Core Nature</Text>
+                  <Text style={styles.wholeChartText}>
+                    {natalChart.wholeChartInterpretation.coreNature}
+                  </Text>
+                </View>
+
+                {/* Section 2: Love and Connection */}
+                <View style={styles.interpretationSection}>
+                  <Text style={styles.sectionTitle}>How You Love & Connect</Text>
+                  <Text style={styles.wholeChartText}>
+                    {natalChart.wholeChartInterpretation.loveAndConnection}
+                  </Text>
+                </View>
+
+                {/* Section 3: Growth Edge */}
+                <View style={styles.interpretationSection}>
+                  <Text style={styles.sectionTitle}>Your Growth Edge</Text>
+                  <Text style={styles.wholeChartText}>
+                    {natalChart.wholeChartInterpretation.growthEdge}
+                  </Text>
+                </View>
+
+                {/* Section 4: Gifts to the World */}
+                <View style={styles.interpretationSection}>
+                  <Text style={styles.sectionTitle}>Your Gifts to the World</Text>
+                  <Text style={styles.wholeChartText}>
+                    {natalChart.wholeChartInterpretation.giftsToWorld}
+                  </Text>
+                </View>
+              </View>
+            )}
+
+            {/* Section divider if we have both whole chart and planet interpretations */}
+            {hasWholeChartInterpretation && hasPlanetInterpretations && (
+              <View style={styles.sectionDivider}>
+                <View style={styles.dividerLine} />
+                <Text style={styles.dividerText}>PLANET DETAILS</Text>
+                <View style={styles.dividerLine} />
+              </View>
+            )}
+
+            {/* Individual Planet Interpretations */}
+            {hasPlanetInterpretations && Object.entries(natalChart.planets).map(([planetKey, planetData]) => {
+              const interpretation = planetData.personalizedDescription;
+
+              if (!interpretation?.detailed) return null;
+
+              return (
+                <View key={planetKey} style={styles.interpretationCard}>
+                  <View style={styles.interpretationHeader}>
+                    <PlanetIcon planet={planetKey} size={24} color="#F6D99F" />
+                    <View style={styles.interpretationTitleContainer}>
+                      <Text style={styles.interpretationTitle}>
+                        {planetKey.toUpperCase()}
+                      </Text>
+                      <Text style={styles.interpretationSubtitle}>
+                        in {planetData.sign} • {planetData.house}{getHouseSuffix(planetData.house)} House
+                      </Text>
+                    </View>
+                  </View>
+                  <Text style={styles.interpretationText}>
+                    {interpretation.detailed}
+                  </Text>
+                </View>
+              );
+            })}
+          </ScrollView>
+        );
+
+      case 'table':
+        return (
+          <View style={styles.tableContainer}>
+            {/* Table Header */}
+            <View style={styles.tableHeader}>
+              <View style={styles.signHeaderCell}>
+                <Text style={styles.columnHeader}>SIGNS</Text>
+              </View>
+              <View style={styles.planetHeaderCell}>
+                <Text style={styles.columnHeader}>PLANETS</Text>
+              </View>
+              <View style={styles.houseHeaderCell}>
+                <Text style={styles.columnHeader}>HOUSES</Text>
+              </View>
+            </View>
+
+            {/* Table Body */}
+            <ScrollView style={styles.tableBody} showsVerticalScrollIndicator={false}>
+              {tableData.map((signGroup, signIndex) => (
+                <View key={signGroup.sign} style={styles.signGroupContainer}>
+                  {signGroup.planets.map((planet: any, planetIndex: number) => (
+                    <View key={planet.key} style={styles.tableRow}>
+                      {/* Sign cell - only show for first planet in the sign group */}
+                      {planetIndex === 0 && (
+                        <View
+                          style={[
+                            styles.signCell,
+                            { height: signGroup.planets.length * 50 },
+                          ]}
+                        >
+                          <Text style={styles.signText}>{signGroup.sign}</Text>
+                        </View>
+                      )}
+
+                      {/* Planet cell */}
+                      <TouchableOpacity
+                        style={styles.planetCell}
+                        onPress={() => {
+                          selectPlanet(planet.key);
+                          navigation.navigate('PlanetDetail', { planetKey: planet.key });
+                        }}
+                      >
+                        <PlanetIcon planet={planet.key} size={16} color={colors.text.primary} />
+                        <Text style={styles.planetName}>{planet.name}</Text>
+                      </TouchableOpacity>
+
+                      {/* House cell - only show for first planet in the sign group */}
+                      {planetIndex === 0 && (
+                        <TouchableOpacity
+                          style={[
+                            styles.houseCell,
+                            { height: signGroup.planets.length * 50 },
+                          ]}
+                          onPress={() => selectHouse(planet.house)}
+                        >
+                          <Text style={styles.houseNumber}>{planet.house}</Text>
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                  ))}
+                </View>
+              ))}
+            </ScrollView>
+          </View>
+        );
+
+      case 'wheel':
+        return (
+          <ScrollView
+            style={styles.wheelScrollView}
+            contentContainerStyle={styles.wheelContentContainer}
+            showsVerticalScrollIndicator={false}
+          >
+            <NatalChartWheel chartData={natalChart} />
+          </ScrollView>
+        );
+
+      default:
+        return null;
+    }
+  };
+
   return (
     <View style={styles.container}>
       <HeaderBar
@@ -117,7 +311,7 @@ export const NatalChartScreen: React.FC<NavigationProps> = ({ navigation }) => {
       />
 
       {isGenerating ? (
-        <LoadingSpinner size="large" text="Generating chart..." />
+        <LoadingScreen context="natal-chart" />
       ) : !natalChart ? (
         <View style={styles.noDataContainer}>
           <Text style={styles.noDataTitle}>Generate Chart</Text>
@@ -129,67 +323,38 @@ export const NatalChartScreen: React.FC<NavigationProps> = ({ navigation }) => {
           </TouchableOpacity>
         </View>
       ) : (
-        <View style={styles.tableContainer}>
-          {/* Table Header */}
-          <View style={styles.tableHeader}>
-            <View style={styles.signHeaderCell}>
-              <Text style={styles.columnHeader}>SIGNS</Text>
-            </View>
-            <View style={styles.planetHeaderCell}>
-              <Text style={styles.columnHeader}>PLANETS</Text>
-            </View>
-            <View style={styles.houseHeaderCell}>
-              <Text style={styles.columnHeader}>HOUSES</Text>
-            </View>
+        <View style={styles.contentWrapper}>
+          {/* Tab Navigation */}
+          <View style={styles.tabNavContainer}>
+            <ScrollView
+              ref={tabScrollRef}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.tabNavScroll}
+              contentContainerStyle={styles.tabNavContent}
+            >
+              {tabs.map((tab, index) => (
+                <TouchableOpacity
+                  key={tab.id}
+                  style={styles.tabNavItem}
+                  onPress={() => setCurrentTabIndex(index)}
+                >
+                  <Text
+                    style={[
+                      styles.tabNavLabel,
+                      currentTabIndex === index && styles.activeTabNavLabel,
+                    ]}
+                  >
+                    {tab.label}
+                  </Text>
+                  {currentTabIndex === index && <View style={styles.tabNavUnderline} />}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
           </View>
 
-          {/* Table Body */}
-          <ScrollView style={styles.tableBody} showsVerticalScrollIndicator={false}>
-            {tableData.map((signGroup, signIndex) => (
-              <View key={signGroup.sign} style={styles.signGroupContainer}>
-                {signGroup.planets.map((planet: any, planetIndex: number) => (
-                  <View key={planet.key} style={styles.tableRow}>
-                    {/* Sign cell - only show for first planet in the sign group */}
-                    {planetIndex === 0 && (
-                      <View
-                        style={[
-                          styles.signCell,
-                          { height: signGroup.planets.length * 50 },
-                        ]}
-                      >
-                        <Text style={styles.signText}>{signGroup.sign}</Text>
-                      </View>
-                    )}
-
-                    {/* Planet cell */}
-                    <TouchableOpacity
-                      style={styles.planetCell}
-                      onPress={() => {
-                        selectPlanet(planet.key);
-                        navigation.navigate('PlanetDetail', { planetKey: planet.key });
-                      }}
-                    >
-                      <Text style={styles.planetSymbol}>{planet.symbol}</Text>
-                      <Text style={styles.planetName}>{planet.name}</Text>
-                    </TouchableOpacity>
-
-                    {/* House cell - only show for first planet in the sign group */}
-                    {planetIndex === 0 && (
-                      <TouchableOpacity
-                        style={[
-                          styles.houseCell,
-                          { height: signGroup.planets.length * 50 },
-                        ]}
-                        onPress={() => selectHouse(planet.house)}
-                      >
-                        <Text style={styles.houseNumber}>{planet.house}</Text>
-                      </TouchableOpacity>
-                    )}
-                  </View>
-                ))}
-              </View>
-            ))}
-          </ScrollView>
+          {/* Tab Content */}
+          {renderTabContent()}
         </View>
       )}
     </View>
@@ -268,9 +433,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   columnHeader: {
-    ...typography.caption,
-    fontWeight: '600',
-    color: colors.text.secondary,
+    ...typography.h3,
+    fontFamily: 'PTSerif_400Regular',
+    color: '#F6D99F',
     letterSpacing: 1,
     textAlign: 'center',
   },
@@ -298,10 +463,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background.primary,
   },
   signText: {
-    ...typography.body,
-    fontWeight: '500',
+    ...typography.h3,
     color: colors.text.primary,
     textAlign: 'center',
+    fontFamily: 'PTSerif_400Regular',
   },
   planetCell: {
     flexDirection: 'row',
@@ -318,17 +483,12 @@ const styles = StyleSheet.create({
     borderRightColor: colors.border,
     flex: 1,
   },
-  planetSymbol: {
-    fontSize: 20,
-    color: colors.text.primary,
-    textAlign: 'center',
-    marginRight: spacing.sm,
-  },
   planetName: {
-    ...typography.body,
+    ...typography.caption,
     fontWeight: '500',
     color: colors.text.primary,
-    letterSpacing: 0.3,
+    letterSpacing: 0.5,
+    marginLeft: spacing.sm,
   },
   houseCell: {
     width: 80,
@@ -344,5 +504,163 @@ const styles = StyleSheet.create({
     ...typography.h4,
     color: colors.text.primary,
     fontFamily: 'Inter',
+  },
+  contentWrapper: {
+    flex: 1,
+  },
+  // Tab Navigation
+  tabNavContainer: {
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border + '30',
+    paddingVertical: spacing.sm,
+    backgroundColor: colors.background.primary,
+  },
+  tabNavScroll: {
+    flexGrow: 0,
+  },
+  tabNavContent: {
+    flexDirection: 'row',
+    width: '100%',
+  },
+  tabNavItem: {
+    flex: 1,
+    paddingVertical: spacing.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  tabNavLabel: {
+    ...typography.caption,
+    color: colors.text.secondary,
+    letterSpacing: 1,
+    fontSize: 12,
+  },
+  activeTabNavLabel: {
+    color: colors.text.primary,
+    fontWeight: '600',
+  },
+  tabNavUnderline: {
+    position: 'absolute',
+    bottom: 0,
+    left: spacing.md,
+    right: spacing.md,
+    height: 2,
+    backgroundColor: colors.text.primary,
+  },
+  // Tab Content
+  tabContent: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.xl,
+  },
+  placeholderText: {
+    ...typography.h1,
+    color: colors.text.primary,
+    marginBottom: spacing.sm,
+  },
+  placeholderSubtext: {
+    ...typography.bodySecondary,
+    color: colors.text.secondary,
+  },
+  // Wheel Tab
+  wheelScrollView: {
+    flex: 1,
+  },
+  wheelContentContainer: {
+    paddingVertical: spacing.lg,
+    alignItems: 'center',
+  },
+  // Interpretation Tab
+  interpretationScrollView: {
+    flex: 1,
+  },
+  interpretationContent: {
+    padding: spacing.md,
+    paddingBottom: spacing.xl,
+  },
+  interpretationCard: {
+    backgroundColor: colors.background.secondary,
+    borderRadius: 12,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+  },
+  interpretationHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.md,
+    paddingBottom: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border + '30',
+  },
+  interpretationTitleContainer: {
+    marginLeft: spacing.sm,
+    flex: 1,
+  },
+  interpretationTitle: {
+    ...typography.h2,
+    color: '#F6D99F',
+    marginBottom: 2,
+  },
+  interpretationSubtitle: {
+    ...typography.h3,
+    color: colors.text.primary,
+    textTransform: 'uppercase',
+    letterSpacing: 1.5,
+  },
+  interpretationText: {
+    ...typography.body,
+    color: colors.text.primary,
+    lineHeight: 22,
+  },
+  // Whole Chart Interpretation
+  wholeChartCard: {
+    backgroundColor: colors.background.secondary,
+    borderRadius: 16,
+    padding: spacing.lg,
+    marginBottom: spacing.lg,
+  },
+  wholeChartHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.md,
+    paddingBottom: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border + '30',
+  },
+  wholeChartTitle: {
+    ...typography.h1,
+    color: '#F6D99F',
+    marginLeft: spacing.sm,
+  },
+  wholeChartText: {
+    ...typography.body,
+    color: colors.text.primary,
+    lineHeight: 22,
+  },
+  interpretationSection: {
+    marginBottom: spacing.lg,
+  },
+  sectionTitle: {
+    ...typography.h2,
+    color: '#F6D99F',
+    marginBottom: spacing.sm,
+    marginTop: spacing.xs,
+  },
+  // Section Divider
+  sectionDivider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: spacing.lg,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: colors.border + '50',
+  },
+  dividerText: {
+    ...typography.h3,
+    color: colors.text.secondary,
+    marginHorizontal: spacing.md,
   },
 });

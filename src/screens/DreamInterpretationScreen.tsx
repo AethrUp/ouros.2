@@ -18,8 +18,7 @@ import {
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useAppStore } from '../store';
-import { QuantumLoadingScreen } from '../components/tarot/QuantumLoadingScreen';
-import { Button, HeaderBar } from '../components';
+import { Button, HeaderBar, LoadingScreen } from '../components';
 import { colors, typography, spacing, theme } from '../styles';
 import { NavigationProps } from '../types';
 
@@ -120,7 +119,7 @@ export const DreamInterpretationScreen: React.FC<NavigationProps> = ({
       case 'interpreting':
         return (
           <View style={{ flex: 1 }}>
-            <QuantumLoadingScreen message={dreamError || 'Interpreting your dream...'} />
+            <LoadingScreen context="dream" />
             {dreamError && (
               <TouchableOpacity
                 style={styles.errorButton}

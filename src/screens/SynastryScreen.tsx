@@ -6,7 +6,6 @@ import {
   SafeAreaView,
   ScrollView,
   TouchableOpacity,
-  ActivityIndicator,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
@@ -14,12 +13,13 @@ import { colors, spacing, typography } from '../styles';
 import { useAppStore } from '../store';
 import { NavigationProps, FriendConnection, SynastryReading } from '../types';
 import { CompatibilityMeterGroup } from '../components/synastry/CompatibilityMeter';
+import { LoadingScreen } from '../components';
 import { synastryAPI } from '../handlers/synastryAPI';
 import { generateSynastryReading } from '../handlers/synastryReading';
 
 export const SynastryScreen: React.FC<NavigationProps> = ({ navigation, route }) => {
   const scrollViewRef = useRef<ScrollView>(null);
-  const [activeTab, setActiveTab] = useState(0);
+  const [activeTab, setActiveTab] = useState<'compatibility' | 'daily'>('compatibility');
   const [sectionPositions, setSectionPositions] = useState<Record<string, number>>({});
   const [isNavigating, setIsNavigating] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -175,53 +175,13 @@ export const SynastryScreen: React.FC<NavigationProps> = ({ navigation, route })
     });
   };
 
-  // Section configuration
-  const sections = [
-    { id: 'compatibility', label: 'Compatibility', shortLabel: 'COMPAT' },
-    { id: 'reading', label: 'Full Reading', shortLabel: 'READING' },
-    { id: 'strengths', label: 'Strengths', shortLabel: 'STRENGTHS' },
-    { id: 'challenges', label: 'Challenges', shortLabel: 'CHALLENGES' },
-  ];
-
-  // Measure section positions for scroll navigation
-  const measureSection = (sectionId: string, event: any) => {
-    const { y } = event.nativeEvent.layout;
-    setSectionPositions((prev) => ({
-      ...prev,
-      [sectionId]: y,
-    }));
-  };
-
-  // Scroll to section when dot is pressed
-  const handleSectionPress = (index: number, sectionId: string) => {
-    setActiveTab(index);
-    setIsNavigating(true);
-
-    setTimeout(() => {
-      setIsNavigating(false);
-    }, 600);
-
-    const position = sectionPositions[sectionId];
-    if (scrollViewRef.current && position !== undefined) {
-      scrollViewRef.current.scrollTo({ y: position - 100, animated: true });
-    }
-  };
-
-  // Update active tab based on scroll position
-  const handleScroll = (event: any) => {
-    if (isNavigating) return;
-
-    const scrollY = event.nativeEvent.contentOffset.y;
-    let newActiveTab = 0;
-
-    Object.entries(sectionPositions).forEach(([sectionId, position], index) => {
-      if (scrollY >= position - 150) {
-        newActiveTab = index;
-      }
-    });
-
-    if (newActiveTab !== activeTab) {
-      setActiveTab(newActiveTab);
+  // Handle tab change
+  const handleTabChange = (tab: 'compatibility' | 'daily') => {
+    if (tab === 'daily') {
+      // Navigate to daily forecast screen
+      viewDailyForecast();
+    } else {
+      setActiveTab(tab);
     }
   };
 
@@ -229,13 +189,7 @@ export const SynastryScreen: React.FC<NavigationProps> = ({ navigation, route })
   if (isLoading) {
     return (
       <SafeAreaView style={styles.container}>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.text.primary} />
-          <Text style={styles.loadingText}>Calculating synastry chart...</Text>
-          <Text style={styles.loadingSubtext}>
-            Analyzing inter-chart aspects and compatibility
-          </Text>
-        </View>
+        <LoadingScreen context="synastry" />
         <StatusBar style="light" />
       </SafeAreaView>
     );
@@ -283,66 +237,54 @@ export const SynastryScreen: React.FC<NavigationProps> = ({ navigation, route })
     );
   }
 
-  // Render compatibility section
-  const renderCompatibility = () => (
-    <View onLayout={(e) => measureSection('compatibility', e)} style={styles.section}>
-      <CompatibilityMeterGroup
-        overall={currentSynastryChart.compatibilityScore || 0}
-        fire={currentSynastryChart.elementCompatibility?.fire}
-        earth={currentSynastryChart.elementCompatibility?.earth}
-        air={currentSynastryChart.elementCompatibility?.air}
-        water={currentSynastryChart.elementCompatibility?.water}
-        cardinal={currentSynastryChart.modalityCompatibility?.cardinal}
-        fixed={currentSynastryChart.modalityCompatibility?.fixed}
-        mutable={currentSynastryChart.modalityCompatibility?.mutable}
-      />
-    </View>
-  );
-
-  // Render full reading section
-  const renderReading = () => {
-    if (!reading) return null;
-
-    // Split reading into paragraphs
-    const paragraphs = reading.interpretation.split('\n\n').filter((p) => p.trim().length > 0);
-
-    return (
-      <View onLayout={(e) => measureSection('reading', e)} style={styles.section}>
-        <Text style={[styles.titleText, { paddingHorizontal: 0, marginTop: spacing.md, marginBottom: spacing.sm }]}>
-          Relationship Dynamics
-        </Text>
-
-        {paragraphs.map((paragraph, index) => (
-          <Text key={index} style={styles.bodyText}>
-            {paragraph}
-          </Text>
-        ))}
-        <View style={styles.sectionDivider} />
+  // Render compatibility content
+  const renderCompatibilityContent = () => (
+    <>
+      {/* Compatibility Meters */}
+      <View style={styles.section}>
+        <CompatibilityMeterGroup
+          overall={currentSynastryChart.compatibilityScore || 0}
+          fire={currentSynastryChart.elementCompatibility?.fire}
+          earth={currentSynastryChart.elementCompatibility?.earth}
+          air={currentSynastryChart.elementCompatibility?.air}
+          water={currentSynastryChart.elementCompatibility?.water}
+          cardinal={currentSynastryChart.modalityCompatibility?.cardinal}
+          fixed={currentSynastryChart.modalityCompatibility?.fixed}
+          mutable={currentSynastryChart.modalityCompatibility?.mutable}
+        />
       </View>
-    );
-  };
 
-  // Render strengths section
-  const renderStrengths = () => {
-    if (!currentSynastryChart.strengths || currentSynastryChart.strengths.length === 0) {
-      return null;
-    }
-
-    return (
-      <View onLayout={(e) => measureSection('strengths', e)} style={styles.section}>
-        <Text style={[styles.titleText, { marginTop: spacing.lg, marginBottom: spacing.sm, color: colors.text.primary, paddingHorizontal: 0 }]}>
-          Relationship Strengths
-        </Text>
-
-        {currentSynastryChart.strengths.map((strength, index) => (
-          <View key={index} style={styles.listItem}>
-            <Text style={styles.listBullet}>✦</Text>
-            <Text style={styles.bodyText}>{strength}</Text>
+      {/* Full Reading */}
+      {reading && (() => {
+        const paragraphs = reading.interpretation.split('\n\n').filter((p) => p.trim().length > 0);
+        return (
+          <View style={styles.section}>
+            <Text style={[styles.titleText, { paddingHorizontal: 0, marginTop: spacing.md, marginBottom: spacing.sm }]}>
+              Relationship Dynamics
+            </Text>
+            {paragraphs.map((paragraph, index) => (
+              <Text key={index} style={styles.bodyText}>
+                {paragraph}
+              </Text>
+            ))}
+            <View style={styles.sectionDivider} />
           </View>
-        ))}
+        );
+      })()}
 
-        {currentSynastryChart.recommendations &&
-          currentSynastryChart.recommendations.length > 0 && (
+      {/* Strengths */}
+      {currentSynastryChart.strengths && currentSynastryChart.strengths.length > 0 && (
+        <View style={styles.section}>
+          <Text style={[styles.titleText, { marginTop: spacing.lg, marginBottom: spacing.sm, color: colors.text.primary, paddingHorizontal: 0 }]}>
+            Relationship Strengths
+          </Text>
+          {currentSynastryChart.strengths.map((strength, index) => (
+            <View key={index} style={styles.listItem}>
+              <Text style={styles.listBullet}>✦</Text>
+              <Text style={styles.bodyText}>{strength}</Text>
+            </View>
+          ))}
+          {currentSynastryChart.recommendations && currentSynastryChart.recommendations.length > 0 && (
             <>
               <Text style={[styles.sectionTitle, { marginTop: spacing.lg }]}>
                 Recommendations
@@ -355,36 +297,29 @@ export const SynastryScreen: React.FC<NavigationProps> = ({ navigation, route })
               ))}
             </>
           )}
-      </View>
-    );
-  };
+        </View>
+      )}
 
-  // Render challenges section
-  const renderChallenges = () => {
-    if (!currentSynastryChart.challenges || currentSynastryChart.challenges.length === 0) {
-      return null;
-    }
-
-    return (
-      <View onLayout={(e) => measureSection('challenges', e)} style={styles.section}>
-        <Text style={[styles.titleText, { marginTop: spacing.lg, marginBottom: spacing.sm, color: colors.text.primary, paddingHorizontal: 0 }]}>
-          Growth Opportunities
-        </Text>
-
-        <Text style={styles.bodyText}>
-          Every relationship has areas for growth. These challenges can strengthen your bond when
-          approached with awareness and compassion.
-        </Text>
-
-        {currentSynastryChart.challenges.map((challenge, index) => (
-          <View key={index} style={styles.listItem}>
-            <Text style={styles.listBullet}>✦</Text>
-            <Text style={styles.bodyText}>{challenge}</Text>
-          </View>
-        ))}
-      </View>
-    );
-  };
+      {/* Challenges */}
+      {currentSynastryChart.challenges && currentSynastryChart.challenges.length > 0 && (
+        <View style={styles.section}>
+          <Text style={[styles.titleText, { marginTop: spacing.lg, marginBottom: spacing.sm, color: colors.text.primary, paddingHorizontal: 0 }]}>
+            Growth Opportunities
+          </Text>
+          <Text style={styles.bodyText}>
+            Every relationship has areas for growth. These challenges can strengthen your bond when
+            approached with awareness and compassion.
+          </Text>
+          {currentSynastryChart.challenges.map((challenge, index) => (
+            <View key={index} style={styles.listItem}>
+              <Text style={styles.listBullet}>✦</Text>
+              <Text style={styles.bodyText}>{challenge}</Text>
+            </View>
+          ))}
+        </View>
+      )}
+    </>
+  );
 
   return (
     <SafeAreaView style={styles.container}>
@@ -397,32 +332,41 @@ export const SynastryScreen: React.FC<NavigationProps> = ({ navigation, route })
         </TouchableOpacity>
 
         <View style={styles.headerContent}>
+          <Text style={styles.headerTitle}>{connection.friendDisplayName}</Text>
           <Text style={styles.headerSubtitle}>SYNASTRY READING</Text>
-          <View style={styles.headerNames}>
-            <Text style={styles.headerName}>{profile?.displayName}</Text>
-            <Text style={styles.headerSeparator}>&</Text>
-            <Text style={styles.headerName}>{connection.friendDisplayName}</Text>
-          </View>
         </View>
-
-        <TouchableOpacity style={styles.moreButton} onPress={viewDailyForecast}>
-          <Ionicons name="calendar-outline" size={24} color={colors.text.primary} />
-        </TouchableOpacity>
       </View>
 
+      {/* Tab Navigation */}
+      <View style={styles.tabContainer}>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'compatibility' && styles.activeTab]}
+          onPress={() => handleTabChange('compatibility')}
+        >
+          <Text style={[styles.tabText, activeTab === 'compatibility' && styles.activeTabText]}>
+            COMPATIBILITY
+          </Text>
+          {activeTab === 'compatibility' && <View style={styles.tabUnderline} />}
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'daily' && styles.activeTab]}
+          onPress={() => handleTabChange('daily')}
+        >
+          <Text style={[styles.tabText, activeTab === 'daily' && styles.activeTabText]}>
+            DAILY
+          </Text>
+          {activeTab === 'daily' && <View style={styles.tabUnderline} />}
+        </TouchableOpacity>
+      </View>
 
       {/* Scrollable Content */}
       <ScrollView
         ref={scrollViewRef}
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
-        onScroll={handleScroll}
-        scrollEventThrottle={16}
       >
-        {renderCompatibility()}
-        {renderReading()}
-        {renderStrengths()}
-        {renderChallenges()}
+        {renderCompatibilityContent()}
 
         {/* Bottom Padding */}
         <View style={{ height: 60 }} />
@@ -496,30 +440,52 @@ const styles = StyleSheet.create({
   },
   headerContent: {
     flex: 1,
-    alignItems: 'center',
+    alignItems: 'flex-start',
+    marginLeft: spacing.md,
+  },
+  headerTitle: {
+    ...typography.h1,
+    color: colors.text.primary,
   },
   headerSubtitle: {
     ...typography.caption,
+    color: colors.text.primary,
+    textTransform: 'uppercase',
+    letterSpacing: 1.65, // 150% letter spacing for 11px font
+    marginTop: spacing.xs / 2,
+  },
+  tabContainer: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border + '30',
+    paddingHorizontal: spacing.lg,
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: spacing.md,
+    alignItems: 'center',
+    position: 'relative',
+  },
+  activeTab: {
+    // Active tab styling handled by text and underline
+  },
+  tabText: {
+    ...typography.caption,
     color: colors.text.secondary,
     letterSpacing: 1,
-    marginBottom: spacing.xs,
+    textTransform: 'uppercase',
   },
-  headerNames: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  activeTabText: {
+    color: colors.text.primary,
+    fontWeight: '600',
   },
-  headerName: {
-    ...typography.h3,
-    fontSize: 16,
-  },
-  headerSeparator: {
-    ...typography.h3,
-    fontSize: 16,
-    marginHorizontal: spacing.sm,
-    color: colors.text.secondary,
-  },
-  moreButton: {
-    padding: spacing.xs,
+  tabUnderline: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 2,
+    backgroundColor: colors.text.primary,
   },
   scrollView: {
     flex: 1,

@@ -8,13 +8,12 @@ import {
   Modal,
   TextInput,
   Alert,
-  ActivityIndicator,
   Clipboard,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
 import { NavigationProps } from '../types';
-import { HeaderBar, Button, SwipeableChartCard } from '../components';
+import { HeaderBar, Button, SwipeableChartCard, LoadingScreen } from '../components';
 import { colors, spacing, typography } from '../styles';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppStore } from '../store';
@@ -57,10 +56,15 @@ export const FriendsScreen: React.FC<NavigationProps> = ({ navigation }) => {
   ]);
 
   useEffect(() => {
-    loadConnections();
-    loadInvitations();
-    loadMyFriendCode();
-    loadSavedCharts();
+    const loadData = async () => {
+      await Promise.all([
+        loadConnections(),
+        loadInvitations(),
+        loadMyFriendCode(),
+        loadSavedCharts(),
+      ]);
+    };
+    loadData();
   }, []);
 
   const handleCopyFriendCode = async () => {
@@ -229,16 +233,33 @@ export const FriendsScreen: React.FC<NavigationProps> = ({ navigation }) => {
     options?: { relationship?: string; notes?: string }
   ) => {
     try {
-      await createSavedChart(name, birthData, natalChart, options);
+      const savedChart = await createSavedChart(name, birthData, natalChart, options);
       setShowChartForm(false);
-      Alert.alert('Success', `Chart for ${name} created successfully!`);
+
+      // Navigate to synastry screen to generate compatibility reading
+      const mockConnection: any = {
+        connectionId: savedChart.id,
+        friendId: savedChart.id,
+        friendEmail: '',
+        friendDisplayName: savedChart.name,
+        friendCode: '',
+        userSharesChart: true,
+        friendSharesChart: true,
+        relationshipLabel: savedChart.relationship,
+        createdAt: savedChart.createdAt,
+      };
+
+      navigation.navigate('Synastry', {
+        connection: mockConnection,
+        savedChart: savedChart
+      });
     } catch (error: any) {
       throw error; // Let the form handle the error
     }
   };
 
-  return (
-    <View style={styles.container}>
+  const content = (
+    <>
       <HeaderBar
         title="FRIENDS"
         rightActions={[
@@ -283,42 +304,41 @@ export const FriendsScreen: React.FC<NavigationProps> = ({ navigation }) => {
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
-        {activeTab === 'connections' && (
-          <>
-            {isLoadingConnections ? (
-              <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color={colors.primary} />
-              </View>
-            ) : connections.length === 0 && savedCharts.length === 0 ? (
-              <View style={styles.emptyState}>
-                <Ionicons name="people-outline" size={64} color={colors.text.secondary} />
-                <Text style={styles.emptyTitle}>No Connections Yet</Text>
-                <Text style={styles.emptyDescription}>
-                  Add friends or create saved charts for people without the app
-                </Text>
-                <View style={styles.emptyButtonContainer}>
-                  <View style={{ flex: 1 }}>
-                    <Button
-                      title="Add Friend"
-                      onPress={() => setShowInviteModal(true)}
-                      variant="primary"
-                      size="medium"
-                      fullWidth
-                    />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Button
-                      title="Add Chart"
-                      onPress={() => setShowChartForm(true)}
-                      variant="primary"
-                      size="medium"
-                      fullWidth
-                    />
+      {isLoadingConnections && activeTab === 'connections' ? (
+        <LoadingScreen context="general" />
+      ) : (
+        <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
+          {activeTab === 'connections' && (
+            <>
+              {connections.length === 0 && savedCharts.length === 0 ? (
+                <View style={styles.emptyState}>
+                  <Ionicons name="people-outline" size={64} color={colors.text.secondary} />
+                  <Text style={styles.emptyTitle}>No Connections Yet</Text>
+                  <Text style={styles.emptyDescription}>
+                    Add friends or create saved charts for people without the app
+                  </Text>
+                  <View style={styles.emptyButtonContainer}>
+                    <View style={{ flex: 1 }}>
+                      <Button
+                        title="Add Friend"
+                        onPress={() => setShowInviteModal(true)}
+                        variant="primary"
+                        size="medium"
+                        fullWidth
+                      />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Button
+                        title="Add Chart"
+                        onPress={() => setShowChartForm(true)}
+                        variant="primary"
+                        size="medium"
+                        fullWidth
+                      />
+                    </View>
                   </View>
                 </View>
-              </View>
-            ) : (
+              ) : (
               <>
                 {/* Saved Charts Section */}
                 {savedCharts.length > 0 && (
@@ -481,7 +501,8 @@ export const FriendsScreen: React.FC<NavigationProps> = ({ navigation }) => {
             )}
           </>
         )}
-      </ScrollView>
+        </ScrollView>
+      )}
 
       {/* Invite Modal */}
       <Modal
@@ -566,6 +587,12 @@ export const FriendsScreen: React.FC<NavigationProps> = ({ navigation }) => {
         onClose={() => setShowChartForm(false)}
         onSave={handleCreateSavedChart}
       />
+    </>
+  );
+
+  return (
+    <View style={styles.container}>
+      {content}
     </View>
   );
 };
@@ -674,12 +701,6 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     padding: spacing.lg,
-  },
-  loadingContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: spacing.xl * 2,
   },
   emptyState: {
     flex: 1,

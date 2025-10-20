@@ -51,15 +51,6 @@ export interface HeaderBarProps extends BaseComponentProps {
   backgroundColor?: string;
 }
 
-// Loading Spinner Props
-export interface LoadingSpinnerProps extends BaseComponentProps {
-  size?: 'small' | 'medium' | 'large';
-  color?: string;
-  text?: string;
-  overlay?: boolean;
-  progress?: number;
-}
-
 // Button Props
 export interface ButtonProps extends BaseComponentProps {
   title: string;

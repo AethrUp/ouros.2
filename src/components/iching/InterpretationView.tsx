@@ -8,22 +8,37 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-nati
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { CastedHexagram, IChingInterpretation } from '../../types/iching';
+import { CastedHexagram, IChingInterpretation, IChingInterpretationV2 } from '../../types/iching';
 import { HexagramDisplay } from './HexagramDisplay';
 import { StructuredInterpretationView } from './StructuredInterpretationView';
+import { StructuredInterpretationViewV2 } from './StructuredInterpretationViewV2';
 import { isStructuredInterpretation } from '../../utils/ichingPromptTemplate';
 import { colors, typography, spacing } from '../../styles';
-import { LoadingSpinner } from '../LoadingSpinner';
+import { LoadingScreen } from '../';
+
+/**
+ * Type guard to check if interpretation is V2 format
+ */
+const isV2Interpretation = (
+  interpretation: string | IChingInterpretation | IChingInterpretationV2 | null
+): interpretation is IChingInterpretationV2 => {
+  return (
+    typeof interpretation === 'object' &&
+    interpretation !== null &&
+    'preview' in interpretation &&
+    'fullContent' in interpretation
+  );
+};
 
 interface InterpretationViewProps {
   question: string;
   primaryHexagram: CastedHexagram;
   relatingHexagram?: CastedHexagram | null;
-  interpretation: string | IChingInterpretation | null;
+  interpretation: string | IChingInterpretation | IChingInterpretationV2 | null;
   isGenerating: boolean;
   onSave?: () => void;
   onNewReading?: () => void;
-  onJournal?: () => void;
+  onJournal?: (prompt?: string, promptIndex?: number) => void;
 }
 
 /**
@@ -43,6 +58,84 @@ export const InterpretationView: React.FC<InterpretationViewProps> = ({
   const hasChangingLines = changingLines.length > 0;
   const insets = useSafeAreaInsets();
 
+  // If V2 interpretation, use full-screen layout with section navigation
+  if (isV2Interpretation(interpretation)) {
+    return (
+      <View style={styles.container}>
+        {/* Header */}
+        <View style={[styles.header, { paddingTop: insets.top + spacing.md }]}>
+          <Text style={styles.headerTitle}>I Ching Reading</Text>
+          <View style={styles.headerActions}>
+            {onSave && (
+              <TouchableOpacity style={styles.iconButton} onPress={onSave} activeOpacity={0.7}>
+                <Ionicons name="bookmark-outline" size={24} color={colors.text.primary} />
+              </TouchableOpacity>
+            )}
+            {onJournal && (
+              <TouchableOpacity style={styles.iconButton} onPress={onJournal} activeOpacity={0.7}>
+                <Ionicons name="journal-outline" size={24} color={colors.text.primary} />
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+
+        {/* Hexagrams Section - Fixed at top */}
+        <Animated.View entering={FadeIn.delay(200)} style={styles.hexagramsMainSection}>
+          <View style={styles.hexagramsRow}>
+            {/* Primary Hexagram */}
+            <View style={styles.hexagramColumn}>
+              <Text style={styles.sectionLabel}>
+                {hasChangingLines ? 'Present' : 'Your Hexagram'}
+              </Text>
+
+              <View style={styles.hexagramInfo}>
+                <Text style={styles.hexagramNumber}>#{primary.number}</Text>
+                <Text style={styles.hexagramChinese}>
+                  {primary.chineseName} {primary.pinyinName}
+                </Text>
+              </View>
+
+              <HexagramDisplay lines={primaryHexagram.lines} maxLines={6} />
+
+              <Text style={styles.hexagramName}>{primary.englishName}</Text>
+            </View>
+
+            {/* Relating Hexagram (if changing lines exist) */}
+            {relatingHexagram && (
+              <View style={styles.hexagramColumn}>
+                <Text style={styles.sectionLabel}>Future</Text>
+
+                <View style={styles.hexagramInfo}>
+                  <Text style={styles.hexagramNumber}>#{relatingHexagram.hexagram.number}</Text>
+                  <Text style={styles.hexagramChinese}>
+                    {relatingHexagram.hexagram.chineseName} {relatingHexagram.hexagram.pinyinName}
+                  </Text>
+                </View>
+
+                <HexagramDisplay lines={relatingHexagram.lines} maxLines={6} />
+
+                <Text style={styles.hexagramName}>{relatingHexagram.hexagram.englishName}</Text>
+              </View>
+            )}
+          </View>
+        </Animated.View>
+
+        {/* V2 Interpretation with section navigation - manages its own scrolling */}
+        {isGenerating ? (
+          <View style={styles.loadingContainer}>
+            <LoadingScreen context="iching" />
+          </View>
+        ) : (
+          <StructuredInterpretationViewV2
+            interpretationData={interpretation}
+            onJournal={onJournal}
+          />
+        )}
+      </View>
+    );
+  }
+
+  // V1 or legacy format - use scrollable layout
   return (
     <View style={styles.container}>
       {/* Header */}
@@ -108,17 +201,18 @@ export const InterpretationView: React.FC<InterpretationViewProps> = ({
       <Animated.View entering={FadeIn.delay(600)} style={styles.interpretationSection}>
         {isGenerating ? (
           <View style={styles.loadingContainer}>
-            <LoadingSpinner />
-            <Text style={styles.loadingText}>Generating interpretation...</Text>
+            <LoadingScreen context="iching" />
           </View>
         ) : interpretation ? (
           isStructuredInterpretation(interpretation) ? (
-            // New structured view
+            // V1 structured view
             <StructuredInterpretationView interpretationData={interpretation} />
           ) : (
             // Legacy plain text view
             <View style={styles.interpretationContent}>
-              <Text style={styles.interpretationText}>{interpretation}</Text>
+              <Text style={styles.interpretationText}>
+                {typeof interpretation === 'string' ? interpretation : ''}
+              </Text>
             </View>
           )
         ) : (

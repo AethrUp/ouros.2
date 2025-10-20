@@ -90,6 +90,22 @@ export const ProfileScreen: React.FC<NavigationProps> = ({ navigation }) => {
         )}
 
         <TouchableOpacity
+          style={styles.testButton}
+          onPress={() => navigation.navigate('TestLoading')}
+        >
+          <Text style={styles.testButtonText}>Test Loading Screen</Text>
+        </TouchableOpacity>
+
+        {__DEV__ && (
+          <TouchableOpacity
+            style={[styles.testButton, { backgroundColor: colors.primary }]}
+            onPress={() => navigation.navigate('DevMenu')}
+          >
+            <Text style={styles.testButtonText}>Developer Menu</Text>
+          </TouchableOpacity>
+        )}
+
+        <TouchableOpacity
           style={[styles.resetButton, isResetting && styles.resetButtonDisabled]}
           onPress={handleResetOnboarding}
           disabled={isResetting}
@@ -137,6 +153,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.text.secondary,
     marginBottom: spacing.sm,
+  },
+  testButton: {
+    backgroundColor: colors.accent,
+    padding: spacing.md,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginTop: spacing.lg,
+  },
+  testButtonText: {
+    ...typography.button,
+    color: colors.text.primary,
   },
   resetButton: {
     backgroundColor: colors.error,

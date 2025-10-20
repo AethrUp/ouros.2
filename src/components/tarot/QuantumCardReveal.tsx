@@ -43,13 +43,13 @@ export const QuantumCardReveal: React.FC<QuantumCardRevealProps> = ({
   const currentCard = drawnCards[currentCardIndex];
   const isLastCard = currentCardIndex === drawnCards.length - 1;
 
-  // Animate card entrance - start bigger (1.2x scale) and slightly higher
+  // Animate card entrance - start bigger (1.2x scale)
   useEffect(() => {
     setIsFlipped(false);
     setHideInstruction(false);
     setShowContent(false);
     contentOpacity.setValue(0);
-    cardTranslateY.setValue(-40); // Start 40px higher
+    cardTranslateY.setValue(0); // Start at normal position
 
     Animated.parallel([
       Animated.spring(cardScale, {
@@ -79,23 +79,15 @@ export const QuantumCardReveal: React.FC<QuantumCardRevealProps> = ({
       duration: 600,
       useNativeDriver: true,
     }).start(() => {
-      // Wait 800ms to let user appreciate the revealed card, then shrink and move into position
+      // Wait 800ms to let user appreciate the revealed card, then shrink to normal size
       setTimeout(() => {
-        Animated.parallel([
-          // Shrink card to normal size
-          Animated.timing(cardScale, {
-            toValue: 1,
-            duration: 600,
-            useNativeDriver: true,
-          }),
-          // Move card down to final position
-          Animated.timing(cardTranslateY, {
-            toValue: 0, // Move to normal position (from -40)
-            duration: 600,
-            useNativeDriver: true,
-          }),
-        ]).start(() => {
-          // After card finishes moving, show text/button and fade them in
+        // Shrink card to normal size
+        Animated.timing(cardScale, {
+          toValue: 1,
+          duration: 600,
+          useNativeDriver: true,
+        }).start(() => {
+          // After card finishes shrinking, show text/button and fade them in
           setIsFlipped(true);
 
           Animated.timing(contentOpacity, {
@@ -154,7 +146,7 @@ export const QuantumCardReveal: React.FC<QuantumCardRevealProps> = ({
       cardScale.setValue(0);
       cardRotateY.setValue(0);
       cardOpacity.setValue(0);
-      cardTranslateY.setValue(-40);
+      cardTranslateY.setValue(0);
       contentOpacity.setValue(0);
       slideAnim.setValue(0);
     });
@@ -179,97 +171,109 @@ export const QuantumCardReveal: React.FC<QuantumCardRevealProps> = ({
         ))}
       </View>
 
-      {/* Main card area */}
-      <View style={styles.cardArea}>
-        <TouchableOpacity
-          onPress={handleCardTap}
-          activeOpacity={1}
-          disabled={isFlipped}
-          style={styles.cardTouchable}
-        >
+      {/* Main content area with flex layout */}
+      <View style={styles.contentArea}>
+        {/* Card and text container - treated as one unit */}
+        <View style={styles.cardAndTextContainer}>
+          {/* Card container */}
+          <TouchableOpacity
+            onPress={handleCardTap}
+            activeOpacity={1}
+            disabled={isFlipped}
+            style={styles.cardTouchable}
+          >
+            <Animated.View
+              style={[
+                styles.cardContainer,
+                {
+                  transform: [
+                    { scale: cardScale },
+                    { translateY: cardTranslateY },
+                    { perspective: 1000 },
+                  ],
+                  opacity: cardOpacity,
+                },
+              ]}
+            >
+              {/* Card back - visible when rotateY = 0 */}
+              <Animated.View
+                style={[
+                  styles.cardSide,
+                  {
+                    transform: [{ rotateY: cardRotateY.interpolate({
+                      inputRange: [0, 180],
+                      outputRange: ['0deg', '180deg'],
+                    }) }],
+                    backfaceVisibility: 'hidden',
+                  },
+                ]}
+              >
+                <TarotCardComponent
+                  isRevealed={false}
+                  orientation={currentCard.orientation}
+                  size="large"
+                />
+              </Animated.View>
+
+              {/* Card front - visible when rotateY = 180 */}
+              <Animated.View
+                style={[
+                  styles.cardSide,
+                  styles.cardFront,
+                  {
+                    transform: [{ rotateY: cardRotateY.interpolate({
+                      inputRange: [0, 180],
+                      outputRange: ['180deg', '360deg'],
+                    }) }],
+                    backfaceVisibility: 'hidden',
+                  },
+                ]}
+              >
+                <TarotCardComponent
+                  card={currentCard.card}
+                  isRevealed={true}
+                  orientation={currentCard.orientation}
+                  size="large"
+                />
+              </Animated.View>
+            </Animated.View>
+          </TouchableOpacity>
+
+          {/* Instruction text - shown below card when not flipped */}
+          {!hideInstruction && (
+            <Text style={styles.instructionText}>Tap to reveal</Text>
+          )}
+
+          {/* Card info - shown below card when flipped */}
+          {isFlipped && (
+            <Animated.View
+              style={[
+                styles.cardInfoContainer,
+                { opacity: contentOpacity }
+              ]}
+            >
+              <Text style={styles.cardName}>{currentCard.card.name}</Text>
+              <Text style={styles.positionName}>{currentCard.position}</Text>
+              <Text style={styles.cardMeaning}>
+                {currentCard.orientation === 'upright'
+                  ? currentCard.card.uprightMeaning
+                  : currentCard.card.reversedMeaning}
+              </Text>
+            </Animated.View>
+          )}
+        </View>
+
+        {/* Spacer to push button to bottom */}
+        <View style={{ flex: 1 }} />
+
+        {/* Button at bottom */}
+        {isFlipped && (
           <Animated.View
             style={[
-              styles.cardContainer,
-              {
-                transform: [
-                  { scale: cardScale },
-                  { translateY: cardTranslateY },
-                  { perspective: 1000 },
-                ],
-                opacity: cardOpacity,
-              },
+              styles.buttonContainer,
+              { opacity: contentOpacity }
             ]}
           >
-            {/* Card back - visible when rotateY = 0 */}
-            <Animated.View
-              style={[
-                styles.cardSide,
-                {
-                  transform: [{ rotateY: cardRotateY.interpolate({
-                    inputRange: [0, 180],
-                    outputRange: ['0deg', '180deg'],
-                  }) }],
-                  backfaceVisibility: 'hidden',
-                },
-              ]}
-            >
-              <TarotCardComponent
-                isRevealed={false}
-                orientation={currentCard.orientation}
-                size="large"
-              />
-            </Animated.View>
-
-            {/* Card front - visible when rotateY = 180 */}
-            <Animated.View
-              style={[
-                styles.cardSide,
-                styles.cardFront,
-                {
-                  transform: [{ rotateY: cardRotateY.interpolate({
-                    inputRange: [0, 180],
-                    outputRange: ['180deg', '360deg'],
-                  }) }],
-                  backfaceVisibility: 'hidden',
-                },
-              ]}
-            >
-              <TarotCardComponent
-                card={currentCard.card}
-                isRevealed={true}
-                orientation={currentCard.orientation}
-                size="large"
-              />
-            </Animated.View>
-          </Animated.View>
-        </TouchableOpacity>
-      </View>
-
-      {/* Instruction text - positioned relative to screen */}
-      {!hideInstruction && (
-        <Text style={styles.instructionText}>Tap to reveal</Text>
-      )}
-
-      {/* Card info and button - absolutely positioned at bottom */}
-      {isFlipped && (
-        <Animated.View
-          style={[
-            styles.bottomContent,
-            { opacity: contentOpacity }
-          ]}
-          pointerEvents="box-none"
-        >
-          <View style={styles.cardInfoContainer}>
-            <Text style={styles.cardName}>{currentCard.card.name}</Text>
-            <Text style={styles.positionName}>{currentCard.position}</Text>
-            <Text style={styles.cardMeaning}>
-              {currentCard.orientation === 'upright'
-                ? currentCard.card.uprightMeaning
-                : currentCard.card.reversedMeaning}
-            </Text>
-          </View>
-
-          <View style={styles.buttonContainer}>
             <Button
               title={isLastCard ? 'Complete' : 'Next'}
               onPress={handleNext}
@@ -277,9 +281,9 @@ export const QuantumCardReveal: React.FC<QuantumCardRevealProps> = ({
               size="medium"
               fullWidth
             />
-          </View>
-        </Animated.View>
-      )}
+          </Animated.View>
+        )}
+      </View>
     </View>
   );
 };
@@ -296,28 +300,23 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingHorizontal: theme.spacing.lg,
     paddingVertical: theme.spacing.md,
-    marginBottom: theme.spacing.lg,
+    marginBottom: theme.spacing.md,
   },
   cardProgressBox: {
-    width: 40,
+    flex: 1,
+    maxWidth: 40,
     height: 8,
     backgroundColor: '#FFFFFF',
     borderRadius: 2,
   },
-  cardArea: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
+  contentArea: {
+    flex: 1,
+    justifyContent: 'space-between',
   },
-  bottomContent: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
+  cardAndTextContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: theme.spacing.xl,
   },
   cardTouchable: {
     // Touchable area for the card
@@ -334,18 +333,15 @@ const styles = StyleSheet.create({
     left: 0,
   },
   instructionText: {
-    position: 'absolute',
-    top: '68%', // Position in the lower half of the screen
-    alignSelf: 'center',
+    marginTop: theme.spacing.xl,
     fontSize: 16,
     color: theme.colors.text.secondary,
     fontFamily: 'Inter',
     textAlign: 'center',
-    zIndex: 10,
   },
   cardInfoContainer: {
     paddingHorizontal: theme.spacing.lg,
-    paddingBottom: theme.spacing.xl,
+    paddingTop: theme.spacing.xl,
   },
   cardName: {
     fontSize: 24,

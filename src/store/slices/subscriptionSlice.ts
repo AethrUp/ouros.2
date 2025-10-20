@@ -123,12 +123,13 @@ export const createSubscriptionSlice: StateCreator<SubscriptionSlice> = (set, ge
           isLoadingSubscription: false,
         });
       } else {
-        // Create default free tier
+        // TEMPORARY: Create default PRO tier for beta testing
+        // TODO: Change back to 'free' for production launch
         const { error: insertError } = await supabase
           .from('subscription_state')
           .insert({
             user_id: user.id,
-            tier: 'free',
+            tier: 'pro',
             status: 'active',
           });
 
@@ -137,7 +138,7 @@ export const createSubscriptionSlice: StateCreator<SubscriptionSlice> = (set, ge
         set({
           subscriptionState: {
             userId: user.id,
-            tier: 'free',
+            tier: 'pro',
             status: 'active',
             platform: null,
             revenueCatId: null,

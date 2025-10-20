@@ -1,6 +1,6 @@
 export { Button } from './Button';
 export { HeaderBar } from './HeaderBar';
-export { LoadingSpinner } from './LoadingSpinner';
+export { LoadingScreen } from './LoadingScreen';
 export { TabNavigation } from './TabNavigation';
 export { TextInput } from './TextInput';
 export { LocationPicker } from './LocationPicker';
@@ -12,3 +12,10 @@ export { TransitEffectivenessGraph } from './TransitEffectivenessGraph';
 export { TransitStrengthBar } from './TransitStrengthBar';
 export { CosmicWeatherChart } from './CosmicWeatherChart';
 export { ZodiacIcon } from './ZodiacIcon';
+export { PlanetIcon } from './PlanetIcon';
+export { TarotIcon, IChingIcon, DreamIcon, AstrologyIcon } from './OracleIcons';
+export { TourTooltip } from './TourTooltip';
+export { LockedFeatureCard } from './LockedFeatureCard';
+export { FadedContent } from './FadedContent';
+export { Badge } from './Badge';
+export { NatalChartWheel } from './NatalChartWheel';

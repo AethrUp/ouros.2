@@ -6,7 +6,7 @@ import { useFeatureUsage } from '../hooks/useFeatureAccess';
 import { UpgradePrompt } from '../components/UpgradePrompt';
 import { SpreadSelector } from '../components/tarot/SpreadSelector';
 import { IntentionInput } from '../components/tarot/IntentionInput';
-import { QuantumLoadingScreen } from '../components/tarot/QuantumLoadingScreen';
+import { LoadingScreen } from '../components';
 import { QuantumCardReveal } from '../components/tarot/QuantumCardReveal';
 import { InterpretationScreen } from '../components/tarot/InterpretationScreen';
 import { PaywallModal } from '../components/PaywallModal';
@@ -81,7 +81,7 @@ export const TarotScreen = ({ navigation }: any) => {
     // Show success message or navigate
   };
 
-  const handleJournal = async () => {
+  const handleJournal = async (prompt?: string, promptIndex?: number) => {
     await saveReading();
 
     // Transform current reading to LinkedReading format
@@ -92,7 +92,7 @@ export const TarotScreen = ({ navigation }: any) => {
         title: `${selectedSpread.name} - ${drawnCards.length} cards`,
         timestamp: new Date().toISOString(),
         interpretation,
-        intention,
+        intention: prompt || intention, // Use prompt if provided
         metadata: {
           spread: selectedSpread.name,
           cardCount: drawnCards.length,
@@ -101,6 +101,7 @@ export const TarotScreen = ({ navigation }: any) => {
             position: dc.position,
             orientation: dc.orientation,
           })),
+          ...(prompt && { prompt, promptIndex }),
         },
       };
 
@@ -170,9 +171,7 @@ export const TarotScreen = ({ navigation }: any) => {
       case 'drawing':
         return (
           <View style={{ flex: 1 }}>
-            <QuantumLoadingScreen
-              message={tarotError || "Drawing cards..."}
-            />
+            <LoadingScreen context="tarot" />
             {tarotError && (
               <TouchableOpacity
                 style={styles.errorButton}
@@ -202,9 +201,7 @@ export const TarotScreen = ({ navigation }: any) => {
       case 'interpretation':
         if (isGeneratingInterpretation) {
           return (
-            <QuantumLoadingScreen
-              message="The cards are speaking..."
-            />
+            <LoadingScreen context="tarot" />
           );
         }
         // Fall through to complete if interpretation is ready
@@ -221,9 +218,7 @@ export const TarotScreen = ({ navigation }: any) => {
           );
         }
         return (
-          <QuantumLoadingScreen
-            message="Generating interpretation..."
-          />
+          <LoadingScreen context="tarot" />
         );
 
       case 'complete':

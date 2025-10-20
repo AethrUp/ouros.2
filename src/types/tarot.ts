@@ -24,7 +24,7 @@ export interface TarotReading {
   intention: string;
   spread: SpreadLayout;
   cards: DrawnCard[];
-  interpretation: string;
+  interpretation: string | TarotInterpretation; // Support both legacy string and new structured format
   interpretationSource: InterpretationSource;
   metadata?: {
     generationTime?: number;
@@ -32,6 +32,51 @@ export interface TarotReading {
     tokensUsed?: number;
     quantumSource?: 'quantum' | 'crypto';
   };
+}
+
+// New structured interpretation format (V2)
+export interface TarotInterpretation {
+  preview: {
+    title: string;
+    summary: string;
+    tone: 'Supportive' | 'Challenging' | 'Transformative' | 'Illuminating';
+  };
+
+  fullContent: {
+    overview: string;
+
+    cardInsights: CardInsight[];
+
+    synthesis: {
+      narrative: string;
+      mainTheme: string;
+    };
+
+    guidance: {
+      understanding: string;
+      actionSteps: string[];
+      thingsToEmbrace: string[];
+      thingsToRelease: string[];
+    };
+
+    timing: {
+      immediateAction: string;
+      nearFuture: string;
+      longTerm: string;
+    };
+
+    keyInsight: string;
+
+    reflectionPrompts: string[];
+
+    conclusion: string;
+  };
+}
+
+export interface CardInsight {
+  position: string;
+  cardName: string;
+  interpretation: string;
 }
 
 export interface DrawnCard {

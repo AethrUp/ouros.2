@@ -23,3 +23,5 @@ export { SynastryScreen } from './SynastryScreen';
 export { SavedChartsScreen } from './SavedChartsScreen';
 export { DailySynastryForecastScreen } from './DailySynastryForecastScreen';
 export { SubscriptionScreen } from './SubscriptionScreen';
+export { default as TestLoadingScreen } from './TestLoadingScreen';
+export { default as DevMenuScreen } from './DevMenuScreen';

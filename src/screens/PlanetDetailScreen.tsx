@@ -18,6 +18,7 @@ import { NavigationProps } from '../types';
 import { useAppStore } from '../store';
 import { colors, spacing, typography } from '../styles';
 import { AspectData, PlanetPosition } from '../types/user';
+import { ZodiacIcon } from '../components';
 
 interface PlanetDetailScreenProps extends NavigationProps {
   route: {
@@ -27,38 +28,38 @@ interface PlanetDetailScreenProps extends NavigationProps {
   };
 }
 
-// Planet symbol mapping
+// Planet symbol mapping (keys match Swiss Ephemeris API capitalization)
 const PLANET_SYMBOLS: Record<string, string> = {
-  sun: '☉',
-  moon: '☽',
-  mercury: '☿',
-  venus: '♀',
-  mars: '♂',
-  jupiter: '♃',
-  saturn: '♄',
-  uranus: '♅',
-  neptune: '♆',
-  pluto: '♇',
-  north_node: '☊',
-  south_node: '☋',
-  chiron: '⚷',
+  Sun: '☉',
+  Moon: '☽',
+  Mercury: '☿',
+  Venus: '♀',
+  Mars: '♂',
+  Jupiter: '♃',
+  Saturn: '♄',
+  Uranus: '♅',
+  Neptune: '♆',
+  Pluto: '♇',
+  'North Node': '☊',
+  'South Node': '☋',
+  Chiron: '⚷',
 };
 
-// Planet display names
+// Planet display names (keys match Swiss Ephemeris API capitalization)
 const PLANET_NAMES: Record<string, string> = {
-  sun: 'Sun',
-  moon: 'Moon',
-  mercury: 'Mercury',
-  venus: 'Venus',
-  mars: 'Mars',
-  jupiter: 'Jupiter',
-  saturn: 'Saturn',
-  uranus: 'Uranus',
-  neptune: 'Neptune',
-  pluto: 'Pluto',
-  north_node: 'North Node',
-  south_node: 'South Node',
-  chiron: 'Chiron',
+  Sun: 'Sun',
+  Moon: 'Moon',
+  Mercury: 'Mercury',
+  Venus: 'Venus',
+  Mars: 'Mars',
+  Jupiter: 'Jupiter',
+  Saturn: 'Saturn',
+  Uranus: 'Uranus',
+  Neptune: 'Neptune',
+  Pluto: 'Pluto',
+  'North Node': 'North Node',
+  'South Node': 'South Node',
+  Chiron: 'Chiron',
 };
 
 // Aspect symbols
@@ -187,55 +188,70 @@ export const PlanetDetailScreen: React.FC<PlanetDetailScreenProps> = ({
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>POSITION</Text>
 
-          <View style={styles.positionList}>
-            {/* Sign placement */}
-            <View style={styles.positionRow}>
-              <Text style={styles.positionLabel}>Sign</Text>
-              <View style={styles.positionValueContainer}>
-                <Text style={styles.positionValue}>
-                  {formatDegrees(degreeInSign)} {signSymbol} {planetData.sign}
-                </Text>
-                {planetData.retrograde && (
-                  <Text style={styles.retrogradeIndicator}>℞</Text>
-                )}
-              </View>
+          <View style={styles.positionContainer}>
+            {/* Sign */}
+            <View style={styles.positionItem}>
+              <ZodiacIcon sign={planetData.sign} size={32} color={colors.text.primary} />
+              <Text style={styles.positionItemLabel}>SIGN</Text>
             </View>
 
-            {/* House placement */}
-            <View style={styles.positionRow}>
-              <Text style={styles.positionLabel}>House</Text>
-              <Text style={styles.positionValue}>{planetData.house}</Text>
+            {/* House */}
+            <View style={styles.positionItem}>
+              <Text style={styles.positionItemValue}>{planetData.house}</Text>
+              <Text style={styles.positionItemLabel}>HOUSE</Text>
             </View>
 
-            {/* Absolute longitude */}
-            <View style={styles.positionRow}>
-              <Text style={styles.positionLabel}>Longitude</Text>
-              <Text style={styles.positionValue}>
-                {formatDegrees(planetData.degree)}
+            {/* Longitude */}
+            <View style={styles.positionItem}>
+              <Text style={styles.positionItemValue}>{formatDegrees(planetData.degree)}</Text>
+              <Text style={styles.positionItemLabel}>LONGITUDE</Text>
+            </View>
+          </View>
+
+          {/* Retrograde status */}
+          {planetData.retrograde && (
+            <View style={styles.retrogradeNotice}>
+              <Text style={styles.retrogradeNoticeSymbol}>℞</Text>
+              <Text style={styles.retrogradeNoticeText}>
+                This planet is currently in retrograde motion, appearing to move
+                backward through the zodiac from Earth's perspective.
               </Text>
             </View>
+          )}
+        </View>
 
-            {/* Speed */}
-            {planetData.speed !== undefined && (
-              <View style={styles.positionRow}>
-                <Text style={styles.positionLabel}>Speed</Text>
-                <Text style={styles.positionValue}>
-                  {planetData.speed.toFixed(4)}° /day
-                </Text>
-              </View>
-            )}
+        {/* AI Interpretation Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>INTERPRETATION</Text>
 
-            {/* Retrograde status */}
-            {planetData.retrograde && (
-              <View style={styles.retrogradeNotice}>
-                <Text style={styles.retrogradeNoticeSymbol}>℞</Text>
-                <Text style={styles.retrogradeNoticeText}>
-                  This planet is currently in retrograde motion, appearing to move
-                  backward through the zodiac from Earth's perspective.
-                </Text>
-              </View>
-            )}
-          </View>
+          {planetData.personalizedDescription ? (
+            <View style={styles.interpretationContent}>
+              <Text style={styles.interpretationText}>
+                {planetData.personalizedDescription.detailed}
+              </Text>
+
+              {planetData.personalizedDescription.keywords &&
+               planetData.personalizedDescription.keywords.length > 0 && (
+                <View style={styles.keywordsContainer}>
+                  <Text style={styles.keywordsLabel}>Keywords:</Text>
+                  <Text style={styles.keywordsText}>
+                    {planetData.personalizedDescription.keywords.join(' • ')}
+                  </Text>
+                </View>
+              )}
+            </View>
+          ) : (
+            <View style={styles.interpretationPlaceholder}>
+              <Text style={styles.interpretationPlaceholderIcon}>✨</Text>
+              <Text style={styles.interpretationPlaceholderText}>
+                AI-powered interpretation coming soon
+              </Text>
+              <Text style={styles.interpretationPlaceholderSubtext}>
+                Get personalized insights about {planetName} in {planetData.sign},
+                House {planetData.house}
+              </Text>
+            </View>
+          )}
         </View>
 
         {/* Aspects Section */}
@@ -251,7 +267,7 @@ export const PlanetDetailScreen: React.FC<PlanetDetailScreenProps> = ({
               </Text>
             </View>
           ) : (
-            <View style={styles.aspectsList}>
+            <View style={styles.aspectsGrid}>
               {relatedAspects.map((aspect, index) => {
                 // Determine which planet is the "other" planet
                 const otherPlanetKey =
@@ -264,83 +280,51 @@ export const PlanetDetailScreen: React.FC<PlanetDetailScreenProps> = ({
                 const strengthColor = getAspectStrengthColor(aspect.strength ?? 0);
 
                 return (
-                  <TouchableOpacity
+                  <View
                     key={aspect.id}
-                    style={styles.aspectItem}
-                    activeOpacity={0.7}
-                    onPress={() => {
-                      // Future: Navigate to aspect detail or show modal
-                      Alert.alert(
-                        aspectName,
-                        `${planetName} ${aspectName} ${otherPlanetName}\n\n` +
-                          (aspect.angle !== undefined ? `Angle: ${aspect.angle.toFixed(2)}°\n` : '') +
-                          (aspect.orb !== undefined ? `Orb: ${aspect.orb.toFixed(2)}°\n` : '') +
-                          (aspect.strength !== undefined ? `Strength: ${(aspect.strength * 100).toFixed(0)}%\n` : '') +
-                          (aspect.applying !== undefined ? `${aspect.applying ? 'Applying' : 'Separating'}` : '')
-                      );
-                    }}
+                    style={styles.aspectCard}
                   >
-                    {/* Aspect header */}
-                    <View style={styles.aspectHeader}>
-                      <View style={styles.aspectTitleRow}>
-                        <Text style={styles.aspectSymbol}>{aspectSymbol}</Text>
-                        <Text style={styles.aspectName}>{aspectName}</Text>
-                      </View>
-                      <View style={styles.aspectOtherPlanet}>
-                        <Text style={styles.aspectOtherSymbol}>
-                          {otherPlanetSymbol}
-                        </Text>
-                        <Text style={styles.aspectOtherName}>{otherPlanetName}</Text>
-                      </View>
+                    {/* Planet name and symbol */}
+                    <View style={styles.aspectCardHeader}>
+                      <Text style={styles.aspectCardPlanetSymbol}>
+                        {otherPlanetSymbol}
+                      </Text>
+                      <Text style={styles.aspectCardPlanetName}>
+                        {otherPlanetName}
+                      </Text>
                     </View>
 
-                    {/* Aspect details */}
-                    <View style={styles.aspectDetails}>
-                      <View style={styles.aspectDetailItem}>
-                        <Text style={styles.aspectDetailLabel}>Orb</Text>
-                        <Text style={styles.aspectDetailValue}>
+                    {/* Aspect type */}
+                    <Text style={styles.aspectCardType}>
+                      {aspectSymbol} {aspectName.toUpperCase()}
+                    </Text>
+
+                    {/* Aspect details - 2 values in a row */}
+                    <View style={styles.aspectCardDetails}>
+                      <View style={styles.aspectCardDetailItem}>
+                        <Text style={styles.aspectCardDetailValue}>
                           {aspect.orb !== undefined ? `${aspect.orb.toFixed(2)}°` : '—'}
                         </Text>
+                        <Text style={styles.aspectCardDetailLabel}>ORB</Text>
                       </View>
-                      <View style={styles.aspectDetailItem}>
-                        <Text style={styles.aspectDetailLabel}>Strength</Text>
+
+                      <View style={styles.aspectCardDetailItem}>
                         <Text
                           style={[
-                            styles.aspectDetailValue,
+                            styles.aspectCardDetailValue,
                             { color: strengthColor },
                           ]}
                         >
                           {aspect.strength !== undefined ? `${(aspect.strength * 100).toFixed(0)}%` : '—'}
                         </Text>
-                      </View>
-                      <View style={styles.aspectDetailItem}>
-                        <Text style={styles.aspectDetailLabel}>Type</Text>
-                        <Text style={styles.aspectDetailValue}>
-                          {aspect.applying !== undefined ? (aspect.applying ? 'Applying' : 'Separating') : '—'}
-                        </Text>
+                        <Text style={styles.aspectCardDetailLabel}>STG</Text>
                       </View>
                     </View>
-                  </TouchableOpacity>
+                  </View>
                 );
               })}
             </View>
           )}
-        </View>
-
-        {/* AI Interpretation Section - Placeholder */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>INTERPRETATION</Text>
-
-          <View style={styles.interpretationPlaceholder}>
-            <Text style={styles.interpretationPlaceholderIcon}>✨</Text>
-            <Text style={styles.interpretationPlaceholderText}>
-              AI-powered interpretation coming soon
-            </Text>
-            <Text style={styles.interpretationPlaceholderSubtext}>
-              Get personalized insights about {planetName} in {planetData.sign},
-              House {planetData.house}
-            </Text>
-          </View>
         </View>
 
         {/* Bottom spacing */}
@@ -404,33 +388,23 @@ const styles = StyleSheet.create({
     ...typography.h3,
     marginBottom: spacing.md,
   },
-  positionList: {
-    // No card styling - just the list
-  },
-  positionRow: {
+  positionContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    justifyContent: 'space-around',
+    paddingVertical: spacing.lg,
   },
-  positionLabel: {
-    ...typography.body,
-    color: colors.text.secondary,
-  },
-  positionValueContainer: {
-    flexDirection: 'row',
+  positionItem: {
     alignItems: 'center',
     gap: spacing.sm,
   },
-  positionValue: {
-    ...typography.body,
+  positionItemValue: {
+    ...typography.h2,
+    fontSize: 32,
     color: colors.text.primary,
   },
-  retrogradeIndicator: {
-    fontSize: 18,
-    color: colors.primary,
+  positionItemLabel: {
+    ...typography.h3,
+    color: colors.text.secondary,
   },
   retrogradeNotice: {
     flexDirection: 'row',
@@ -450,63 +424,59 @@ const styles = StyleSheet.create({
     color: colors.text.secondary,
     flex: 1,
   },
-  aspectsList: {
-    // No card styling
-  },
-  aspectItem: {
-    paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  aspectHeader: {
+  aspectsGrid: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing.xs,
+    flexWrap: 'wrap',
+    gap: spacing.md,
   },
-  aspectTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
+  aspectCard: {
+    width: '47%', // Slightly less than 50% to account for gap
+    backgroundColor: colors.background.secondary,
+    padding: spacing.md,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
-  aspectSymbol: {
-    fontSize: 18,
-    color: colors.text.primary,
-  },
-  aspectName: {
-    ...typography.body,
-    color: colors.text.primary,
-  },
-  aspectOtherPlanet: {
+  aspectCardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
+    marginBottom: spacing.xs,
   },
-  aspectOtherSymbol: {
-    fontSize: 16,
-    color: colors.text.secondary,
+  aspectCardPlanetSymbol: {
+    fontSize: 20,
+    color: colors.text.primary,
   },
-  aspectOtherName: {
-    ...typography.body,
-    color: colors.text.secondary,
+  aspectCardPlanetName: {
+    ...typography.h2,
+    fontSize: 18,
+    color: '#F6D99F',
   },
-  aspectDetails: {
+  aspectCardType: {
+    ...typography.h3,
+    fontSize: 12,
+    marginBottom: spacing.md,
+  },
+  aspectCardDetails: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: spacing.xs,
+    gap: spacing.xs,
   },
-  aspectDetailItem: {
+  aspectCardDetailItem: {
     flex: 1,
     alignItems: 'center',
   },
-  aspectDetailLabel: {
-    ...typography.caption,
-    color: colors.text.secondary,
+  aspectCardDetailValue: {
+    ...typography.body,
+    fontSize: 14,
+    fontWeight: '400',
+    color: colors.text.primary,
     marginBottom: 2,
   },
-  aspectDetailValue: {
-    ...typography.body,
-    color: colors.text.primary,
+  aspectCardDetailLabel: {
+    ...typography.h3,
+    fontSize: 11,
+    color: colors.text.secondary,
   },
   emptyState: {
     padding: spacing.xl,
@@ -516,6 +486,33 @@ const styles = StyleSheet.create({
     ...typography.body,
     color: colors.text.secondary,
     textAlign: 'center',
+  },
+  interpretationContent: {
+    paddingTop: spacing.sm,
+  },
+  interpretationText: {
+    ...typography.body,
+    color: colors.text.primary,
+    lineHeight: 24,
+    marginBottom: spacing.md,
+  },
+  keywordsContainer: {
+    marginTop: spacing.md,
+    paddingTop: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  keywordsLabel: {
+    ...typography.caption,
+    color: colors.text.secondary,
+    marginBottom: spacing.xs,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  keywordsText: {
+    ...typography.body,
+    color: '#F6D99F',
+    fontStyle: 'italic',
   },
   interpretationPlaceholder: {
     paddingVertical: spacing.xl,

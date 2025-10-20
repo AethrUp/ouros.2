@@ -6,7 +6,6 @@ import {
   SafeAreaView,
   ScrollView,
   TouchableOpacity,
-  ActivityIndicator,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
@@ -14,13 +13,13 @@ import { colors, spacing, typography } from '../styles';
 import { useAppStore } from '../store';
 import { NavigationProps } from '../types';
 import { SynastryChart } from '../types/synastry';
+import { LoadingScreen } from '../components';
+import { isSynastryV1Format, isSynastryV2Format } from '../utils/readingTypeGuards';
 
 export const DailySynastryForecastScreen: React.FC<NavigationProps> = ({ navigation, route }) => {
-  const scrollViewRef = useRef<ScrollView>(null);
-  const isMountedRef = useRef(true);
-  const [activeTab, setActiveTab] = useState(0);
-  const [sectionPositions, setSectionPositions] = useState<Record<string, number>>({});
-  const [isNavigating, setIsNavigating] = useState(false);
+  const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
+  const [currentScrollX, setCurrentScrollX] = useState(0);
+  const sectionNavScrollRef = useRef<ScrollView>(null);
 
   // Get route params
   const synastryChart: SynastryChart = route?.params?.synastryChart;
@@ -45,14 +44,9 @@ export const DailySynastryForecastScreen: React.FC<NavigationProps> = ({ navigat
   // Get forecast for this synastry chart
   const forecast = synastryChart ? dailySynastryForecasts[synastryChart.id] : null;
 
-  // Reset flag on mount and cleanup on unmount
-  useEffect(() => {
-    isMountedRef.current = true;
-
-    return () => {
-      isMountedRef.current = false;
-    };
-  }, []);
+  // Detect format
+  const isV2 = forecast ? isSynastryV2Format(forecast.fullContent) : false;
+  const isV1 = forecast ? isSynastryV1Format(forecast.fullContent) : false;
 
   // Load forecast on mount
   useEffect(() => {
@@ -91,53 +85,101 @@ export const DailySynastryForecastScreen: React.FC<NavigationProps> = ({ navigat
     }
   };
 
-  // Section configuration
-  const sections = [
-    { id: 'forecasts', label: 'Daily Forecast', shortLabel: 'FORECAST' },
-    { id: 'advice', label: 'Advice & Activities', shortLabel: 'ADVICE' },
-    { id: 'transits', label: 'Transit Analysis', shortLabel: 'TRANSITS' },
-  ];
+  // Build dynamic sections based on format
+  const buildSections = () => {
+    const sections: Array<{ id: string; label: string }> = [];
 
-  // Measure section positions for scroll navigation
-  const measureSection = (sectionId: string, event: any) => {
-    const { y } = event.nativeEvent.layout;
-    setSectionPositions((prev) => ({
-      ...prev,
-      [sectionId]: y,
-    }));
-  };
+    if (!forecast) return sections;
 
-  // Scroll to section when dot is pressed
-  const handleSectionPress = (index: number, sectionId: string) => {
-    setActiveTab(index);
-    setIsNavigating(true);
+    if (isV2) {
+      // V2 Format - structured sections
+      sections.push({ id: 'overview', label: 'OVERVIEW' });
+      sections.push({ id: 'morning', label: 'MORNING' });
+      sections.push({ id: 'afternoon', label: 'AFTERNOON' });
+      sections.push({ id: 'evening', label: 'EVENING' });
+      sections.push({ id: 'guidance', label: 'GUIDANCE' });
 
-    setTimeout(() => {
-      setIsNavigating(false);
-    }, 600);
-
-    const position = sectionPositions[sectionId];
-    if (scrollViewRef.current && position !== undefined) {
-      scrollViewRef.current.scrollTo({ y: position - 100, animated: true });
-    }
-  };
-
-  // Update active tab based on scroll position
-  const handleScroll = (event: any) => {
-    if (isNavigating) return;
-
-    const scrollY = event.nativeEvent.contentOffset.y;
-    let newActiveTab = 0;
-
-    Object.entries(sectionPositions).forEach(([sectionId, position], index) => {
-      if (scrollY >= position - 150) {
-        newActiveTab = index;
+      // Transit sections
+      if (forecast.fullContent.transitAnalysis) {
+        sections.push({ id: 'transit-primary', label: 'TRANSIT 1' });
+        if (forecast.fullContent.transitAnalysis.secondary?.length) {
+          forecast.fullContent.transitAnalysis.secondary.forEach((_, i) => {
+            sections.push({ id: `transit-${i}`, label: `TRANSIT ${i + 2}` });
+          });
+        }
       }
-    });
 
-    if (newActiveTab !== activeTab) {
-      setActiveTab(newActiveTab);
+      sections.push({ id: 'insights', label: 'INSIGHTS' });
+      sections.push({ id: 'practice', label: 'PRACTICE' });
+      sections.push({ id: 'conclusion', label: 'CLOSING' });
+    } else if (isV1) {
+      // V1 Format - legacy sections
+      sections.push({ id: 'overview', label: 'OVERVIEW' });
+      sections.push({ id: 'morning', label: 'MORNING' });
+      sections.push({ id: 'afternoon', label: 'AFTERNOON' });
+      sections.push({ id: 'evening', label: 'EVENING' });
+      sections.push({ id: 'advice', label: 'ADVICE' });
+      sections.push({ id: 'transits', label: 'TRANSITS' });
     }
+
+    return sections;
+  };
+
+  const sections = buildSections();
+
+  // Auto-scroll section navigation to show active section
+  useEffect(() => {
+    if (sectionNavScrollRef.current && sections.length > 0) {
+      const itemWidth = 110;
+      const scrollPosition = currentSectionIndex * itemWidth - 100;
+
+      sectionNavScrollRef.current.scrollTo({
+        x: Math.max(0, scrollPosition),
+        animated: true,
+      });
+    }
+  }, [currentSectionIndex]);
+
+  // Navigate to specific section
+  const handleSectionPress = (index: number) => {
+    setCurrentSectionIndex(index);
+  };
+
+  // Navigate to previous section (with looping)
+  const handlePrevious = () => {
+    setCurrentSectionIndex((prev) => (prev === 0 ? sections.length - 1 : prev - 1));
+  };
+
+  // Navigate to next section (with looping)
+  const handleNext = () => {
+    setCurrentSectionIndex((prev) => (prev === sections.length - 1 ? 0 : prev + 1));
+  };
+
+  // Scroll section navigation left
+  const scrollSectionNavLeft = () => {
+    if (sectionNavScrollRef.current) {
+      const scrollAmount = 250;
+      sectionNavScrollRef.current.scrollTo({
+        x: Math.max(0, (currentScrollX || 0) - scrollAmount),
+        animated: true,
+      });
+    }
+  };
+
+  // Scroll section navigation right
+  const scrollSectionNavRight = () => {
+    if (sectionNavScrollRef.current) {
+      const scrollAmount = 250;
+      sectionNavScrollRef.current.scrollTo({
+        x: (currentScrollX || 0) + scrollAmount,
+        animated: true,
+      });
+    }
+  };
+
+  // Track current scroll position
+  const handleSectionNavScroll = (event: any) => {
+    setCurrentScrollX(event.nativeEvent.contentOffset.x);
   };
 
   // Get current date for header
@@ -156,13 +198,7 @@ export const DailySynastryForecastScreen: React.FC<NavigationProps> = ({ navigat
   if (isLoadingForecast || isGeneratingForecast) {
     return (
       <SafeAreaView style={styles.container}>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.text.primary} />
-          <Text style={styles.loadingText}>Generating your relationship forecast...</Text>
-          <Text style={styles.loadingSubtext}>
-            Analyzing transits for {person1Name} & {person2Name}
-          </Text>
-        </View>
+        <LoadingScreen context="synastry" />
         <StatusBar style="light" />
       </SafeAreaView>
     );
@@ -202,6 +238,8 @@ export const DailySynastryForecastScreen: React.FC<NavigationProps> = ({ navigat
     );
   }
 
+  // ===== HELPER FUNCTIONS =====
+
   // Get energy rating color
   const getEnergyColor = (rating: string) => {
     switch (rating) {
@@ -218,148 +256,383 @@ export const DailySynastryForecastScreen: React.FC<NavigationProps> = ({ navigat
     }
   };
 
-  // Render time-based forecasts
-  const renderForecasts = () => {
-    const { morningForecast, afternoonForecast, eveningForecast } = forecast.fullContent;
+  // ===== SECTION RENDER FUNCTIONS =====
+
+  const renderOverview = () => {
+    if (!forecast) return null;
 
     return (
-      <View onLayout={(e) => measureSection('forecasts', e)} style={styles.section}>
-        <View style={styles.introductionSection}>
-          <Text style={[styles.titleText, { paddingHorizontal: 0, marginBottom: spacing.sm }]}>
-            Today's Relationship Energy
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Today's Energy</Text>
+        <Text style={[styles.headerSubtitle, { marginBottom: spacing.sm }]}>
+          {forecast.preview.topTheme}
+        </Text>
+        <View style={styles.energyBadge}>
+          <Text
+            style={[
+              styles.energyText,
+              { color: getEnergyColor(forecast.preview.energyRating) },
+            ]}
+          >
+            {forecast.preview.energyRating.toUpperCase()}
           </Text>
-          <Text style={[styles.sectionTitle, { marginTop: 0, marginBottom: spacing.xs }]}>
-            {forecast.preview.title}
-          </Text>
-          <View style={styles.energyBadge}>
-            <Text
-              style={[
-                styles.energyText,
-                { color: getEnergyColor(forecast.preview.energyRating) },
-              ]}
-            >
-              {forecast.preview.energyRating.toUpperCase()}
-            </Text>
-          </View>
-          <Text style={styles.bodyText}>{forecast.preview.summary}</Text>
         </View>
+        <Text style={styles.bodyText}>{forecast.preview.summary}</Text>
 
-        {/* Morning */}
-        <View style={styles.timeSection}>
+        {isV2 && forecast.fullContent.introduction && (
+          <>
+            <Text style={styles.subsectionTitle}>Overview</Text>
+            <Text style={styles.bodyText}>{forecast.fullContent.introduction}</Text>
+          </>
+        )}
+      </View>
+    );
+  };
+
+  const renderMorning = () => {
+    if (!forecast) return null;
+
+    const content = forecast.fullContent;
+
+    if (isV2) {
+      const morning = content.timeBasedForecasts.morning;
+      return (
+        <View style={styles.section}>
           <View style={styles.timeSectionHeader}>
             <Ionicons name="sunny-outline" size={24} color={colors.text.primary} />
             <Text style={[styles.sectionTitle, { marginTop: 0, marginLeft: spacing.sm }]}>
               Morning (6am-12pm)
             </Text>
           </View>
-          <Text style={styles.bodyText}>{morningForecast}</Text>
-        </View>
 
-        {/* Afternoon */}
-        <View style={styles.timeSection}>
+          {morning.energy && (
+            <View style={styles.energyBadgeSmall}>
+              <Text style={styles.energyTextSmall}>{morning.energy}</Text>
+            </View>
+          )}
+
+          <Text style={styles.bodyText}>{morning.narrative}</Text>
+
+          {morning.bestFor && morning.bestFor.length > 0 && (
+            <>
+              <Text style={styles.subsectionTitle}>Best For</Text>
+              {morning.bestFor.map((item, index) => (
+                <View key={index} style={styles.listItem}>
+                  <Text style={[styles.listBullet, { color: '#4CAF50' }]}>✦</Text>
+                  <Text style={styles.listText}>{item}</Text>
+                </View>
+              ))}
+            </>
+          )}
+
+          {morning.avoid && morning.avoid.length > 0 && (
+            <>
+              <Text style={styles.subsectionTitle}>Avoid</Text>
+              {morning.avoid.map((item, index) => (
+                <View key={index} style={styles.listItem}>
+                  <Text style={[styles.listBullet, { color: '#F44336' }]}>✦</Text>
+                  <Text style={styles.listText}>{item}</Text>
+                </View>
+              ))}
+            </>
+          )}
+        </View>
+      );
+    } else if (isV1) {
+      return (
+        <View style={styles.section}>
+          <View style={styles.timeSectionHeader}>
+            <Ionicons name="sunny-outline" size={24} color={colors.text.primary} />
+            <Text style={[styles.sectionTitle, { marginTop: 0, marginLeft: spacing.sm }]}>
+              Morning (6am-12pm)
+            </Text>
+          </View>
+          <Text style={styles.bodyText}>{content.morningForecast}</Text>
+        </View>
+      );
+    }
+
+    return null;
+  };
+
+  const renderAfternoon = () => {
+    if (!forecast) return null;
+
+    const content = forecast.fullContent;
+
+    if (isV2) {
+      const afternoon = content.timeBasedForecasts.afternoon;
+      return (
+        <View style={styles.section}>
           <View style={styles.timeSectionHeader}>
             <Ionicons name="partly-sunny-outline" size={24} color={colors.text.primary} />
             <Text style={[styles.sectionTitle, { marginTop: 0, marginLeft: spacing.sm }]}>
               Afternoon (12pm-6pm)
             </Text>
           </View>
-          <Text style={styles.bodyText}>{afternoonForecast}</Text>
-        </View>
 
-        {/* Evening */}
-        <View style={styles.timeSection}>
+          {afternoon.energy && (
+            <View style={styles.energyBadgeSmall}>
+              <Text style={styles.energyTextSmall}>{afternoon.energy}</Text>
+            </View>
+          )}
+
+          <Text style={styles.bodyText}>{afternoon.narrative}</Text>
+
+          {afternoon.bestFor && afternoon.bestFor.length > 0 && (
+            <>
+              <Text style={styles.subsectionTitle}>Best For</Text>
+              {afternoon.bestFor.map((item, index) => (
+                <View key={index} style={styles.listItem}>
+                  <Text style={[styles.listBullet, { color: '#4CAF50' }]}>✦</Text>
+                  <Text style={styles.listText}>{item}</Text>
+                </View>
+              ))}
+            </>
+          )}
+
+          {afternoon.avoid && afternoon.avoid.length > 0 && (
+            <>
+              <Text style={styles.subsectionTitle}>Avoid</Text>
+              {afternoon.avoid.map((item, index) => (
+                <View key={index} style={styles.listItem}>
+                  <Text style={[styles.listBullet, { color: '#F44336' }]}>✦</Text>
+                  <Text style={styles.listText}>{item}</Text>
+                </View>
+              ))}
+            </>
+          )}
+        </View>
+      );
+    } else if (isV1) {
+      return (
+        <View style={styles.section}>
+          <View style={styles.timeSectionHeader}>
+            <Ionicons name="partly-sunny-outline" size={24} color={colors.text.primary} />
+            <Text style={[styles.sectionTitle, { marginTop: 0, marginLeft: spacing.sm }]}>
+              Afternoon (12pm-6pm)
+            </Text>
+          </View>
+          <Text style={styles.bodyText}>{content.afternoonForecast}</Text>
+        </View>
+      );
+    }
+
+    return null;
+  };
+
+  const renderEvening = () => {
+    if (!forecast) return null;
+
+    const content = forecast.fullContent;
+
+    if (isV2) {
+      const evening = content.timeBasedForecasts.evening;
+      return (
+        <View style={styles.section}>
           <View style={styles.timeSectionHeader}>
             <Ionicons name="moon-outline" size={24} color={colors.text.primary} />
             <Text style={[styles.sectionTitle, { marginTop: 0, marginLeft: spacing.sm }]}>
               Evening (6pm-12am)
             </Text>
           </View>
-          <Text style={styles.bodyText}>{eveningForecast}</Text>
+
+          {evening.energy && (
+            <View style={styles.energyBadgeSmall}>
+              <Text style={styles.energyTextSmall}>{evening.energy}</Text>
+            </View>
+          )}
+
+          <Text style={styles.bodyText}>{evening.narrative}</Text>
+
+          {evening.bestFor && evening.bestFor.length > 0 && (
+            <>
+              <Text style={styles.subsectionTitle}>Best For</Text>
+              {evening.bestFor.map((item, index) => (
+                <View key={index} style={styles.listItem}>
+                  <Text style={[styles.listBullet, { color: '#4CAF50' }]}>✦</Text>
+                  <Text style={styles.listText}>{item}</Text>
+                </View>
+              ))}
+            </>
+          )}
+
+          {evening.avoid && evening.avoid.length > 0 && (
+            <>
+              <Text style={styles.subsectionTitle}>Avoid</Text>
+              {evening.avoid.map((item, index) => (
+                <View key={index} style={styles.listItem}>
+                  <Text style={[styles.listBullet, { color: '#F44336' }]}>✦</Text>
+                  <Text style={styles.listText}>{item}</Text>
+                </View>
+              ))}
+            </>
+          )}
         </View>
-      </View>
-    );
+      );
+    } else if (isV1) {
+      return (
+        <View style={styles.section}>
+          <View style={styles.timeSectionHeader}>
+            <Ionicons name="moon-outline" size={24} color={colors.text.primary} />
+            <Text style={[styles.sectionTitle, { marginTop: 0, marginLeft: spacing.sm }]}>
+              Evening (6pm-12am)
+            </Text>
+          </View>
+          <Text style={styles.bodyText}>{content.eveningForecast}</Text>
+        </View>
+      );
+    }
+
+    return null;
   };
 
-  // Render advice and activities
+  const renderGuidance = () => {
+    if (!forecast) return null;
+
+    const content = forecast.fullContent;
+
+    if (isV2) {
+      const { guidance } = content;
+      return (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Guidance</Text>
+
+          <Text style={styles.subsectionTitle}>Focus On</Text>
+          <Text style={styles.bodyText}>{guidance.focusOn}</Text>
+
+          {guidance.exploreTogether && guidance.exploreTogether.length > 0 && (
+            <>
+              <Text style={styles.subsectionTitle}>Explore Together</Text>
+              {guidance.exploreTogether.map((item, index) => (
+                <View key={index} style={styles.listItem}>
+                  <Text style={styles.listBullet}>✦</Text>
+                  <Text style={styles.listText}>{item}</Text>
+                </View>
+              ))}
+            </>
+          )}
+
+          {guidance.beMindfulOf && guidance.beMindfulOf.length > 0 && (
+            <>
+              <Text style={styles.subsectionTitle}>Be Mindful Of</Text>
+              {guidance.beMindfulOf.map((item, index) => (
+                <View key={index} style={styles.listItem}>
+                  <Text style={styles.listBullet}>✦</Text>
+                  <Text style={styles.listText}>{item}</Text>
+                </View>
+              ))}
+            </>
+          )}
+        </View>
+      );
+    }
+
+    return null;
+  };
+
   const renderAdvice = () => {
+    if (!forecast || !isV1) return null;
+
     const { advice, activitiesSuggested, activitiesToAvoid } = forecast.fullContent;
 
     return (
-      <View onLayout={(e) => measureSection('advice', e)} style={styles.section}>
-        <View style={styles.sectionDivider} />
-        <Text
-          style={[
-            styles.titleText,
-            { paddingHorizontal: 0, marginTop: spacing.lg, marginBottom: spacing.sm },
-          ]}
-        >
-          Guidance for Today
-        </Text>
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Guidance for Today</Text>
 
-        {/* Advice */}
         {advice && advice.length > 0 && (
-          <View style={styles.adviceSection}>
-            <Text style={[styles.sectionTitle, { marginTop: 0 }]}>Advice</Text>
+          <>
+            <Text style={styles.subsectionTitle}>Advice</Text>
             {advice.map((item, index) => (
               <View key={index} style={styles.listItem}>
                 <Text style={styles.listBullet}>✦</Text>
-                <Text style={styles.bodyText}>{item}</Text>
+                <Text style={styles.listText}>{item}</Text>
               </View>
             ))}
-          </View>
+          </>
         )}
 
-        {/* Activities Suggested */}
         {activitiesSuggested && activitiesSuggested.length > 0 && (
-          <View style={styles.adviceSection}>
-            <Text style={[styles.sectionTitle, { marginTop: spacing.lg }]}>Do Together</Text>
+          <>
+            <Text style={[styles.subsectionTitle, { marginTop: spacing.lg }]}>Do Together</Text>
             {activitiesSuggested.map((item, index) => (
               <View key={index} style={styles.listItem}>
                 <Text style={[styles.listBullet, { color: '#4CAF50' }]}>✓</Text>
-                <Text style={styles.bodyText}>{item}</Text>
+                <Text style={styles.listText}>{item}</Text>
               </View>
             ))}
-          </View>
+          </>
         )}
 
-        {/* Activities to Avoid */}
         {activitiesToAvoid && activitiesToAvoid.length > 0 && (
-          <View style={styles.adviceSection}>
-            <Text style={[styles.sectionTitle, { marginTop: spacing.lg }]}>Avoid Today</Text>
+          <>
+            <Text style={[styles.subsectionTitle, { marginTop: spacing.lg }]}>Avoid Today</Text>
             {activitiesToAvoid.map((item, index) => (
               <View key={index} style={styles.listItem}>
                 <Text style={[styles.listBullet, { color: '#F44336' }]}>✗</Text>
-                <Text style={styles.bodyText}>{item}</Text>
+                <Text style={styles.listText}>{item}</Text>
               </View>
             ))}
-          </View>
+          </>
         )}
-
-        <View style={styles.sectionDivider} />
       </View>
     );
   };
 
-  // Render transit analysis
-  const renderTransits = () => {
-    const { transitAnalysis } = forecast.fullContent;
+  const renderTransit = (transitIndex: number) => {
+    if (!forecast || !isV2) return null;
 
+    const { transitAnalysis } = forecast.fullContent;
+    let transit;
+
+    if (transitIndex === 0) {
+      transit = transitAnalysis.primary;
+    } else if (transitAnalysis.secondary && transitAnalysis.secondary[transitIndex - 1]) {
+      transit = transitAnalysis.secondary[transitIndex - 1];
+    } else {
+      return null;
+    }
+
+    return (
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Transit {transitIndex + 1}</Text>
+
+        <View style={styles.transitAspect}>
+          <Text style={styles.transitAspectText}>{transit.aspect}</Text>
+        </View>
+
+        <Text style={styles.subsectionTitle}>Interpretation</Text>
+        <Text style={styles.bodyText}>{transit.interpretation}</Text>
+
+        {transit.timing && (
+          <>
+            <Text style={styles.subsectionTitle}>Timing</Text>
+            <Text style={styles.bodyText}>{transit.timing}</Text>
+          </>
+        )}
+
+        {transit.advice && (
+          <>
+            <Text style={styles.subsectionTitle}>Advice</Text>
+            <Text style={styles.bodyText}>{transit.advice}</Text>
+          </>
+        )}
+      </View>
+    );
+  };
+
+  const renderTransitsV1 = () => {
+    if (!forecast || !isV1) return null;
+
+    const { transitAnalysis } = forecast.fullContent;
     if (!transitAnalysis) return null;
 
     // Split into paragraphs
     const paragraphs = transitAnalysis.split('\n\n').filter((p) => p.trim().length > 0);
 
     return (
-      <View onLayout={(e) => measureSection('transits', e)} style={styles.section}>
-        <Text
-          style={[
-            styles.titleText,
-            { marginTop: spacing.lg, marginBottom: spacing.sm, paddingHorizontal: 0 },
-          ]}
-        >
-          Transit Analysis
-        </Text>
-
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Transit Analysis</Text>
         {paragraphs.map((paragraph, index) => (
           <Text key={index} style={styles.bodyText}>
             {paragraph}
@@ -367,6 +640,112 @@ export const DailySynastryForecastScreen: React.FC<NavigationProps> = ({ navigat
         ))}
       </View>
     );
+  };
+
+  const renderInsights = () => {
+    if (!forecast || !isV2) return null;
+
+    const { relationshipInsights } = forecast.fullContent;
+    if (!relationshipInsights || relationshipInsights.length === 0) return null;
+
+    const insightLabels = [
+      'Connection Quality',
+      'Communication Climate',
+      'Emotional Tone',
+      'Growth Opportunities',
+      'Challenges to Navigate'
+    ];
+
+    return (
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Relationship Insights</Text>
+        {relationshipInsights.map((insight, index) => (
+          <View key={index} style={styles.insightItem}>
+            <Text style={styles.subsectionTitle}>{insightLabels[index] || `Insight ${index + 1}`}</Text>
+            <Text style={styles.bodyText}>{insight}</Text>
+          </View>
+        ))}
+      </View>
+    );
+  };
+
+  const renderPractice = () => {
+    if (!forecast || !isV2) return null;
+
+    const { connectionPractice } = forecast.fullContent;
+    if (!connectionPractice) return null;
+
+    return (
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Connection Practice</Text>
+
+        <Text style={styles.subsectionTitle}>Exercise</Text>
+        <Text style={styles.bodyText}>{connectionPractice.exercise}</Text>
+
+        {connectionPractice.affirmation && (
+          <>
+            <Text style={styles.subsectionTitle}>Affirmation</Text>
+            <View style={styles.affirmationCard}>
+              <Text style={styles.affirmationText}>{connectionPractice.affirmation}</Text>
+            </View>
+          </>
+        )}
+
+        {connectionPractice.reflectionPrompts && connectionPractice.reflectionPrompts.length > 0 && (
+          <>
+            <Text style={styles.subsectionTitle}>Reflection Prompts</Text>
+            {connectionPractice.reflectionPrompts.map((prompt, index) => (
+              <View key={index} style={styles.reflectionItem}>
+                <Text style={styles.reflectionNumber}>{index + 1}.</Text>
+                <Text style={styles.reflectionText}>{prompt}</Text>
+              </View>
+            ))}
+          </>
+        )}
+      </View>
+    );
+  };
+
+  const renderConclusion = () => {
+    if (!forecast || !isV2) return null;
+
+    const { conclusion } = forecast.fullContent;
+    if (!conclusion) return null;
+
+    return (
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Closing Thoughts</Text>
+        <Text style={styles.bodyText}>{conclusion}</Text>
+      </View>
+    );
+  };
+
+  // Render current section based on section ID
+  const renderCurrentSection = () => {
+    if (!forecast || sections.length === 0) return null;
+
+    const currentSection = sections[currentSectionIndex];
+    if (!currentSection) return null;
+
+    const sectionId = currentSection.id;
+
+    if (sectionId === 'overview') return renderOverview();
+    if (sectionId === 'morning') return renderMorning();
+    if (sectionId === 'afternoon') return renderAfternoon();
+    if (sectionId === 'evening') return renderEvening();
+    if (sectionId === 'guidance') return renderGuidance();
+    if (sectionId === 'advice') return renderAdvice();
+    if (sectionId === 'transit-primary') return renderTransit(0);
+    if (sectionId.startsWith('transit-')) {
+      const transitIndex = parseInt(sectionId.replace('transit-', '')) + 1;
+      return renderTransit(transitIndex);
+    }
+    if (sectionId === 'transits') return renderTransitsV1();
+    if (sectionId === 'insights') return renderInsights();
+    if (sectionId === 'practice') return renderPractice();
+    if (sectionId === 'conclusion') return renderConclusion();
+
+    return null;
   };
 
   return (
@@ -382,11 +761,7 @@ export const DailySynastryForecastScreen: React.FC<NavigationProps> = ({ navigat
         <View style={styles.headerContent}>
           <Text style={styles.headerSubtitle}>DAILY FORECAST</Text>
           <Text style={styles.headerDate}>{getCurrentDate()}</Text>
-          <View style={styles.headerNames}>
-            <Text style={styles.headerName}>{person1Name}</Text>
-            <Ionicons name="heart" size={16} color={colors.primary} style={styles.headerIcon} />
-            <Text style={styles.headerName}>{person2Name}</Text>
-          </View>
+          <Text style={styles.headerName}>{person2Name || 'Synastry Chart'}</Text>
         </View>
 
         <TouchableOpacity style={styles.refreshButton} onPress={() => loadForecast(true)}>
@@ -394,42 +769,62 @@ export const DailySynastryForecastScreen: React.FC<NavigationProps> = ({ navigat
         </TouchableOpacity>
       </View>
 
-      {/* Section Navigation Dots */}
-      <View style={styles.sectionNav}>
-        {sections.map((section, index) => (
-          <TouchableOpacity
-            key={section.id}
-            onPress={() => handleSectionPress(index, section.id)}
-            style={styles.sectionNavItem}
-          >
-            <View style={[styles.dot, activeTab === index && styles.dotActive]} />
-            <Text
-              style={[
-                styles.sectionNavLabel,
-                activeTab === index && styles.sectionNavLabelActive,
-              ]}
+      {/* Section Navigation */}
+      <View style={styles.sectionNavContainer}>
+        <TouchableOpacity onPress={scrollSectionNavLeft} style={styles.navChevron}>
+          <Ionicons name="chevron-back" size={20} color={colors.text.primary} />
+        </TouchableOpacity>
+
+        <ScrollView
+          ref={sectionNavScrollRef}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.sectionNavScroll}
+          contentContainerStyle={styles.sectionNavContent}
+          onScroll={handleSectionNavScroll}
+          scrollEventThrottle={16}
+        >
+          {sections.map((section, index) => (
+            <TouchableOpacity
+              key={section.id}
+              style={styles.sectionNavItem}
+              onPress={() => handleSectionPress(index)}
             >
-              {section.shortLabel}
-            </Text>
-          </TouchableOpacity>
-        ))}
+              <Text
+                style={[
+                  styles.sectionNavLabel,
+                  currentSectionIndex === index && styles.activeSectionNavLabel,
+                ]}
+              >
+                {section.label}
+              </Text>
+              {currentSectionIndex === index && <View style={styles.sectionNavUnderline} />}
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+
+        <TouchableOpacity onPress={scrollSectionNavRight} style={styles.navChevron}>
+          <Ionicons name="chevron-forward" size={20} color={colors.text.primary} />
+        </TouchableOpacity>
       </View>
 
-      {/* Scrollable Content */}
-      <ScrollView
-        ref={scrollViewRef}
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        onScroll={handleScroll}
-        scrollEventThrottle={16}
-      >
-        {renderForecasts()}
-        {renderAdvice()}
-        {renderTransits()}
-
-        {/* Bottom Padding */}
-        <View style={{ height: 60 }} />
+      {/* Content - Current Section Only */}
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        <View style={styles.contentContainer}>
+          {renderCurrentSection()}
+        </View>
       </ScrollView>
+
+      {/* Bottom Navigation */}
+      <View style={styles.navButtonsContainer}>
+        <TouchableOpacity onPress={handlePrevious} style={styles.navButton}>
+          <Text style={styles.navButtonText}>PREVIOUS</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={handleNext} style={styles.navButton}>
+          <Text style={styles.navButtonText}>NEXT</Text>
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 };
@@ -439,6 +834,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background.primary,
   },
+  // Loading & Error States
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -484,6 +880,7 @@ const styles = StyleSheet.create({
     ...typography.button,
     color: '#FFF',
   },
+  // Header
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -499,7 +896,8 @@ const styles = StyleSheet.create({
   },
   headerContent: {
     flex: 1,
-    alignItems: 'center',
+    alignItems: 'flex-start',
+    marginLeft: spacing.md,
   },
   headerSubtitle: {
     ...typography.caption,
@@ -513,89 +911,83 @@ const styles = StyleSheet.create({
     fontSize: 11,
     marginBottom: spacing.xs,
   },
-  headerNames: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
   headerName: {
     ...typography.h3,
     fontSize: 16,
   },
-  headerIcon: {
-    marginHorizontal: spacing.sm,
-  },
   refreshButton: {
     padding: spacing.xs,
   },
-  sectionNav: {
-    position: 'absolute',
-    right: spacing.md,
-    top: '40%',
-    zIndex: 10,
+  // Section Navigation (Horizontal Tabs)
+  sectionNavContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border + '30',
+    paddingVertical: spacing.sm,
+  },
+  navChevron: {
+    paddingHorizontal: spacing.sm,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  sectionNavScroll: {
+    flex: 1,
+  },
+  sectionNavContent: {
+    paddingHorizontal: spacing.xs,
+    alignItems: 'center',
   },
   sectionNavItem: {
-    alignItems: 'center',
-    marginVertical: spacing.sm,
-  },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: colors.text.secondary + '40',
-    marginBottom: spacing.xs,
-  },
-  dotActive: {
-    backgroundColor: colors.primary,
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.sm,
+    marginHorizontal: 2,
+    position: 'relative',
   },
   sectionNavLabel: {
     ...typography.caption,
-    fontSize: 9,
     color: colors.text.secondary,
-    transform: [{ rotate: '90deg' }],
-    width: 60,
-    textAlign: 'center',
+    letterSpacing: 1,
   },
-  sectionNavLabelActive: {
-    color: colors.primary,
+  activeSectionNavLabel: {
+    color: colors.text.primary,
     fontWeight: '600',
   },
-  scrollView: {
+  sectionNavUnderline: {
+    position: 'absolute',
+    bottom: 0,
+    left: spacing.sm,
+    right: spacing.sm,
+    height: 2,
+    backgroundColor: colors.text.primary,
+  },
+  // Content
+  content: {
     flex: 1,
   },
-  scrollContent: {
+  contentContainer: {
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.lg,
+    paddingBottom: spacing.xl * 2,
   },
   section: {
-    marginBottom: spacing.xl,
-  },
-  sectionDivider: {
-    height: 1,
-    backgroundColor: colors.border,
-    marginVertical: spacing.xl,
-  },
-  titleText: {
-    ...typography.h2,
-    fontSize: 20,
-    letterSpacing: 0.5,
-    textTransform: 'uppercase',
+    marginBottom: spacing.md,
   },
   sectionTitle: {
+    ...typography.h2,
+    marginBottom: spacing.sm,
+  },
+  subsectionTitle: {
     ...typography.h3,
-    marginTop: spacing.lg,
-    marginBottom: spacing.md,
+    marginTop: spacing.md,
+    marginBottom: spacing.sm,
   },
   bodyText: {
     ...typography.body,
-    lineHeight: 24,
+    lineHeight: 20,
     marginBottom: spacing.md,
   },
-  introductionSection: {
-    marginBottom: spacing.lg,
-  },
+  // Energy Badges
   energyBadge: {
     alignSelf: 'flex-start',
     paddingHorizontal: spacing.md,
@@ -612,24 +1004,107 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     letterSpacing: 1,
   },
-  timeSection: {
-    marginBottom: spacing.lg,
+  energyBadgeSmall: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs / 2,
+    backgroundColor: 'rgba(0, 0, 0, 0.25)',
+    borderRadius: 6,
+    marginBottom: spacing.sm,
   },
+  energyTextSmall: {
+    ...typography.caption,
+    fontSize: 11,
+    color: colors.text.secondary,
+    fontStyle: 'italic',
+  },
+  // Time Section
   timeSectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: spacing.sm,
   },
-  adviceSection: {
-    marginBottom: spacing.md,
-  },
+  // Lists
   listItem: {
     flexDirection: 'row',
-    marginBottom: spacing.sm,
+    marginBottom: spacing.xs,
   },
   listBullet: {
     ...typography.body,
-    marginRight: spacing.sm,
+    lineHeight: 20,
+    marginRight: spacing.xs,
     color: colors.primary,
+  },
+  listText: {
+    ...typography.body,
+    lineHeight: 20,
+    flex: 1,
+  },
+  // Transit Section
+  transitAspect: {
+    backgroundColor: 'rgba(0, 0, 0, 0.25)',
+    borderRadius: 8,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+    alignItems: 'center',
+  },
+  transitAspectText: {
+    ...typography.h3,
+    fontSize: 14,
+    textAlign: 'center',
+    color: '#F6D99F',
+  },
+  // Insights
+  insightItem: {
+    marginBottom: spacing.md,
+  },
+  // Affirmation Card
+  affirmationCard: {
+    backgroundColor: 'rgba(0, 0, 0, 0.25)',
+    borderRadius: 8,
+    padding: spacing.lg,
+    alignItems: 'center',
+    marginBottom: spacing.md,
+  },
+  affirmationText: {
+    ...typography.h3,
+    textTransform: 'none',
+    textAlign: 'center',
+    fontStyle: 'italic',
+    lineHeight: 24,
+  },
+  // Reflections
+  reflectionItem: {
+    flexDirection: 'row',
+    marginBottom: spacing.md,
+  },
+  reflectionNumber: {
+    ...typography.body,
+    color: colors.text.secondary,
+    marginRight: spacing.sm,
+  },
+  reflectionText: {
+    ...typography.body,
+    lineHeight: 20,
+    flex: 1,
+  },
+  // Bottom Navigation
+  navButtonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: colors.border + '30',
+  },
+  navButton: {
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+  },
+  navButtonText: {
+    ...typography.body,
+    color: colors.text.primary,
+    letterSpacing: 1,
   },
 });

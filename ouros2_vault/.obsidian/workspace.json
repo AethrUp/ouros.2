@@ -118,9 +118,37 @@
               "icon": "lucide-file",
               "title": "astrology_component_apis"
             }
+          },
+          {
+            "id": "d46dc582026b095e",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "App Structure/Updated Reading Structures.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Updated Reading Structures"
+            }
+          },
+          {
+            "id": "ba7b3f4b8ed33a59",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "Headlines Starters.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Headlines Starters"
+            }
           }
         ],
-        "currentTab": 2
+        "currentTab": 9
       }
     ],
     "direction": "vertical"
@@ -269,37 +297,43 @@
       "table-editor-obsidian:Advanced Tables Toolbar": false
     }
   },
-  "active": "09e45096c5d2a3c3",
+  "active": "ba7b3f4b8ed33a59",
   "lastOpenFiles": [
-    "Updated Daily Reading.md",
-    "four_astrology_prompts.md",
-    "daily_horoscope_prompt_template.md",
-    "iching-json-migration-plan.md",
-    "DIAGNOSIS_chiron_return_hallucination.md",
-    "DIAGNOSIS_chiron_return_hallucination.md.tmp.13148.1760112642856",
-    "daily_horoscope_prompt_template.md.tmp.13148.1760112564089",
-    "dream_interpretation_prompt.md",
-    "iching Prompt.md",
-    "iching-json-migration-plan.md.tmp.9008.1759932120182",
-    "iching-json-migration-plan.md.tmp.9008.1759932104938",
-    "iching-json-migration-plan.md.tmp.9008.1759932095445",
-    "iching-json-migration-plan.md.tmp.9008.1759932084965",
-    "iching-json-migration-plan.md.tmp.9008.1759932057055",
-    "iching-json-migration-plan.md.tmp.9008.1759932046015",
-    "iching-json-migration-plan.md.tmp.9008.1759932020055",
-    "iching-json-migration-plan.md.tmp.9008.1759931993267",
-    "tarot_interpretation_prompt.md",
-    "iching-interpretation-prompt.md",
-    "DAILY_READING_DATA_STRUCTURE.md",
-    "astrology_app_architecture.md",
-    "astrology_component_apis.md",
-    "Marketing/I Feel Disconnected from My Purpose.md",
-    "Marketing/high-level benefits.md",
-    "Marketing/Highlight Points.md",
-    "Marketing/Am I Making the Right Choice.md",
-    "Marketing/Avatar.md",
-    "tarot_implementation_plan.md",
-    "astrology_state_management.md",
-    "Tasks.md"
+    "App Structure/Updated Reading Structures.md",
+    "Headlines Starters.md",
+    "Prompts/Updated Daily Reading.md",
+    "Marketing/APP_FEATURES_MARKETING.md",
+    "App Structure",
+    "Dev Progress",
+    "Implementations",
+    "Prompts",
+    "Prompts/natal_interpretation_prompt.md",
+    "APP_FEATURES_MARKETING.md.tmp.8988.1760971310769",
+    "App Structure/DAILY_READING_DATA_STRUCTURE.md",
+    "Marketing/subscription_tiers_table.md",
+    "Marketing/SUBSCRIPTION_TIERS_AND_LIMITS.md",
+    "SUBSCRIPTION_TIERS_AND_LIMITS.md.tmp.22808.1760716999028",
+    "SUBSCRIPTION_TIERS_AND_LIMITS.md.tmp.22808.1760716986785",
+    "SUBSCRIPTION_TIERS_AND_LIMITS.md.tmp.22808.1760716957870",
+    "SUBSCRIPTION_TIERS_AND_LIMITS.md.tmp.22808.1760716956429",
+    "SUBSCRIPTION_TIERS_AND_LIMITS.md.tmp.22808.1760716954918",
+    "Implementations/TAROT_UI_FIXES_FINAL.md",
+    "Implementations/TAROT_UI_FIXES_CORRECTED.md",
+    "Dev Progress/TAROT_UI_FIXES_COMPLETE.md",
+    "Dev Progress/TAROT_TOKEN_FIX.md",
+    "Dev Progress/TAROT_SECTION_NAVIGATION_COMPLETE.md",
+    "Dev Progress/PHASE_2_COMPLETE_SUMMARY.md",
+    "Dev Progress/PHASE_2_PROGRESS.md",
+    "Prompts/daily_synastry_forecast_prompt_v2.md",
+    "Prompts/iching_interpretation_prompt_v2.md",
+    "Prompts/tarot_interpretation_prompt_v2.md",
+    "Prompts/four_astrology_prompts.md",
+    "Prompts/daily_horoscope_prompt_template.md",
+    "Implementations/iching-json-migration-plan.md",
+    "Dev Progress/DIAGNOSIS_chiron_return_hallucination.md",
+    "Prompts/dream_interpretation_prompt.md",
+    "Prompts/iching Prompt.md",
+    "Prompts/tarot_interpretation_prompt.md",
+    "Prompts/iching-interpretation-prompt.md"
   ]
 }

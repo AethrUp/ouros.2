@@ -8,7 +8,6 @@ import {
   TouchableOpacity,
   ScrollView,
   Alert,
-  ActivityIndicator,
   Platform,
   KeyboardAvoidingView,
 } from 'react-native';
@@ -18,6 +17,7 @@ import { colors, spacing, typography } from '../../styles';
 import { BirthData, LocationData } from '../../types/user';
 import { handleChartGeneration } from '../../handlers/chartGeneration';
 import { LocationPicker } from '../LocationPicker';
+import { Button } from '../Button';
 
 interface SavedChartFormProps {
   visible: boolean;
@@ -38,6 +38,9 @@ export const SavedChartForm: React.FC<SavedChartFormProps> = ({ visible, onClose
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+
+  // Ref to prevent auto-focus on relationship field
+  const relationshipInputRef = React.useRef<TextInput>(null);
 
   const resetForm = () => {
     setName('');
@@ -92,7 +95,6 @@ export const SavedChartForm: React.FC<SavedChartFormProps> = ({ visible, onClose
         relationship: relationship.trim() || undefined,
       });
 
-      Alert.alert('Success', `Chart for ${name} saved successfully!`);
       resetForm();
       onClose();
     } catch (error: any) {
@@ -139,6 +141,7 @@ export const SavedChartForm: React.FC<SavedChartFormProps> = ({ visible, onClose
             />
 
             <TextInput
+              ref={relationshipInputRef}
               style={styles.input}
               placeholder="Relationship (Optional)"
               placeholderTextColor={colors.text.secondary}
@@ -168,15 +171,24 @@ export const SavedChartForm: React.FC<SavedChartFormProps> = ({ visible, onClose
                 <TouchableOpacity
                   style={styles.pickerOverlay}
                   activeOpacity={1}
-                  onPress={() => setShowDatePicker(false)}
+                  onPress={() => {
+                    setShowDatePicker(false);
+                    relationshipInputRef.current?.blur();
+                  }}
                 >
                   <TouchableOpacity activeOpacity={1}>
                     <View style={styles.pickerContainer}>
                       <View style={styles.pickerHeader}>
-                        <TouchableOpacity onPress={() => setShowDatePicker(false)}>
+                        <TouchableOpacity onPress={() => {
+                          setShowDatePicker(false);
+                          relationshipInputRef.current?.blur();
+                        }}>
                           <Text style={styles.pickerCancelText}>Cancel</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity onPress={() => setShowDatePicker(false)}>
+                        <TouchableOpacity onPress={() => {
+                          setShowDatePicker(false);
+                          relationshipInputRef.current?.blur();
+                        }}>
                           <Text style={styles.pickerDoneText}>Done</Text>
                         </TouchableOpacity>
                       </View>
@@ -204,6 +216,8 @@ export const SavedChartForm: React.FC<SavedChartFormProps> = ({ visible, onClose
                 onChange={(event, selectedDate) => {
                   setShowDatePicker(false);
                   if (selectedDate) setBirthDate(selectedDate);
+                  // Blur the relationship input to prevent auto-focus
+                  setTimeout(() => relationshipInputRef.current?.blur(), 100);
                 }}
                 maximumDate={new Date()}
               />
@@ -245,15 +259,24 @@ export const SavedChartForm: React.FC<SavedChartFormProps> = ({ visible, onClose
                 <TouchableOpacity
                   style={styles.pickerOverlay}
                   activeOpacity={1}
-                  onPress={() => setShowTimePicker(false)}
+                  onPress={() => {
+                    setShowTimePicker(false);
+                    relationshipInputRef.current?.blur();
+                  }}
                 >
                   <TouchableOpacity activeOpacity={1}>
                     <View style={styles.pickerContainer}>
                       <View style={styles.pickerHeader}>
-                        <TouchableOpacity onPress={() => setShowTimePicker(false)}>
+                        <TouchableOpacity onPress={() => {
+                          setShowTimePicker(false);
+                          relationshipInputRef.current?.blur();
+                        }}>
                           <Text style={styles.pickerCancelText}>Cancel</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity onPress={() => setShowTimePicker(false)}>
+                        <TouchableOpacity onPress={() => {
+                          setShowTimePicker(false);
+                          relationshipInputRef.current?.blur();
+                        }}>
                           <Text style={styles.pickerDoneText}>Done</Text>
                         </TouchableOpacity>
                       </View>
@@ -280,6 +303,8 @@ export const SavedChartForm: React.FC<SavedChartFormProps> = ({ visible, onClose
                 onChange={(event, selectedTime) => {
                   setShowTimePicker(false);
                   if (selectedTime) setBirthTime(selectedTime);
+                  // Blur the relationship input to prevent auto-focus
+                  setTimeout(() => relationshipInputRef.current?.blur(), 100);
                 }}
               />
             )}
@@ -294,17 +319,15 @@ export const SavedChartForm: React.FC<SavedChartFormProps> = ({ visible, onClose
 
           {/* Footer */}
           <View style={styles.footer}>
-            <TouchableOpacity
-              style={[styles.saveButton, isGenerating && styles.saveButtonDisabled]}
+            <Button
+              title="SAVE CHART"
               onPress={handleSave}
               disabled={isGenerating}
-            >
-              {isGenerating ? (
-                <ActivityIndicator size="small" color={colors.text.primary} />
-              ) : (
-                <Text style={styles.saveButtonText}>SAVE CHART</Text>
-              )}
-            </TouchableOpacity>
+              loading={isGenerating}
+              fullWidth
+              variant="primary"
+              testId="save-chart-button"
+            />
           </View>
         </View>
       </KeyboardAvoidingView>
@@ -425,22 +448,5 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     borderTopWidth: 1,
     borderTopColor: colors.border,
-  },
-  saveButton: {
-    backgroundColor: '#FFFFFF',
-    paddingVertical: spacing.lg,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  saveButtonDisabled: {
-    opacity: 0.6,
-  },
-  saveButtonText: {
-    ...typography.button,
-    color: colors.text.primary,
-    fontSize: 16,
-    fontWeight: '600',
-    letterSpacing: 1.92,
   },
 });

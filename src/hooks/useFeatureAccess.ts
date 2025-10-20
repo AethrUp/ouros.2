@@ -19,7 +19,8 @@ export function useFeatureAccess(feature: keyof typeof TIER_FEATURES.free) {
     if (!subscriptionState) {
       loadSubscriptionState();
     }
-  }, [subscriptionState, loadSubscriptionState]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [subscriptionState]);
 
   const hasAccess = TIER_FEATURES[tier][feature] === true;
 
@@ -62,7 +63,8 @@ export function useFeatureUsage(feature: UsageFeature) {
     } finally {
       setIsChecking(false);
     }
-  }, [feature, canUseFeature]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [feature]);
 
   useEffect(() => {
     // Load subscription and usage if not loaded
@@ -74,7 +76,8 @@ export function useFeatureUsage(feature: UsageFeature) {
     }
 
     checkAccess();
-  }, [subscriptionState, usage, checkAccess, loadSubscriptionState, loadUsageTracking]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [subscriptionState, usage]);
 
   // Function to increment usage (call this when feature is used)
   const useFeature = useCallback(async () => {
@@ -85,7 +88,8 @@ export function useFeatureUsage(feature: UsageFeature) {
       console.error('Failed to increment usage:', error);
       throw error;
     }
-  }, [feature, incrementUsage, checkAccess]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [feature]);
 
   return {
     canUse,
@@ -108,7 +112,8 @@ export function useSubscriptionTier() {
     if (!subscriptionState && !isLoadingSubscription) {
       loadSubscriptionState();
     }
-  }, [subscriptionState, isLoadingSubscription, loadSubscriptionState]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [subscriptionState, isLoadingSubscription]);
 
   const tier = subscriptionState?.tier || 'free';
   const status = subscriptionState?.status || 'active';
@@ -155,14 +160,16 @@ export function useSubscription() {
     if (!subscriptionState) {
       loadSubscriptionState();
     }
-  }, [subscriptionState, loadSubscriptionState]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [subscriptionState]);
 
   // Load packages when needed
   const loadPackages = useCallback(async () => {
     if (availablePackages.length === 0) {
       await loadAvailablePackages();
     }
-  }, [availablePackages.length, loadAvailablePackages]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [availablePackages.length]);
 
   return {
     subscriptionState,

@@ -47,6 +47,14 @@ export interface UserPreferences {
   journalPrompts: boolean;
 }
 
+// Natal Chart Interpretation Types
+export interface WholeChartInterpretation {
+  coreNature: string;           // Section 1: Your Core Nature (Sun, Moon, Rising)
+  loveAndConnection: string;    // Section 2: How You Love & Connect (Venus, Mars, 7th House)
+  growthEdge: string;           // Section 3: Your Growth Edge (North Node, Saturn, challenging aspects)
+  giftsToWorld: string;         // Section 4: Your Gifts to the World (Midheaven, Jupiter, harmonious aspects)
+}
+
 // Natal Chart Types
 export interface NatalChartData {
   planets: Record<string, PlanetPosition>;
@@ -54,6 +62,7 @@ export interface NatalChartData {
   aspects: AspectData[];
   angles: Angles;
   metadata: ChartMetadata;
+  wholeChartInterpretation?: WholeChartInterpretation;  // AI-generated overall chart synthesis
 }
 
 export interface PlanetPosition {

@@ -2,7 +2,7 @@
  * I Ching AI Interpretation Prompt Templates
  */
 
-import { CastedHexagram, IChingInterpretation } from '../types/iching';
+import { CastedHexagram, IChingInterpretation, IChingInterpretationV2 } from '../types/iching';
 import { getLineSymbol, getLinePositionName } from './ichingCasting';
 
 interface IChingPromptContext {

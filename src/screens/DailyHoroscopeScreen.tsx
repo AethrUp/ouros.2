@@ -6,9 +6,9 @@ import {
   SafeAreaView,
   ScrollView,
   TouchableOpacity,
-  ActivityIndicator,
   Dimensions,
 } from 'react-native';
+import { LoadingScreen, FadedContent } from '../components';
 import { StatusBar } from 'expo-status-bar';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -16,6 +16,8 @@ import Svg, { Polyline, Path } from 'react-native-svg';
 import { colors, spacing, typography } from '../styles';
 import { useAppStore } from '../store';
 import { getDailyHoroscope } from '../handlers/horoscopeGeneration';
+import { useSubscriptionTier } from '../hooks/useFeatureAccess';
+import { PaywallModal } from '../components/PaywallModal';
 
 // Bootstrap Icons SVG paths
 const BootstrapIcons = {
@@ -125,6 +127,10 @@ const DailyHoroscopeScreen = () => {
   const isMountedRef = useRef(true);
   const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [showPaywall, setShowPaywall] = useState(false);
+
+  // Subscription tier
+  const { isFree } = useSubscriptionTier();
 
   // Get data from store
   const {
@@ -399,11 +405,7 @@ const DailyHoroscopeScreen = () => {
   if (isLoadingDailyReading) {
     return (
       <SafeAreaView style={styles.container}>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.text.primary} />
-          <Text style={styles.loadingText}>Generating your personalized horoscope...</Text>
-          <Text style={styles.loadingSubtext}>Calculating planetary transits and AI interpretation</Text>
-        </View>
+        <LoadingScreen context="natal-chart" />
         <StatusBar style="light" />
       </SafeAreaView>
     );
@@ -577,7 +579,7 @@ const DailyHoroscopeScreen = () => {
       );
     }
 
-    return (
+    const transitContent = (
       <View style={styles.section}>
         <Text style={[styles.titleText, { paddingHorizontal: 0, marginBottom: spacing.sm }]}>Transit {transitNumber}</Text>
 
@@ -590,6 +592,16 @@ const DailyHoroscopeScreen = () => {
         {transit.advice && <Text style={styles.bodyText}>{transit.advice}</Text>}
       </View>
     );
+
+    return (
+      <FadedContent
+        isLocked={isFree}
+        onUnlock={() => setShowPaywall(true)}
+        maxHeight={250}
+      >
+        {transitContent}
+      </FadedContent>
+    );
   };
 
   // Render insights section (Energy, Influence, Emotion, Opportunities, Challenges)
@@ -597,7 +609,7 @@ const DailyHoroscopeScreen = () => {
     const transitInsights = fullContent.transitInsights || [];
     const categories = ['Energy', 'Influence', 'Emotion', 'Opportunities', 'Challenges'];
 
-    return (
+    const insightsContent = (
       <View style={styles.section}>
         <Text style={[styles.titleText, { paddingHorizontal: 0, marginBottom: spacing.sm }]}>Insights</Text>
         {transitInsights.map((insight, index) => {
@@ -611,6 +623,16 @@ const DailyHoroscopeScreen = () => {
         })}
       </View>
     );
+
+    return (
+      <FadedContent
+        isLocked={isFree}
+        onUnlock={() => setShowPaywall(true)}
+        maxHeight={250}
+      >
+        {insightsContent}
+      </FadedContent>
+    );
   };
 
   // Render guidance section (Focus, Explore, Be Mindful)
@@ -619,7 +641,7 @@ const DailyHoroscopeScreen = () => {
     const limit = fullContent.limit || content.limit || [];
     const dailyFocus = fullContent.dailyFocus || content.dailyFocus;
 
-    return (
+    const guidanceContent = (
       <View style={styles.section}>
         <Text style={[styles.titleText, { marginBottom: spacing.sm, color: colors.text.primary, paddingHorizontal: 0 }]}>
           Guidance
@@ -655,13 +677,23 @@ const DailyHoroscopeScreen = () => {
         )}
       </View>
     );
+
+    return (
+      <FadedContent
+        isLocked={isFree}
+        onUnlock={() => setShowPaywall(true)}
+        maxHeight={250}
+      >
+        {guidanceContent}
+      </FadedContent>
+    );
   };
 
   // Render spiritual section (Meditation, Affirmation, Prompts)
   const renderSpiritual = () => {
     const spiritualGuidance = fullContent.spiritualGuidance;
 
-    return (
+    const spiritualContent = (
       <View style={styles.section}>
         <Text style={[styles.titleText, { paddingHorizontal: 0, marginBottom: spacing.sm }]}>Spiritual Practice</Text>
 
@@ -707,6 +739,16 @@ const DailyHoroscopeScreen = () => {
         )}
       </View>
     );
+
+    return (
+      <FadedContent
+        isLocked={isFree}
+        onUnlock={() => setShowPaywall(true)}
+        maxHeight={250}
+      >
+        {spiritualContent}
+      </FadedContent>
+    );
   };
 
   // Render categories section
@@ -715,7 +757,7 @@ const DailyHoroscopeScreen = () => {
     const allCategories = Object.keys(categoryIcons);
     const categoryAdvice = dailyHoroscope?.content?.categoryAdvice;
 
-    return (
+    const categoriesContent = (
       <View style={styles.section}>
         <Text style={[styles.titleText, { paddingHorizontal: 0, marginBottom: spacing.md }]}>Categories</Text>
 
@@ -756,6 +798,16 @@ const DailyHoroscopeScreen = () => {
           </View>
         )}
       </View>
+    );
+
+    return (
+      <FadedContent
+        isLocked={isFree}
+        onUnlock={() => setShowPaywall(true)}
+        maxHeight={250}
+      >
+        {categoriesContent}
+      </FadedContent>
     );
   };
 
@@ -818,9 +870,7 @@ const DailyHoroscopeScreen = () => {
           <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
         <Text style={styles.dateText}>{getCurrentDate()}</Text>
-        <TouchableOpacity onPress={() => loadHoroscope(true)} style={styles.refreshButton}>
-          <Ionicons name="refresh" size={20} color={colors.text.primary} />
-        </TouchableOpacity>
+        <View style={styles.refreshButton} />
       </View>
 
       {/* Scrollable Section Navigation */}
@@ -891,6 +941,12 @@ const DailyHoroscopeScreen = () => {
           <Text style={styles.navButtonText}>NEXT</Text>
         </TouchableOpacity>
       </View>
+
+      <PaywallModal
+        visible={showPaywall}
+        onClose={() => setShowPaywall(false)}
+        onSuccess={() => setShowPaywall(false)}
+      />
 
       <StatusBar style="light" />
     </SafeAreaView>

@@ -9,7 +9,7 @@ import {
   Alert,
 } from 'react-native';
 import { NavigationProps } from '../types';
-import { HeaderBar } from '../components';
+import { HeaderBar, LoadingScreen } from '../components';
 import { PaywallModal } from '../components/PaywallModal';
 import { useSubscriptionTier } from '../hooks/useFeatureAccess';
 import { useAppStore } from '../store';
@@ -55,7 +55,7 @@ export const SubscriptionScreen: React.FC<NavigationProps> = ({ navigation }) =>
       <View style={styles.container}>
         <HeaderBar title="Subscription" />
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
+          <LoadingScreen context="general" />
         </View>
       </View>
     );

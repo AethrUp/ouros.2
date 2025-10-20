@@ -8,6 +8,7 @@ import { BirthData, NatalChartData } from '../types/user';
 import { ChartGenerationOptions, ChartGenerationResult } from '../types/chart';
 import SwissEphService from '../utils/swisseph';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { enrichChartWithInterpretations } from './planetHouseInterpretation';
 
 const CHART_STORAGE_KEY = 'natal_chart_data';
 
@@ -52,7 +53,7 @@ export const handleChartGeneration = async (
     }
 
     // Generate chart using Swiss Ephemeris
-    const chartData = await SwissEphService.generateNatalChart(birthData, {
+    let chartData = await SwissEphService.generateNatalChart(birthData, {
       houseSystem: options.houseSystem,
       includeReports: options.includeReports,
       includeAspects: options.includeAspects,
@@ -61,6 +62,18 @@ export const handleChartGeneration = async (
     // Validate chart data
     if (!SwissEphService.validateNatalChart(chartData)) {
       throw new Error('Generated chart data is invalid');
+    }
+
+    // Enrich chart with planet-house interpretations (if reports are enabled)
+    if (options.includeReports) {
+      console.log('🔮 Generating planet-house interpretations...');
+      try {
+        chartData = await enrichChartWithInterpretations(chartData, birthData);
+        console.log('✅ Chart enriched with interpretations');
+      } catch (error: any) {
+        console.error('⚠️ Failed to generate interpretations, continuing without them:', error);
+        // Continue without interpretations - don't fail the whole chart generation
+      }
     }
 
     // Create chart record

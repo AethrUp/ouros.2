@@ -22,8 +22,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useAppStore } from '../store';
 import { CoinCastingView } from '../components/iching/CoinCastingView';
 import { InterpretationView } from '../components/iching/InterpretationView';
-import { QuantumLoadingScreen } from '../components/tarot/QuantumLoadingScreen';
-import { Button, HeaderBar } from '../components';
+import { Button, HeaderBar, LoadingScreen } from '../components';
 import { colors, typography, spacing, theme } from '../styles';
 import { HexagramLine, CastingMethod } from '../types/iching';
 import { getHexagramByLines } from '../data/iching/hexagrams';
@@ -155,7 +154,7 @@ export const IChingScreen: React.FC<NavigationProps> = ({ navigation }) => {
   };
 
   // Handle journal
-  const handleJournal = async () => {
+  const handleJournal = async (prompt?: string, promptIndex?: number) => {
     await saveIChingReading();
 
     // Transform current reading to LinkedReading format
@@ -168,11 +167,12 @@ export const IChingScreen: React.FC<NavigationProps> = ({ navigation }) => {
         interpretation: typeof ichingInterpretation === 'string'
           ? ichingInterpretation
           : JSON.stringify(ichingInterpretation),
-        intention: question,
+        intention: prompt || question, // Use prompt if provided
         metadata: {
           primaryHexagram: primaryHexagram.hexagram.number,
           changingLines: primaryHexagram.changingLines,
           relatingHexagram: relatingHexagram?.hexagram.number,
+          ...(prompt && { prompt, promptIndex }),
         },
       };
 
@@ -241,9 +241,7 @@ export const IChingScreen: React.FC<NavigationProps> = ({ navigation }) => {
       case 'loading':
         return (
           <View style={{ flex: 1 }}>
-            <QuantumLoadingScreen
-              message={ichingError || "Casting coins..."}
-            />
+            <LoadingScreen context="iching" />
             {ichingError && (
               <TouchableOpacity
                 style={styles.errorButton}
@@ -271,9 +269,7 @@ export const IChingScreen: React.FC<NavigationProps> = ({ navigation }) => {
       case 'interpretation':
         return (
           <View style={{ flex: 1 }}>
-            <QuantumLoadingScreen
-              message="Consulting the ancient wisdom..."
-            />
+            <LoadingScreen context="iching" />
           </View>
         );
 

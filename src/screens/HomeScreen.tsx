@@ -1,53 +1,19 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  ActivityIndicator,
 } from 'react-native';
 import { NavigationProps } from '../types';
-import { HeaderBar, Button, TransitEffectivenessGraph, TransitStrengthBar, CosmicWeatherChart, ZodiacIcon } from '../components';
+import { HeaderBar, Button, TransitEffectivenessGraph, TransitStrengthBar, CosmicWeatherChart, ZodiacIcon, LoadingScreen, TarotIcon, IChingIcon, DreamIcon, LockedFeatureCard, Badge } from '../components';
 import { colors, spacing, typography } from '../styles';
 import { useAppStore } from '../store';
 import { getDailyHoroscope } from '../handlers/horoscopeGeneration';
 import { Ionicons } from '@expo/vector-icons';
-import Svg, { Line } from 'react-native-svg';
-
-// Custom hexagram icon component
-const HexagramIcon = ({ size = 28, color = '#FFFFFF' }) => {
-  const lineWidth = size * 0.7;
-  const lineSpacing = size / 7;
-  const strokeWidth = 2;
-  const gapSize = size * 0.15;
-
-  return (
-    <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-      {/* Hexagram with alternating solid and broken lines */}
-      {/* Line 1 - broken (yin) */}
-      <Line x1={(size - lineWidth) / 2} y1={lineSpacing * 1} x2={(size - lineWidth) / 2 + lineWidth / 2 - gapSize / 2} y2={lineSpacing * 1} stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" />
-      <Line x1={(size - lineWidth) / 2 + lineWidth / 2 + gapSize / 2} y1={lineSpacing * 1} x2={(size - lineWidth) / 2 + lineWidth} y2={lineSpacing * 1} stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" />
-
-      {/* Line 2 - solid (yang) */}
-      <Line x1={(size - lineWidth) / 2} y1={lineSpacing * 2} x2={(size - lineWidth) / 2 + lineWidth} y2={lineSpacing * 2} stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" />
-
-      {/* Line 3 - solid (yang) */}
-      <Line x1={(size - lineWidth) / 2} y1={lineSpacing * 3} x2={(size - lineWidth) / 2 + lineWidth} y2={lineSpacing * 3} stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" />
-
-      {/* Line 4 - broken (yin) */}
-      <Line x1={(size - lineWidth) / 2} y1={lineSpacing * 4} x2={(size - lineWidth) / 2 + lineWidth / 2 - gapSize / 2} y2={lineSpacing * 4} stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" />
-      <Line x1={(size - lineWidth) / 2 + lineWidth / 2 + gapSize / 2} y1={lineSpacing * 4} x2={(size - lineWidth) / 2 + lineWidth} y2={lineSpacing * 4} stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" />
-
-      {/* Line 5 - solid (yang) */}
-      <Line x1={(size - lineWidth) / 2} y1={lineSpacing * 5} x2={(size - lineWidth) / 2 + lineWidth} y2={lineSpacing * 5} stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" />
-
-      {/* Line 6 - broken (yin) */}
-      <Line x1={(size - lineWidth) / 2} y1={lineSpacing * 6} x2={(size - lineWidth) / 2 + lineWidth / 2 - gapSize / 2} y2={lineSpacing * 6} stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" />
-      <Line x1={(size - lineWidth) / 2 + lineWidth / 2 + gapSize / 2} y1={lineSpacing * 6} x2={(size - lineWidth) / 2 + lineWidth} y2={lineSpacing * 6} stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" />
-    </Svg>
-  );
-};
+import { useSubscriptionTier } from '../hooks/useFeatureAccess';
+import { PaywallModal } from '../components/PaywallModal';
 
 // Category icon mappings
 const categoryIcons: Record<string, keyof typeof Ionicons.glyphMap> = {
@@ -67,6 +33,8 @@ const categoryIcons: Record<string, keyof typeof Ionicons.glyphMap> = {
 
 export const HomeScreen: React.FC<NavigationProps> = ({ navigation }) => {
   const isMountedRef = useRef(true);
+  const { tier, isFree, isPremium, isPro } = useSubscriptionTier();
+  const [showPaywall, setShowPaywall] = useState(false);
 
   const {
     profile,
@@ -279,11 +247,11 @@ export const HomeScreen: React.FC<NavigationProps> = ({ navigation }) => {
   const renderRecentSynastry = () => {
     const recentConnections = getRecentSynastryConnections();
 
-    if (recentConnections.length === 0) {
+    if (recentConnections.length === 0 && !isFree) {
       return null;
     }
 
-    return (
+    const synastryContent = (
       <View style={styles.synastrySection}>
         <Text style={styles.cardSectionTitle}>SYNASTRY READINGS</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.synastryScroll}>
@@ -333,11 +301,7 @@ export const HomeScreen: React.FC<NavigationProps> = ({ navigation }) => {
                   }
                 }}
               >
-                {isNew && (
-                  <View style={styles.newBadge}>
-                    <Text style={styles.newBadgeText}>NEW</Text>
-                  </View>
-                )}
+                {isNew && <Badge variant="new" />}
                 {connection.sunSign && (
                   <View style={styles.zodiacIconContainer}>
                     <ZodiacIcon sign={connection.sunSign} size={32} color="#FFFFFF" />
@@ -362,6 +326,22 @@ export const HomeScreen: React.FC<NavigationProps> = ({ navigation }) => {
         </ScrollView>
       </View>
     );
+
+    if (isFree) {
+      return (
+        <LockedFeatureCard
+          featureName="Synastry Readings"
+          featureDescription="Explore compatibility and relationship dynamics with friends and loved ones"
+          requiredTier="premium"
+          onUpgrade={() => setShowPaywall(true)}
+          style={{ marginHorizontal: spacing.lg, marginBottom: spacing.lg }}
+        >
+          {synastryContent}
+        </LockedFeatureCard>
+      );
+    }
+
+    return synastryContent;
   };
 
   // Render category previews
@@ -371,7 +351,7 @@ export const HomeScreen: React.FC<NavigationProps> = ({ navigation }) => {
 
     const categoryAdvice = dailyHoroscope?.preview?.categoryAdvice || {};
 
-    return (
+    const categoryContent = (
       <View style={styles.categoriesSection}>
         <Text style={styles.sectionTitle}>YOUR CATEGORIES</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryScroll}>
@@ -400,6 +380,22 @@ export const HomeScreen: React.FC<NavigationProps> = ({ navigation }) => {
         </ScrollView>
       </View>
     );
+
+    if (isFree) {
+      return (
+        <LockedFeatureCard
+          featureName="Category Insights"
+          featureDescription="Get personalized guidance for your selected life areas"
+          requiredTier="premium"
+          onUpgrade={() => setShowPaywall(true)}
+          style={{ marginHorizontal: spacing.lg, marginBottom: spacing.lg }}
+        >
+          {categoryContent}
+        </LockedFeatureCard>
+      );
+    }
+
+    return categoryContent;
   };
 
   // Render journal prompts
@@ -408,7 +404,7 @@ export const HomeScreen: React.FC<NavigationProps> = ({ navigation }) => {
 
     if (journalPrompts.length === 0) return null;
 
-    return (
+    const promptsContent = (
       <View style={styles.journalPromptsSection}>
         <Text style={styles.journalPromptsTitle}>JOURNAL PROMPTS</Text>
         {journalPrompts.map((prompt, index) => (
@@ -426,32 +422,36 @@ export const HomeScreen: React.FC<NavigationProps> = ({ navigation }) => {
         ))}
       </View>
     );
+
+    if (isFree) {
+      return (
+        <LockedFeatureCard
+          featureName="Journal Prompts"
+          featureDescription="Deepen your self-reflection with personalized daily journal prompts"
+          requiredTier="premium"
+          onUpgrade={() => setShowPaywall(true)}
+          style={{ marginHorizontal: spacing.lg, marginBottom: spacing.lg }}
+        >
+          {promptsContent}
+        </LockedFeatureCard>
+      );
+    }
+
+    return promptsContent;
   };
 
-  return (
-    <View style={styles.container}>
-      <HeaderBar
-        title="OUROS"
-        rightActions={[
-          {
-            icon: 'person-circle-outline',
-            onPress: () => navigation.navigate('Profile'),
-          },
-        ]}
-      />
-
+  const content = (
+    <>
       <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
         {/* Date Header */}
         <View style={styles.dateHeader}>
           <Text style={styles.dateText}>{getCurrentDate()}</Text>
         </View>
 
-        {/* Loading State */}
-        {isLoadingDailyReading && (
+        {/* Loading State (for refreshes when horoscope exists) */}
+        {isLoadingDailyReading && dailyHoroscope && (
           <View style={styles.loadingCard}>
-            <ActivityIndicator size="large" color={colors.text.primary} />
-            <Text style={styles.loadingText}>Generating your daily horoscope...</Text>
-            <Text style={styles.loadingSubtext}>Calculating transits & AI interpretation</Text>
+            <LoadingScreen context="natal-chart" />
           </View>
         )}
 
@@ -496,24 +496,60 @@ export const HomeScreen: React.FC<NavigationProps> = ({ navigation }) => {
 
             {/* Transit Effectiveness Graph */}
             {dailyHoroscope.fullContent?.transitAnalysis && (
-              <View style={styles.transitSection}>
-                <Text style={styles.cardSectionTitle}>TODAY'S TRANSITS</Text>
-                <TransitEffectivenessGraph
-                  transits={[
-                    dailyHoroscope.fullContent.transitAnalysis.primary,
-                    ...(dailyHoroscope.fullContent.transitAnalysis.secondary || []),
-                  ]}
-                  maxTransits={3}
-                />
-              </View>
+              isFree ? (
+                <LockedFeatureCard
+                  featureName="Today's Transits"
+                  featureDescription="See how planetary movements affect your chart with detailed transit analysis"
+                  requiredTier="premium"
+                  onUpgrade={() => setShowPaywall(true)}
+                  style={{ marginHorizontal: spacing.lg, marginBottom: spacing.lg }}
+                >
+                  <View style={styles.transitSection}>
+                    <Text style={styles.cardSectionTitle}>TODAY'S TRANSITS</Text>
+                    <TransitEffectivenessGraph
+                      transits={[
+                        dailyHoroscope.fullContent.transitAnalysis.primary,
+                        ...(dailyHoroscope.fullContent.transitAnalysis.secondary || []),
+                      ]}
+                      maxTransits={3}
+                    />
+                  </View>
+                </LockedFeatureCard>
+              ) : (
+                <View style={styles.transitSection}>
+                  <Text style={styles.cardSectionTitle}>TODAY'S TRANSITS</Text>
+                  <TransitEffectivenessGraph
+                    transits={[
+                      dailyHoroscope.fullContent.transitAnalysis.primary,
+                      ...(dailyHoroscope.fullContent.transitAnalysis.secondary || []),
+                    ]}
+                    maxTransits={3}
+                  />
+                </View>
+              )
             )}
 
             {/* Cosmic Weather Chart */}
             {dailyHoroscope.preview?.weather && (
-              <View style={styles.cosmicWeatherSection}>
-                <Text style={styles.cardSectionTitle}>COSMIC WEATHER</Text>
-                <CosmicWeatherChart weather={dailyHoroscope.preview.weather} />
-              </View>
+              isFree ? (
+                <LockedFeatureCard
+                  featureName="Cosmic Weather"
+                  featureDescription="Track the overall astrological climate and its influence on your daily life"
+                  requiredTier="premium"
+                  onUpgrade={() => setShowPaywall(true)}
+                  style={{ marginHorizontal: spacing.lg, marginBottom: spacing.lg }}
+                >
+                  <View style={styles.cosmicWeatherSection}>
+                    <Text style={styles.cardSectionTitle}>COSMIC WEATHER</Text>
+                    <CosmicWeatherChart weather={dailyHoroscope.preview.weather} />
+                  </View>
+                </LockedFeatureCard>
+              ) : (
+                <View style={styles.cosmicWeatherSection}>
+                  <Text style={styles.cardSectionTitle}>COSMIC WEATHER</Text>
+                  <CosmicWeatherChart weather={dailyHoroscope.preview.weather} />
+                </View>
+              )
             )}
 
             {/* Category Previews */}
@@ -542,7 +578,9 @@ export const HomeScreen: React.FC<NavigationProps> = ({ navigation }) => {
               style={[styles.actionCardThird, { marginRight: spacing.sm }]}
               onPress={() => navigation.navigate('oracle', { screen: 'Tarot' })}
             >
-              <Ionicons name="sparkles-outline" size={28} color="#FFFFFF" style={styles.oracleIcon} />
+              <View style={styles.oracleIcon}>
+                <TarotIcon size={48} color="#FFFFFF" />
+              </View>
               <Text style={styles.oracleTitle}>Tarot</Text>
             </TouchableOpacity>
 
@@ -551,23 +589,79 @@ export const HomeScreen: React.FC<NavigationProps> = ({ navigation }) => {
               onPress={() => navigation.navigate('oracle', { screen: 'IChing' })}
             >
               <View style={styles.oracleIcon}>
-                <HexagramIcon size={28} color="#FFFFFF" />
+                <IChingIcon size={48} color="#FFFFFF" />
               </View>
               <Text style={styles.oracleTitle}>I Ching</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={[styles.actionCardThird, { marginRight: 0 }]}
-              onPress={() => navigation.navigate('oracle', { screen: 'DreamInterpretation' })}
+              onPress={() => {
+                if (isFree) {
+                  setShowPaywall(true);
+                } else {
+                  navigation.navigate('oracle', { screen: 'DreamInterpretation' });
+                }
+              }}
             >
-              <Ionicons name="moon-outline" size={28} color="#FFFFFF" style={styles.oracleIcon} />
+              <View style={styles.oracleIcon}>
+                <DreamIcon size={48} color="#FFFFFF" />
+              </View>
               <Text style={styles.oracleTitle}>Dreams</Text>
+              {isFree && <Badge variant="locked" />}
             </TouchableOpacity>
           </View>
         </View>
 
         <View style={styles.bottomSpacer} />
       </ScrollView>
+    </>
+  );
+
+  // Show full-screen loading during initial load
+  if (isLoadingDailyReading && !dailyHoroscope) {
+    return (
+      <View style={styles.container}>
+        <HeaderBar
+          title="OUROS"
+          rightActions={[
+            {
+              icon: 'person-circle-outline',
+              onPress: () => navigation.navigate('Profile'),
+            },
+          ]}
+        />
+        <View style={styles.initialLoadingContainer}>
+          <View style={styles.dateHeader}>
+            <Text style={styles.dateText}>{getCurrentDate()}</Text>
+          </View>
+          <View style={styles.loadingCard}>
+            <LoadingScreen context="natal-chart" />
+          </View>
+        </View>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.container}>
+      <HeaderBar
+        title="OUROS"
+        rightActions={[
+          {
+            icon: 'person-circle-outline',
+            onPress: () => navigation.navigate('Profile'),
+          },
+        ]}
+      />
+
+      {content}
+
+      <PaywallModal
+        visible={showPaywall}
+        onClose={() => setShowPaywall(false)}
+        onSuccess={() => setShowPaywall(false)}
+      />
     </View>
   );
 };
@@ -576,6 +670,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background.primary,
+  },
+  initialLoadingContainer: {
+    flex: 1,
+    backgroundColor: colors.background.card,
   },
   scrollContainer: {
     flex: 1,
@@ -699,21 +797,6 @@ const styles = StyleSheet.create({
   },
   zodiacIconContainer: {
     marginBottom: spacing.xs,
-  },
-  newBadge: {
-    position: 'absolute',
-    top: spacing.xs,
-    right: spacing.xs,
-    backgroundColor: colors.text.primary,
-    paddingHorizontal: spacing.xs,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  newBadgeText: {
-    ...typography.caption,
-    fontSize: 10,
-    color: colors.background.primary,
-    fontWeight: 'bold',
   },
   synastryName: {
     ...typography.h3,

@@ -4,7 +4,7 @@ import { TabNavigator } from './TabNavigator';
 import { AuthNavigator } from './AuthNavigator';
 import { OnboardingNavigator } from './OnboardingNavigator';
 import { useAppStore } from '../store';
-import { LoadingSpinner } from '../components';
+import { LoadingScreen } from '../components';
 import { theme } from '../styles/theme';
 import { initializeRevenueCat } from '../services/subscriptionService';
 
@@ -44,51 +44,47 @@ export const AppNavigator: React.FC = () => {
 
   // Initialize RevenueCat and load subscription when user is authenticated
   useEffect(() => {
-    if (isAuthenticated && user?.id) {
-      const initializeSubscription = async () => {
-        try {
-          // Check if there's an active oracle session before syncing
-          // This prevents re-renders during card reveal or interpretation
-          const hasActiveSession = currentSession !== null ||
-                                   currentIChingSession !== null ||
-                                   dreamSessionStep !== 'input';
-
-          if (hasActiveSession) {
-            console.log('⏸️ Skipping subscription sync - active oracle session detected');
-            // Still load from Supabase cache, but don't sync with RevenueCat
-            await loadSubscriptionState();
-            return;
-          }
-
-          console.log('🔑 Initializing RevenueCat for user:', user.id);
-
-          // Initialize RevenueCat SDK
-          await initializeRevenueCat(user.id);
-
-          // Load subscription state from Supabase
-          await loadSubscriptionState();
-
-          // Sync with RevenueCat (will update Supabase if needed)
-          await syncWithRevenueCat();
-
-          console.log('✅ Subscription system initialized');
-        } catch (error) {
-          console.error('❌ Failed to initialize subscription system:', error);
-          // Still load from Supabase even if RevenueCat fails
-          try {
-            await loadSubscriptionState();
-          } catch (loadError) {
-            console.error('Failed to load subscription from Supabase:', loadError);
-          }
-        }
-      };
-
-      initializeSubscription();
+    if (!isAuthenticated || !user?.id) {
+      return;
     }
-  }, [isAuthenticated, user?.id, loadSubscriptionState, syncWithRevenueCat, currentSession, currentIChingSession, dreamSessionStep]);
+
+    const initializeSubscription = async () => {
+      try {
+        // Check if there's an active oracle session before syncing
+        // This prevents re-renders during card reveal or interpretation
+        const hasActiveSession = currentSession !== null ||
+                                 currentIChingSession !== null ||
+                                 dreamSessionStep !== 'input';
+
+        if (hasActiveSession) {
+          console.log('⏸️ Skipping subscription sync - active oracle session detected');
+          await loadSubscriptionState();
+          return;
+        }
+
+        console.log('🔑 Initializing RevenueCat for user:', user.id);
+
+        // Initialize RevenueCat SDK
+        await initializeRevenueCat(user.id);
+
+        // Load subscription state from Supabase
+        await loadSubscriptionState();
+
+        // Sync with RevenueCat (will update Supabase if needed)
+        await syncWithRevenueCat();
+
+        console.log('✅ Subscription system initialized');
+      } catch (error) {
+        console.error('❌ Failed to initialize subscription system:', error);
+        throw error;
+      }
+    };
+
+    initializeSubscription();
+  }, [isAuthenticated, user?.id, currentSession, currentIChingSession, dreamSessionStep]);
 
   if (isLoading) {
-    return <LoadingSpinner size="large" overlay />;
+    return <LoadingScreen context="general" overlay />;
   }
 
   // Not authenticated: show auth flow

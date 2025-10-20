@@ -49,7 +49,7 @@ export interface Trigram {
 }
 
 /**
- * Structured interpretation for I Ching readings
+ * Structured interpretation for I Ching readings (Legacy format - V1)
  */
 export interface IChingInterpretation {
   interpretation: {
@@ -67,6 +67,58 @@ export interface IChingInterpretation {
 }
 
 /**
+ * New structured interpretation format (V2)
+ */
+export interface IChingInterpretationV2 {
+  preview: {
+    title: string;
+    summary: string;
+    tone: 'Contemplative' | 'Dynamic' | 'Cautionary' | 'Auspicious';
+  };
+
+  fullContent: {
+    overview: string;
+
+    presentSituation: string;
+
+    trigramDynamics: {
+      interaction: string;
+      upperMeaning: string;
+      lowerMeaning: string;
+    };
+
+    changingLines: {
+      present: string;
+      significance: string;
+    };
+
+    transformation: {
+      journey: string;
+      futureState: string;
+    };
+
+    guidance: {
+      wisdom: string;
+      rightAction: string[];
+      toEmbody: string[];
+      toAvoid: string[];
+    };
+
+    timing: {
+      nature: string;
+      whenToAct: string;
+      whenToWait: string;
+    };
+
+    keyInsight: string;
+
+    reflectionPrompts: string[];
+
+    conclusion: string;
+  };
+}
+
+/**
  * A complete I Ching reading
  */
 export interface IChingReading {
@@ -77,7 +129,7 @@ export interface IChingReading {
   castingMethod: CastingMethod;
   primaryHexagram: CastedHexagram;
   relatingHexagram?: CastedHexagram; // Present if there are changing lines
-  interpretation: string | IChingInterpretation; // Support both legacy string and new structured format
+  interpretation: string | IChingInterpretation | IChingInterpretationV2; // Support legacy string, V1 structured, and V2 structured formats
   interpretationSource: InterpretationSource;
   metadata?: {
     generationTime?: number;
@@ -151,7 +203,7 @@ export interface IChingState {
   relatingHexagram: CastedHexagram | null;
 
   // Interpretation
-  interpretation: string | IChingInterpretation;
+  interpretation: string | IChingInterpretation | IChingInterpretationV2;
   isGeneratingInterpretation: boolean;
   interpretationSource: InterpretationSource;
 

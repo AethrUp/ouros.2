@@ -22,6 +22,8 @@ import {
   SavedChartsScreen,
   DailySynastryForecastScreen,
   SubscriptionScreen,
+  TestLoadingScreen,
+  DevMenuScreen,
 } from '../screens';
 import { TabNavigation } from '../components';
 import { useAppStore } from '../store';
@@ -44,6 +46,8 @@ const HomeStackNavigator: React.FC = () => {
       <HomeStack.Screen name="DailyHoroscope" component={DailyHoroscopeScreen} />
       <HomeStack.Screen name="Profile" component={ProfileScreen} />
       <HomeStack.Screen name="Subscription" component={SubscriptionScreen} />
+      <HomeStack.Screen name="TestLoading" component={TestLoadingScreen} />
+      <HomeStack.Screen name="DevMenu" component={DevMenuScreen} />
     </HomeStack.Navigator>
   );
 };
@@ -129,7 +133,7 @@ const FriendsStackNavigator: React.FC = () => {
 };
 
 export const TabNavigator: React.FC = () => {
-  const { activeTab, setActiveTab } = useAppStore();
+  const { activeTab, setActiveTab, ichingSessionStep, sessionStep } = useAppStore();
 
   const tabs = [
     { id: 'home', label: 'Home', icon: 'home-outline', screen: HomeStackNavigator },
@@ -147,10 +151,24 @@ export const TabNavigator: React.FC = () => {
         // Check if we're on a screen that should hide the tab bar
         const route = props.state.routes[props.state.index];
         const nestedRoute = route.state?.routes?.[route.state.index];
+
+        // Hide on DailyHoroscope detail screen
         const shouldHideTabBar = nestedRoute?.name === 'DailyHoroscope';
 
-        // Hide tab bar on specific screens
-        if (shouldHideTabBar) return null;
+        // Hide during critical I Ching steps
+        const isOnIChingScreen = nestedRoute?.name === 'IChing';
+        const criticalIChingSteps = ['loading', 'casting', 'interpretation', 'complete'];
+        const shouldHideForIChing = isOnIChingScreen &&
+          criticalIChingSteps.includes(ichingSessionStep);
+
+        // Hide during critical Tarot steps
+        const isOnTarotScreen = nestedRoute?.name === 'Tarot';
+        const criticalTarotSteps = ['drawing', 'reveal', 'interpretation', 'complete'];
+        const shouldHideForTarot = isOnTarotScreen &&
+          criticalTarotSteps.includes(sessionStep);
+
+        // Hide tab bar on specific screens or during critical oracle steps
+        if (shouldHideTabBar || shouldHideForIChing || shouldHideForTarot) return null;
 
         return (
           <TabNavigation

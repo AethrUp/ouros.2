@@ -20,36 +20,84 @@ import { REVENUECAT_APPLE_KEY } from '@env';
 // The same key works for both sandbox and production testing
 const REVENUECAT_APPLE_API_KEY = REVENUECAT_APPLE_KEY;
 
-let isInitialized = false;
+// Initialization state management
+type InitializationState = 'not_started' | 'initializing' | 'initialized' | 'failed';
+let initializationState: InitializationState = 'not_started';
+let initializationPromise: Promise<void> | null = null;
+
+// Sync state management to prevent concurrent syncs
+let isSyncing = false;
+let syncPromise: Promise<SubscriptionState> | null = null;
+
+/**
+ * Wait for RevenueCat to be initialized
+ * Throws if initialization failed
+ */
+async function waitForInitialization(): Promise<void> {
+  if (initializationState === 'initialized') {
+    return;
+  }
+
+  if (initializationState === 'failed') {
+    throw new Error('RevenueCat initialization failed');
+  }
+
+  if (initializationState === 'initializing' && initializationPromise) {
+    await initializationPromise;
+    return;
+  }
+
+  throw new Error('RevenueCat not initialized. Call initializeRevenueCat() first.');
+}
 
 /**
  * Initialize RevenueCat SDK
  * Must be called before any other RevenueCat operations
  */
 export async function initializeRevenueCat(userId: string): Promise<void> {
-  if (isInitialized) {
+  // If already initialized, return immediately
+  if (initializationState === 'initialized') {
     console.log('⚠️ RevenueCat already initialized');
     return;
   }
 
-  try {
-    // Configure SDK
-    if (__DEV__) {
-      Purchases.setLogLevel(LOG_LEVEL.DEBUG);
-    }
-
-    // Configure Purchases
-    await Purchases.configure({
-      apiKey: REVENUECAT_APPLE_API_KEY,
-      appUserID: userId, // Use your Supabase user ID
-    });
-
-    isInitialized = true;
-    console.log('✅ RevenueCat initialized for user:', userId);
-  } catch (error) {
-    console.error('❌ Failed to initialize RevenueCat:', error);
-    throw error;
+  // If currently initializing, wait for the existing promise
+  if (initializationState === 'initializing' && initializationPromise) {
+    console.log('⏳ RevenueCat initialization in progress, waiting...');
+    await initializationPromise;
+    return;
   }
+
+  // Start initialization
+  initializationState = 'initializing';
+  initializationPromise = (async () => {
+    try {
+      // Validate API key
+      if (!REVENUECAT_APPLE_API_KEY || REVENUECAT_APPLE_API_KEY.trim() === '') {
+        throw new Error('RevenueCat API key not loaded from environment variables');
+      }
+
+      // Configure SDK
+      if (__DEV__) {
+        Purchases.setLogLevel(LOG_LEVEL.DEBUG);
+      }
+
+      // Configure Purchases
+      await Purchases.configure({
+        apiKey: REVENUECAT_APPLE_API_KEY,
+        appUserID: userId,
+      });
+
+      initializationState = 'initialized';
+      console.log('✅ RevenueCat initialized for user:', userId);
+    } catch (error) {
+      initializationState = 'failed';
+      console.error('❌ Failed to initialize RevenueCat:', error);
+      throw error;
+    }
+  })();
+
+  await initializationPromise;
 }
 
 /**
@@ -105,9 +153,21 @@ function getStatusFromCustomerInfo(customerInfo: CustomerInfo): SubscriptionStat
  * This fetches the latest customer info from RevenueCat and updates Supabase
  */
 export async function syncSubscriptionWithRevenueCat(): Promise<SubscriptionState> {
-  try {
-    // Get customer info from RevenueCat
-    const customerInfo = await Purchases.getCustomerInfo();
+  // Wait for initialization
+  await waitForInitialization();
+
+  // If already syncing, return the existing promise
+  if (isSyncing && syncPromise) {
+    console.log('⏳ Sync already in progress, waiting...');
+    return syncPromise;
+  }
+
+  // Start sync
+  isSyncing = true;
+  syncPromise = (async () => {
+    try {
+      // Get customer info from RevenueCat
+      const customerInfo = await Purchases.getCustomerInfo();
 
     const tier = getTierFromEntitlements(customerInfo);
     const status = getStatusFromCustomerInfo(customerInfo);
@@ -151,29 +211,37 @@ export async function syncSubscriptionWithRevenueCat(): Promise<SubscriptionStat
       throw error;
     }
 
-    console.log(`✅ Synced subscription from RevenueCat: ${tier} (${status})`);
+      console.log(`✅ Synced subscription from RevenueCat: ${tier} (${status})`);
 
-    return {
-      userId: data.user_id,
-      tier: data.tier,
-      status: data.status,
-      platform: data.platform,
-      revenueCatId: data.revenue_cat_id,
-      expiresAt: data.expires_at,
-      isSandbox: data.is_sandbox,
-      isDebugOverride: data.is_debug_override,
-      updatedAt: data.updated_at,
-    };
-  } catch (error) {
-    console.error('Failed to sync with RevenueCat:', error);
-    throw error;
-  }
+      return {
+        userId: data.user_id,
+        tier: data.tier,
+        status: data.status,
+        platform: data.platform,
+        revenueCatId: data.revenue_cat_id,
+        expiresAt: data.expires_at,
+        isSandbox: data.is_sandbox,
+        isDebugOverride: data.is_debug_override,
+        updatedAt: data.updated_at,
+      };
+    } catch (error) {
+      console.error('Failed to sync with RevenueCat:', error);
+      throw error;
+    } finally {
+      isSyncing = false;
+      syncPromise = null;
+    }
+  })();
+
+  return syncPromise;
 }
 
 /**
  * Get available subscription packages
  */
 export async function getAvailablePackages(): Promise<SubscriptionPackage[]> {
+  await waitForInitialization();
+
   try {
     const offerings = await Purchases.getOfferings();
 
@@ -244,6 +312,8 @@ export async function getAvailablePackages(): Promise<SubscriptionPackage[]> {
  * Purchase a subscription package
  */
 export async function purchasePackage(packageIdentifier: string): Promise<void> {
+  await waitForInitialization();
+
   try {
     const offerings = await Purchases.getOfferings();
 
@@ -283,6 +353,8 @@ export async function purchasePackage(packageIdentifier: string): Promise<void> 
  * Restore previous purchases
  */
 export async function restorePurchases(): Promise<void> {
+  await waitForInitialization();
+
   try {
     console.log('🔄 Restoring purchases...');
 
@@ -302,6 +374,8 @@ export async function restorePurchases(): Promise<void> {
  * Check if user has an active subscription
  */
 export async function hasActiveSubscription(): Promise<boolean> {
+  await waitForInitialization();
+
   try {
     const customerInfo = await Purchases.getCustomerInfo();
 
@@ -318,6 +392,8 @@ export async function hasActiveSubscription(): Promise<boolean> {
  * Get subscription expiration date
  */
 export async function getSubscriptionExpirationDate(): Promise<Date | null> {
+  await waitForInitialization();
+
   try {
     const customerInfo = await Purchases.getCustomerInfo();
 
@@ -340,6 +416,8 @@ export async function getSubscriptionExpirationDate(): Promise<Date | null> {
  * Check if user is in a trial period
  */
 export async function isInTrialPeriod(): Promise<boolean> {
+  await waitForInitialization();
+
   try {
     const customerInfo = await Purchases.getCustomerInfo();
 
@@ -359,6 +437,8 @@ export async function isInTrialPeriod(): Promise<boolean> {
  * Useful when you want to force a fresh fetch from RevenueCat servers
  */
 export async function invalidateCustomerInfoCache(): Promise<void> {
+  await waitForInitialization();
+
   try {
     await Purchases.invalidateCustomerInfoCache();
     console.log('✅ Customer info cache invalidated');

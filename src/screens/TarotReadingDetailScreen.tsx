@@ -11,7 +11,7 @@ import { useAppStore } from '../store';
 import { InterpretationScreen } from '../components/tarot/InterpretationScreen';
 import { TarotReading, LinkedReading } from '../types';
 import { colors } from '../styles';
-import { LoadingSpinner } from '../components';
+import { LoadingScreen } from '../components';
 
 interface TarotReadingDetailScreenProps extends NavigationProps {
   route: {
@@ -45,7 +45,7 @@ export const TarotReadingDetailScreen: React.FC<TarotReadingDetailScreenProps> =
     console.log('Reading already saved');
   };
 
-  const handleJournal = () => {
+  const handleJournal = (prompt?: string, promptIndex?: number) => {
     if (!reading) return;
 
     // Transform TarotReading to LinkedReading format
@@ -55,7 +55,7 @@ export const TarotReadingDetailScreen: React.FC<TarotReadingDetailScreenProps> =
       title: `${reading.spread.name} - ${reading.cards.length} cards`,
       timestamp: reading.createdAt,
       interpretation: reading.interpretation,
-      intention: reading.intention,
+      intention: prompt || reading.intention, // Use prompt if provided
       metadata: {
         spread: reading.spread.name,
         cardCount: reading.cards.length,
@@ -64,6 +64,7 @@ export const TarotReadingDetailScreen: React.FC<TarotReadingDetailScreenProps> =
           position: dc.position,
           orientation: dc.orientation,
         })),
+        ...(prompt && { prompt, promptIndex }),
       },
     };
 
@@ -78,7 +79,7 @@ export const TarotReadingDetailScreen: React.FC<TarotReadingDetailScreenProps> =
     return (
       <SafeAreaView style={styles.container} edges={['top']}>
         <View style={styles.loadingContainer}>
-          <LoadingSpinner />
+          <LoadingScreen context="tarot" />
         </View>
       </SafeAreaView>
     );

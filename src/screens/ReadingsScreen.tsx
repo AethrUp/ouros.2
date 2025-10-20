@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { NavigationProps } from '../types';
-import { HeaderBar, LoadingSpinner } from '../components';
+import { HeaderBar, LoadingScreen } from '../components';
 import { colors, typography, spacing } from '../styles';
 import { useAppStore } from '../store';
 import { format } from 'date-fns';
@@ -30,9 +30,10 @@ export const ReadingsScreen: React.FC<NavigationProps> = ({ navigation }) => {
 
   // Load readings on mount
   useEffect(() => {
-    loadHistory();
-    loadIChingHistory();
-    loadDreamHistory();
+    const loadData = async () => {
+      await Promise.all([loadHistory(), loadIChingHistory(), loadDreamHistory()]);
+    };
+    loadData();
   }, []);
 
   // Handle refresh
@@ -51,8 +52,8 @@ export const ReadingsScreen: React.FC<NavigationProps> = ({ navigation }) => {
 
   const isLoading = isLoadingHistory || isLoadingIChingHistory;
 
-  return (
-    <View style={styles.container}>
+  const content = (
+    <>
       <HeaderBar
         title="READINGS"
         rightActions={[
@@ -70,8 +71,7 @@ export const ReadingsScreen: React.FC<NavigationProps> = ({ navigation }) => {
       >
         {isLoading && allReadings.length === 0 ? (
           <View style={styles.loadingContainer}>
-            <LoadingSpinner />
-            <Text style={styles.loadingText}>Loading readings...</Text>
+            <LoadingScreen context="general" />
           </View>
         ) : allReadings.length === 0 ? (
           <Animated.View entering={FadeIn} style={styles.emptyContainer}>
@@ -129,6 +129,12 @@ export const ReadingsScreen: React.FC<NavigationProps> = ({ navigation }) => {
           </View>
         )}
       </ScrollView>
+    </>
+  );
+
+  return (
+    <View style={styles.container}>
+      {content}
     </View>
   );
 };

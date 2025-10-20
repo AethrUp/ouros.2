@@ -9,16 +9,18 @@ import {
   CastedHexagram,
   CastingMethod,
   IChingInterpretation,
+  IChingInterpretationV2,
 } from '../types/iching';
 import {
   castHexagramWithCoins,
   castHexagramWithYarrowStalks,
 } from '../utils/ichingCasting';
 import {
-  constructIChingPrompt,
+  constructIChingPromptV2,
+  validateIChingInterpretationV2JSON,
+} from '../utils/ichingPromptTemplateV2';
+import {
   constructStaticIChingInterpretation,
-  validateIChingResponse,
-  validateIChingInterpretationJSON,
 } from '../utils/ichingPromptTemplate';
 import { supabase } from '../utils/supabase';
 import { useAppStore } from '../store';
@@ -75,7 +77,7 @@ export const generateIChingInterpretation = async (
   question: string,
   primaryHexagram: CastedHexagram,
   relatingHexagram?: CastedHexagram
-): Promise<IChingInterpretation> => {
+): Promise<IChingInterpretationV2> => {
   const store = useAppStore.getState();
   const { birthData, preferences } = store;
 
@@ -94,8 +96,8 @@ export const generateIChingInterpretation = async (
 
   // Try AI interpretation first
   try {
-    // Construct prompt
-    const prompt = constructIChingPrompt({
+    // Construct V2 prompt (structured format)
+    const prompt = constructIChingPromptV2({
       question,
       primaryHexagram,
       relatingHexagram,
@@ -104,17 +106,12 @@ export const generateIChingInterpretation = async (
       detailLevel,
     });
 
-    console.log('📡 Calling Anthropic API...');
+    console.log('📡 Calling Anthropic API with V2 prompt...');
 
     // Call Anthropic API
     const response = await anthropic.messages.create({
       model: 'claude-sonnet-4-5-20250929',
-      max_tokens:
-        detailLevel === 'comprehensive'
-          ? 3000
-          : detailLevel === 'detailed'
-          ? 2000
-          : 1000,
+      max_tokens: 4000, // V2 format needs more tokens for structured content
       temperature: 0.7,
       messages: [
         {
@@ -133,7 +130,7 @@ export const generateIChingInterpretation = async (
     }
 
     // Parse JSON response
-    let interpretationData: IChingInterpretation;
+    let interpretationData: IChingInterpretationV2;
     try {
       // Try to extract JSON if there's text before/after the JSON
       const jsonMatch = responseText.match(/\{[\s\S]*\}/);
@@ -146,32 +143,54 @@ export const generateIChingInterpretation = async (
     }
 
     // Validate JSON structure
-    const validation = validateIChingInterpretationJSON(interpretationData);
+    const validation = validateIChingInterpretationV2JSON(interpretationData);
 
     if (!validation.valid) {
       console.warn('AI response JSON validation failed:', validation.errors);
       throw new Error(`Invalid interpretation structure: ${validation.errors.join(', ')}`);
     }
 
-    console.log('✅ AI interpretation generated successfully');
+    console.log('✅ AI interpretation V2 generated successfully');
     console.log('📊 Token usage:', {
       input: response.usage.input_tokens,
       output: response.usage.output_tokens,
       total: response.usage.input_tokens + response.usage.output_tokens,
     });
 
-    return interpretationData;
+    // Wrap in preview/fullContent structure (similar to other readings)
+    const structuredResult: IChingInterpretationV2 = {
+      preview: {
+        title: interpretationData.title,
+        summary: interpretationData.summary,
+        tone: interpretationData.tone,
+      },
+      fullContent: {
+        overview: interpretationData.overview,
+        presentSituation: interpretationData.presentSituation,
+        trigramDynamics: interpretationData.trigramDynamics,
+        changingLines: interpretationData.changingLines,
+        transformation: interpretationData.transformation,
+        guidance: interpretationData.guidance,
+        timing: interpretationData.timing,
+        keyInsight: interpretationData.keyInsight,
+        reflectionPrompts: interpretationData.reflectionPrompts,
+        conclusion: interpretationData.conclusion,
+      },
+    };
+
+    return structuredResult;
   } catch (error) {
     console.error('AI interpretation failed, using static fallback:', error);
 
-    // Fallback to static interpretation
+    // Fallback to static interpretation (V1 format, still compatible)
     const staticInterpretation = constructStaticIChingInterpretation(
       question,
       primaryHexagram,
       relatingHexagram
     );
 
-    return staticInterpretation;
+    // For now, return the V1 format - the UI will handle both
+    return staticInterpretation as any;
   }
 };
 
@@ -183,7 +202,7 @@ export const saveIChingReading = async (data: {
   castingMethod: CastingMethod;
   primaryHexagram: CastedHexagram;
   relatingHexagram?: CastedHexagram;
-  interpretation: string | IChingInterpretation;
+  interpretation: string | IChingInterpretation | IChingInterpretationV2;
 }): Promise<IChingReading> => {
   const store = useAppStore.getState();
   const userId = store.user?.id;

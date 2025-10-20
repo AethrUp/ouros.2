@@ -4,9 +4,16 @@
  */
 
 import Anthropic from '@anthropic-ai/sdk';
-import { TarotCard, DrawnCard, SpreadLayout, TarotReading } from '../types/tarot';
+import { TarotCard, DrawnCard, SpreadLayout, TarotReading, CardInsight } from '../types/tarot';
 import { getQuantumRandom } from '../utils/quantumRandom';
-import { constructTarotPrompt, constructStaticInterpretation, validateTarotResponse } from '../utils/tarotPromptTemplate';
+import {
+  constructTarotPrompt,
+  constructOverviewPrompt,
+  constructCardPrompt,
+  constructMetaPrompt,
+  constructStaticInterpretation,
+  validateTarotResponse
+} from '../utils/tarotPromptTemplate';
 import { supabase } from '../utils/supabase';
 import { useAppStore } from '../store';
 
@@ -70,6 +77,166 @@ export const handleDrawCards = async (spread: SpreadLayout): Promise<DrawnCard[]
 };
 
 /**
+ * Helper: Parse and clean JSON response from AI
+ */
+const parseAIResponse = (text: string): any => {
+  let cleanedText = text.trim();
+
+  // Remove markdown code fences if present
+  if (cleanedText.startsWith('```json')) {
+    cleanedText = cleanedText.substring(7);
+  } else if (cleanedText.startsWith('```')) {
+    cleanedText = cleanedText.substring(3);
+  }
+
+  if (cleanedText.endsWith('```')) {
+    cleanedText = cleanedText.substring(0, cleanedText.length - 3);
+  }
+
+  return JSON.parse(cleanedText.trim());
+};
+
+/**
+ * Generate tarot interpretation using parallel AI calls (for larger spreads)
+ */
+const generateParallelInterpretation = async (
+  intention: string,
+  drawnCards: DrawnCard[],
+  context: any,
+  style: 'mystical' | 'psychological' | 'practical'
+): Promise<string> => {
+  const startTime = Date.now();
+  console.log(`🚀 Starting parallel generation for ${drawnCards.length} cards...`);
+
+  // Create all prompts
+  const overviewPrompt = constructOverviewPrompt({
+    intention,
+    cards: drawnCards,
+    context,
+    style
+  });
+
+  const cardPrompts = drawnCards.map((card, index) =>
+    constructCardPrompt({
+      card,
+      cardIndex: index,
+      allCards: drawnCards,
+      intention,
+      context,
+      style
+    })
+  );
+
+  const metaPrompt = constructMetaPrompt({
+    intention,
+    cards: drawnCards,
+    context,
+    style
+  });
+
+  // Create all API calls
+  const overviewCall = anthropic.messages.create({
+    model: 'claude-sonnet-4-5-20250929',
+    max_tokens: 400,
+    temperature: 0.7,
+    messages: [{ role: 'user', content: overviewPrompt }]
+  });
+
+  const cardCalls = cardPrompts.map(prompt =>
+    anthropic.messages.create({
+      model: 'claude-sonnet-4-5-20250929',
+      max_tokens: 500,
+      temperature: 0.7,
+      messages: [{ role: 'user', content: prompt }]
+    })
+  );
+
+  const metaCall = anthropic.messages.create({
+    model: 'claude-sonnet-4-5-20250929',
+    max_tokens: 1500,
+    temperature: 0.7,
+    messages: [{ role: 'user', content: metaPrompt }]
+  });
+
+  // Execute all calls in parallel
+  console.log(`📡 Executing ${2 + drawnCards.length} parallel API calls...`);
+  const [overviewResponse, ...cardAndMetaResponses] = await Promise.all([
+    overviewCall,
+    ...cardCalls,
+    metaCall
+  ]);
+
+  // Split card responses and meta response
+  const cardResponses = cardAndMetaResponses.slice(0, drawnCards.length);
+  const metaResponse = cardAndMetaResponses[drawnCards.length];
+
+  const parallelTime = ((Date.now() - startTime) / 1000).toFixed(2);
+  console.log(`⚡ All parallel calls completed in ${parallelTime}s`);
+
+  // Parse responses
+  const overviewData = parseAIResponse(
+    overviewResponse.content[0]?.type === 'text' ? overviewResponse.content[0].text : '{}'
+  );
+
+  const cardInsights: CardInsight[] = cardResponses.map((response, index) => {
+    try {
+      const cardData = parseAIResponse(
+        response.content[0]?.type === 'text' ? response.content[0].text : '{}'
+      );
+      return cardData as CardInsight;
+    } catch (error) {
+      console.error(`Failed to parse card ${index + 1}:`, error);
+      // Fallback for this card
+      return {
+        position: drawnCards[index].position,
+        cardName: `${drawnCards[index].card.name} (${drawnCards[index].orientation})`,
+        interpretation: drawnCards[index].orientation === 'upright'
+          ? drawnCards[index].card.uprightMeaning
+          : drawnCards[index].card.reversedMeaning
+      };
+    }
+  });
+
+  const metaData = parseAIResponse(
+    metaResponse.content[0]?.type === 'text' ? metaResponse.content[0].text : '{}'
+  );
+
+  // Assemble final interpretation
+  const finalInterpretation = {
+    preview: metaData.preview,
+    fullContent: {
+      overview: overviewData.overview,
+      cardInsights,
+      synthesis: metaData.synthesis,
+      guidance: metaData.guidance,
+      timing: metaData.timing,
+      keyInsight: metaData.keyInsight,
+      reflectionPrompts: metaData.reflectionPrompts,
+      conclusion: metaData.conclusion
+    }
+  };
+
+  // Calculate total tokens
+  const totalTokens = [overviewResponse, ...cardResponses, metaResponse].reduce(
+    (sum, resp) => sum + resp.usage.input_tokens + resp.usage.output_tokens,
+    0
+  );
+
+  console.log('✅ Parallel interpretation assembled successfully');
+  console.log('📊 Total token usage:', totalTokens);
+  console.log(`⚡ Generation method: parallel (${2 + drawnCards.length} calls)`);
+
+  // Validate assembled interpretation
+  const validation = validateTarotResponse(finalInterpretation);
+  if (!validation.valid) {
+    console.warn('⚠️ Assembled interpretation validation failed:', validation.error);
+    // Continue anyway - we have content
+  }
+
+  return JSON.stringify(finalInterpretation);
+};
+
+/**
  * Generate AI-powered tarot interpretation
  * Falls back to static interpretation if AI unavailable
  */
@@ -93,9 +260,19 @@ export const generateTarotInterpretation = async (
   const style = preferences?.interpretationStyle || 'psychological';
   const detailLevel = preferences?.detailLevel || 'detailed';
 
+  // Decide on generation method based on card count
+  const useParallel = drawnCards.length >= 6;
+
+  console.log(`📊 Card count: ${drawnCards.length}, Method: ${useParallel ? 'PARALLEL' : 'SINGLE-CALL'}`);
+
   // Try AI interpretation first
   try {
-    // Construct prompt
+    if (useParallel) {
+      // Use parallel generation for large spreads
+      return await generateParallelInterpretation(intention, drawnCards, context, style);
+    }
+
+    // Use single-call generation for small spreads (legacy method)
     const prompt = constructTarotPrompt({
       intention,
       cards: drawnCards,
@@ -104,12 +281,11 @@ export const generateTarotInterpretation = async (
       detailLevel
     });
 
-    console.log('📡 Calling Anthropic API...');
+    console.log('📡 Calling Anthropic API (single call)...');
 
-    // Call Anthropic API
     const response = await anthropic.messages.create({
       model: 'claude-sonnet-4-5-20250929',
-      max_tokens: detailLevel === 'comprehensive' ? 3000 : detailLevel === 'detailed' ? 2000 : 1000,
+      max_tokens: detailLevel === 'comprehensive' ? 4000 : detailLevel === 'detailed' ? 2500 : 1500,
       temperature: 0.7,
       messages: [
         {
@@ -119,13 +295,18 @@ export const generateTarotInterpretation = async (
       ]
     });
 
-    // Extract text from response
-    const interpretation = response.content[0]?.type === 'text'
+    const interpretationText = response.content[0]?.type === 'text'
       ? response.content[0].text
       : '';
 
-    // Validate response
-    const validation = validateTarotResponse(interpretation);
+    if (!interpretationText) {
+      throw new Error('AI returned empty response');
+    }
+
+    const interpretationJson = parseAIResponse(interpretationText);
+
+    // Validate parsed JSON
+    const validation = validateTarotResponse(interpretationJson);
 
     if (!validation.valid) {
       console.warn('AI response validation failed:', validation.error);
@@ -139,7 +320,7 @@ export const generateTarotInterpretation = async (
       total: response.usage.input_tokens + response.usage.output_tokens
     });
 
-    return interpretation;
+    return JSON.stringify(interpretationJson);
 
   } catch (error) {
     console.error('AI interpretation failed, using static fallback:', error);

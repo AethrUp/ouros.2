@@ -6,11 +6,10 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
-  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { NavigationProps } from '../types';
-import { HeaderBar, SwipeableChartCard } from '../components';
+import { HeaderBar, SwipeableChartCard, LoadingScreen } from '../components';
 import { colors, spacing, typography } from '../styles';
 import { useAppStore } from '../store';
 import { SavedChartForm } from '../components/synastry/SavedChartForm';
@@ -102,8 +101,7 @@ export const SavedChartsScreen: React.FC<NavigationProps> = ({ navigation }) => 
 
       {isLoadingSavedCharts ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={styles.loadingText}>Loading saved charts...</Text>
+          <LoadingScreen context="general" />
         </View>
       ) : savedCharts.length === 0 ? (
         <View style={styles.emptyState}>

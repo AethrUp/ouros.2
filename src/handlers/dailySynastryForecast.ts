@@ -28,7 +28,7 @@ const anthropic = new Anthropic({
 });
 
 const MODEL = 'claude-sonnet-4-20250514';
-const PROMPT_VERSION = '1.0';
+const PROMPT_VERSION = '2.0'; // V2: Structured format with timeBasedForecasts, transitAnalysis, relationshipInsights, guidance, connectionPractice
 
 interface DailySynastryForecastOptions {
   forceRegenerate?: boolean;
@@ -82,6 +82,24 @@ const loadCachedForecast = async (
     }
 
     // Transform database record to DailySynastryForecast
+    // Check format version and construct appropriate fullContent
+    let fullContent;
+    if (data.format_version === 'v2') {
+      // V2 format - use structured JSONB content
+      fullContent = data.full_content_v2;
+    } else {
+      // V1 format - use legacy flat fields
+      fullContent = {
+        morningForecast: data.morning_forecast,
+        afternoonForecast: data.afternoon_forecast,
+        eveningForecast: data.evening_forecast,
+        advice: data.advice,
+        activitiesSuggested: data.activities_suggested,
+        activitiesToAvoid: data.activities_to_avoid,
+        transitAnalysis: data.transit_analysis,
+      };
+    }
+
     const forecast: DailySynastryForecast = {
       id: data.id,
       date: data.date,
@@ -95,20 +113,11 @@ const loadCachedForecast = async (
       currentPositions: data.current_positions,
       triggeredAspects: data.triggered_aspects,
       preview: {
-        title: data.title,
+        topTheme: data.top_theme,
         summary: data.summary,
         energyRating: data.energy_rating,
-        topTheme: data.top_theme,
       },
-      fullContent: {
-        morningForecast: data.morning_forecast,
-        afternoonForecast: data.afternoon_forecast,
-        eveningForecast: data.evening_forecast,
-        advice: data.advice,
-        activitiesSuggested: data.activities_suggested,
-        activitiesToAvoid: data.activities_to_avoid,
-        transitAnalysis: data.transit_analysis,
-      },
+      fullContent,
       hasFullForecast: data.has_full_forecast,
       generatedAt: data.generated_at,
       model: data.model,
@@ -264,7 +273,7 @@ export const generateDailySynastryForecast = async (
 
     console.log('✅ AI response validated successfully');
 
-    // Step 9: Structure forecast data
+    // Step 9: Structure forecast data with V2 format
     const forecast: DailySynastryForecast = {
       id: `forecast_${Date.now()}_${Math.random().toString(36).substring(7)}`,
       date: today,
@@ -278,19 +287,18 @@ export const generateDailySynastryForecast = async (
       currentPositions,
       triggeredAspects,
       preview: {
-        title: forecastData.title,
+        topTheme: forecastData.topTheme,
         summary: forecastData.summary,
         energyRating: forecastData.energyRating,
-        topTheme: forecastData.topTheme,
       },
       fullContent: {
-        morningForecast: forecastData.morningForecast,
-        afternoonForecast: forecastData.afternoonForecast,
-        eveningForecast: forecastData.eveningForecast,
-        advice: forecastData.advice,
-        activitiesSuggested: forecastData.activitiesSuggested,
-        activitiesToAvoid: forecastData.activitiesToAvoid,
+        introduction: forecastData.introduction,
+        timeBasedForecasts: forecastData.timeBasedForecasts,
         transitAnalysis: forecastData.transitAnalysis,
+        relationshipInsights: forecastData.relationshipInsights,
+        guidance: forecastData.guidance,
+        connectionPractice: forecastData.connectionPractice,
+        conclusion: forecastData.conclusion,
       },
       hasFullForecast: true,
       generatedAt: new Date().toISOString(),
@@ -316,17 +324,35 @@ export const generateDailySynastryForecast = async (
         person2_transits: person2Transits,
         current_positions: currentPositions,
         triggered_aspects: triggeredAspects,
-        title: forecastData.title,
+
+        // Preview fields (used by both V1 and V2)
+        title: forecastData.topTheme,
         summary: forecastData.summary,
         energy_rating: forecastData.energyRating,
         top_theme: forecastData.topTheme,
-        morning_forecast: forecastData.morningForecast,
-        afternoon_forecast: forecastData.afternoonForecast,
-        evening_forecast: forecastData.eveningForecast,
-        advice: forecastData.advice,
-        activities_suggested: forecastData.activitiesSuggested,
-        activities_to_avoid: forecastData.activitiesToAvoid,
-        transit_analysis: forecastData.transitAnalysis,
+
+        // V2 format fields
+        format_version: 'v2',
+        full_content_v2: {
+          introduction: forecastData.introduction,
+          timeBasedForecasts: forecastData.timeBasedForecasts,
+          transitAnalysis: forecastData.transitAnalysis,
+          relationshipInsights: forecastData.relationshipInsights,
+          guidance: forecastData.guidance,
+          connectionPractice: forecastData.connectionPractice,
+          conclusion: forecastData.conclusion,
+        },
+
+        // V1 fields = null for V2 forecasts (for backward compatibility)
+        morning_forecast: null,
+        afternoon_forecast: null,
+        evening_forecast: null,
+        advice: null,
+        activities_suggested: null,
+        activities_to_avoid: null,
+        transit_analysis: null,
+
+        // Metadata
         has_full_forecast: true,
         generated_at: forecast.generatedAt,
         model: MODEL,

@@ -11,7 +11,7 @@ import { useAppStore } from '../store';
 import { InterpretationView } from '../components/iching/InterpretationView';
 import { IChingReading, LinkedReading } from '../types';
 import { colors } from '../styles';
-import { LoadingSpinner } from '../components';
+import { LoadingScreen } from '../components';
 
 interface IChingReadingDetailScreenProps extends NavigationProps {
   route: {
@@ -40,7 +40,7 @@ export const IChingReadingDetailScreen: React.FC<IChingReadingDetailScreenProps>
     }
   }, [readingId, ichingReadings]);
 
-  const handleJournal = () => {
+  const handleJournal = (prompt?: string, promptIndex?: number) => {
     if (!reading) return;
 
     // Transform IChingReading to LinkedReading format
@@ -52,11 +52,12 @@ export const IChingReadingDetailScreen: React.FC<IChingReadingDetailScreenProps>
       interpretation: typeof reading.interpretation === 'string'
         ? reading.interpretation
         : JSON.stringify(reading.interpretation),
-      intention: reading.question,
+      intention: prompt || reading.question, // Use prompt if provided
       metadata: {
         primaryHexagram: reading.primaryHexagram.hexagram.number,
         changingLines: reading.primaryHexagram.changingLines,
         relatingHexagram: reading.relatingHexagram?.hexagram.number,
+        ...(prompt && { prompt, promptIndex }),
       },
     };
 
@@ -71,7 +72,7 @@ export const IChingReadingDetailScreen: React.FC<IChingReadingDetailScreenProps>
     return (
       <SafeAreaView style={styles.container} edges={['top']}>
         <View style={styles.loadingContainer}>
-          <LoadingSpinner />
+          <LoadingScreen context="iching" />
         </View>
       </SafeAreaView>
     );

@@ -81,7 +81,7 @@ export interface SocialSlice extends SocialState {
     birthData: BirthData,
     natalChart: NatalChartData,
     options?: { relationship?: string; notes?: string; isPublic?: boolean }
-  ) => Promise<void>;
+  ) => Promise<SavedChart>;
   updateSavedChart: (chartId: string, updates: {
     name?: string;
     relationship?: string;
@@ -340,6 +340,8 @@ export const createSocialSlice: StateCreator<
       set((state) => ({
         savedCharts: [newChart, ...state.savedCharts],
       }));
+
+      return newChart;
     } catch (error) {
       console.error('Error creating saved chart:', error);
       set({
