@@ -7,6 +7,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Platform,
+  Modal,
 } from 'react-native';
 import { NavigationProps, JournalEntryType, LinkedReading } from '../types';
 import { HeaderBar } from '../components';
@@ -132,9 +133,16 @@ export const JournalEntryScreen: React.FC<JournalEntryScreenProps> = ({ navigati
   };
 
   const handleDateChange = (event: any, selectedDate?: Date) => {
-    setShowDatePicker(Platform.OS === 'ios');
+    if (Platform.OS === 'android') {
+      setShowDatePicker(false);
+    }
     if (selectedDate) {
       setDate(selectedDate);
+      if (Platform.OS === 'ios') {
+        setShowDatePicker(false);
+      }
+    } else if (Platform.OS === 'android') {
+      setShowDatePicker(false);
     }
   };
 
@@ -196,13 +204,39 @@ export const JournalEntryScreen: React.FC<JournalEntryScreenProps> = ({ navigati
         </TouchableOpacity>
 
         {showDatePicker && (
-          <DateTimePicker
-            value={date}
-            mode="date"
-            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-            onChange={handleDateChange}
-            textColor={colors.text.primary}
-          />
+          Platform.OS === 'ios' ? (
+            <Modal
+              transparent
+              animationType="slide"
+              visible={showDatePicker}
+              onRequestClose={() => setShowDatePicker(false)}
+            >
+              <View style={styles.modalOverlay}>
+                <View style={styles.modalContent}>
+                  <View style={styles.modalHeader}>
+                    <Text style={styles.modalTitle}>Select Date</Text>
+                    <TouchableOpacity onPress={() => setShowDatePicker(false)}>
+                      <Text style={styles.modalButton}>Done</Text>
+                    </TouchableOpacity>
+                  </View>
+                  <DateTimePicker
+                    value={date}
+                    mode="date"
+                    display="spinner"
+                    onChange={handleDateChange}
+                    textColor={colors.text.primary}
+                  />
+                </View>
+              </View>
+            </Modal>
+          ) : (
+            <DateTimePicker
+              value={date}
+              mode="date"
+              display="default"
+              onChange={handleDateChange}
+            />
+          )
         )}
 
         {/* Title Input */}
@@ -402,5 +436,33 @@ const styles = StyleSheet.create({
     minHeight: 400,
     padding: spacing.md,
     borderRadius: 8,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: colors.background.secondary,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingBottom: spacing.xl,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  modalTitle: {
+    ...typography.h3,
+    color: colors.text.primary,
+  },
+  modalButton: {
+    ...typography.h4,
+    color: colors.primary,
   },
 });

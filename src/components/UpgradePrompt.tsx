@@ -2,13 +2,13 @@ import React from 'react';
 import {
   View,
   Text,
-  TouchableOpacity,
   StyleSheet,
   Modal,
 } from 'react-native';
+import { Button } from './Button';
 import { UsageFeature, SubscriptionTier } from '../types/subscription';
-import { getUpgradeMessage, getRecommendedTier, getTierBenefits } from '../utils/featureGates';
-import { colors, typography, spacing } from '../styles/theme';
+import { getUpgradeMessage, getUpgradeHeadline, getRecommendedTier, getTierBenefits } from '../utils/featureGates';
+import { theme } from '../styles/theme';
 
 interface UpgradePromptProps {
   visible: boolean;
@@ -28,6 +28,7 @@ export const UpgradePrompt: React.FC<UpgradePromptProps> = ({
   currentUsage,
 }) => {
   const recommendedTier = getRecommendedTier(feature);
+  const headline = getUpgradeHeadline(feature);
   const message = getUpgradeMessage(feature, currentTier, currentUsage);
   const benefits = getTierBenefits(recommendedTier);
 
@@ -35,54 +36,51 @@ export const UpgradePrompt: React.FC<UpgradePromptProps> = ({
     <Modal
       visible={visible}
       animationType="slide"
-      transparent={true}
+      presentationStyle="pageSheet"
       onRequestClose={onClose}
     >
-      <View style={styles.overlay}>
-        <View style={styles.container}>
-          {/* Header */}
-          <View style={styles.header}>
-            <Text style={styles.emoji}>✨</Text>
-            <Text style={styles.title}>Upgrade to {recommendedTier}</Text>
+      <View style={styles.container}>
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.title}>{headline}</Text>
+          <View style={styles.closeButton}>
+            <Text style={styles.closeButtonText} onPress={onClose}>✕</Text>
           </View>
+        </View>
 
+        <View style={styles.content}>
           {/* Message */}
           <Text style={styles.message}>{message}</Text>
 
           {/* Benefits */}
           <View style={styles.benefitsContainer}>
             <Text style={styles.benefitsTitle}>What you'll get:</Text>
-            {benefits.slice(0, 5).map((benefit, index) => (
+            {benefits.map((benefit, index) => (
               <View key={index} style={styles.benefitItem}>
                 <Text style={styles.benefitBullet}>•</Text>
                 <Text style={styles.benefitText}>{benefit}</Text>
               </View>
             ))}
-            {benefits.length > 5 && (
-              <Text style={styles.moreBenefits}>
-                + {benefits.length - 5} more features
-              </Text>
-            )}
           </View>
+        </View>
 
-          {/* Actions */}
-          <View style={styles.actions}>
-            <TouchableOpacity
-              style={styles.upgradeButton}
-              onPress={onUpgrade}
-            >
-              <Text style={styles.upgradeButtonText}>
-                Upgrade Now
-              </Text>
-            </TouchableOpacity>
+        {/* Bottom Actions */}
+        <View style={styles.bottomActions}>
+          <Button
+            title="Upgrade Now"
+            onPress={onUpgrade}
+            variant="primary"
+            size="medium"
+            fullWidth
+          />
 
-            <TouchableOpacity
-              style={styles.cancelButton}
-              onPress={onClose}
-            >
-              <Text style={styles.cancelButtonText}>Maybe Later</Text>
-            </TouchableOpacity>
-          </View>
+          <Button
+            title="Maybe Later"
+            onPress={onClose}
+            variant="text"
+            size="medium"
+            fullWidth
+          />
         </View>
       </View>
     </Modal>
@@ -90,93 +88,80 @@ export const UpgradePrompt: React.FC<UpgradePromptProps> = ({
 };
 
 const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: spacing.xl,
-  },
   container: {
-    backgroundColor: colors.surface,
-    borderRadius: 20,
-    padding: spacing.xl,
-    width: '100%',
-    maxWidth: 400,
+    flex: 1,
+    backgroundColor: theme.colors.background.primary,
   },
   header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.lg,
-  },
-  emoji: {
-    fontSize: 48,
-    marginBottom: spacing.sm,
+    padding: theme.spacing.lg,
+    paddingTop: 60,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
   },
   title: {
-    ...typography.h2,
-    color: colors.text,
-    textAlign: 'center',
+    fontSize: 20,
+    fontWeight: '400',
+    color: '#F6D99F',
     textTransform: 'capitalize',
+    fontFamily: 'PTSerif_400Regular',
+  },
+  closeButton: {
+    padding: theme.spacing.sm,
+  },
+  closeButtonText: {
+    fontSize: 20,
+    fontWeight: '400',
+    color: 'rgba(255, 255, 255, 0.5)',
+    fontFamily: 'PTSerif_400Regular',
+  },
+  content: {
+    flex: 1,
+    padding: theme.spacing.lg,
   },
   message: {
-    ...typography.body,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    marginBottom: spacing.xl,
+    fontSize: theme.fontSize.md,
+    color: 'rgba(255, 255, 255, 0.5)',
+    marginBottom: theme.spacing.xl,
     lineHeight: 22,
+    fontFamily: 'Inter',
   },
   benefitsContainer: {
-    backgroundColor: colors.background,
-    borderRadius: 12,
-    padding: spacing.lg,
-    marginBottom: spacing.xl,
+    marginBottom: theme.spacing.xl,
   },
   benefitsTitle: {
-    ...typography.h3,
-    color: colors.text,
-    marginBottom: spacing.md,
+    fontSize: theme.fontSize.md,
+    fontWeight: '400',
+    color: theme.colors.text.primary,
+    marginBottom: theme.spacing.md,
+    textTransform: 'uppercase',
+    letterSpacing: 1.26,
+    fontFamily: 'Inter',
   },
   benefitItem: {
     flexDirection: 'row',
-    marginBottom: spacing.sm,
+    marginBottom: theme.spacing.sm,
   },
   benefitBullet: {
-    ...typography.body,
-    color: colors.primary,
-    marginRight: spacing.sm,
+    fontSize: theme.fontSize.md,
+    color: theme.colors.primary,
+    marginRight: theme.spacing.sm,
     fontWeight: '700',
+    fontFamily: 'Inter',
   },
   benefitText: {
-    ...typography.body,
-    color: colors.text,
+    fontSize: theme.fontSize.md,
+    color: theme.colors.text.primary,
     flex: 1,
+    fontFamily: 'Inter',
   },
-  moreBenefits: {
-    ...typography.caption,
-    color: colors.primary,
-    marginTop: spacing.sm,
-    fontStyle: 'italic',
-  },
-  actions: {
-    gap: spacing.md,
-  },
-  upgradeButton: {
-    backgroundColor: colors.primary,
-    padding: spacing.lg,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  upgradeButtonText: {
-    ...typography.button,
-    color: '#FFFFFF',
-    fontWeight: '700',
-  },
-  cancelButton: {
-    padding: spacing.md,
-    alignItems: 'center',
-  },
-  cancelButtonText: {
-    ...typography.body,
-    color: colors.textSecondary,
+  bottomActions: {
+    padding: theme.spacing.lg,
+    paddingBottom: theme.spacing.xl,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.border,
+    backgroundColor: theme.colors.background.primary,
   },
 });

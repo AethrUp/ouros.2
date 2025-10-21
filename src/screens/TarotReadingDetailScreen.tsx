@@ -48,13 +48,24 @@ export const TarotReadingDetailScreen: React.FC<TarotReadingDetailScreenProps> =
   const handleJournal = (prompt?: string, promptIndex?: number) => {
     if (!reading) return;
 
+    // Extract human-readable interpretation text
+    let interpretationText: string;
+    if (typeof reading.interpretation === 'string') {
+      interpretationText = reading.interpretation;
+    } else if ('fullContent' in reading.interpretation) {
+      // V2 format (TarotInterpretation)
+      interpretationText = reading.interpretation.fullContent.overview;
+    } else {
+      interpretationText = 'No interpretation available';
+    }
+
     // Transform TarotReading to LinkedReading format
     const linkedReading: LinkedReading = {
       id: reading.id,
       reading_type: 'tarot',
       title: `${reading.spread.name} - ${reading.cards.length} cards`,
       timestamp: reading.createdAt,
-      interpretation: reading.interpretation,
+      interpretation: interpretationText,
       intention: prompt || reading.intention, // Use prompt if provided
       metadata: {
         spread: reading.spread.name,

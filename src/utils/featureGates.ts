@@ -115,6 +115,22 @@ export function getTierBenefits(tier: Exclude<SubscriptionTier, 'free'>): string
 }
 
 /**
+ * Get upgrade headline for a feature
+ */
+export function getUpgradeHeadline(feature: UsageFeature): string {
+  const featureHeadlines: Record<UsageFeature, string> = {
+    dream: "Dreams Hold Your Answers",
+    tarot: "Ask As Much As You Want",
+    iching: "Ask As Much As You Want",
+    synastry: "Understand Your Connections",
+    journal: "More Space to Grow",
+  };
+
+  // Default general headline
+  return featureHeadlines[feature] || "Unlock Full Access";
+}
+
+/**
  * Get upgrade message for a feature
  */
 export function getUpgradeMessage(
@@ -123,22 +139,27 @@ export function getUpgradeMessage(
   currentUsage: number
 ): string {
   const limit = getTierLimit(currentTier, feature);
-  const featureDesc = getFeatureDescription(feature);
 
-  if (limit === 0) {
-    return `${featureDesc} are not available on the Free plan. Upgrade to Premium or Pro to access this feature.`;
-  }
+  // Feature-specific marketing messages
+  const featureMessages: Record<UsageFeature, string> = {
+    dream: "Your subconscious is speaking - Premium helps you listen with unlimited dream interpretation and pattern tracking.",
+    tarot: "No more rationing your spiritual guidance. Premium gives unlimited tarot and I Ching access whenever you need clarity.",
+    iching: "No more rationing your spiritual guidance. Premium gives unlimited tarot and I Ching access whenever you need clarity.",
+    synastry: "Why do you click? Where do you clash? Premium reveals the cosmic chemistry in all your relationships.",
+    journal: "You've used your 3 free entries. Premium gives unlimited journaling space for deeper reflection and insight tracking.",
+  };
 
+  // Default general message
+  const defaultMessage = "Ready for unlimited spiritual insights? Premium gives you everything you need for deeper self-understanding and relationship clarity.";
+
+  // If unlimited access, return success message
   if (limit === 'unlimited') {
+    const featureDesc = getFeatureDescription(feature);
     return `You have unlimited access to ${featureDesc}.`;
   }
 
-  if (currentUsage >= limit) {
-    return `You've reached your daily limit of ${limit} ${featureDesc.toLowerCase()}. Upgrade to Premium or Pro for unlimited access.`;
-  }
-
-  const remaining = limit - currentUsage;
-  return `You have ${remaining} ${featureDesc.toLowerCase()} remaining today. Upgrade for unlimited access.`;
+  // Return feature-specific message or default
+  return featureMessages[feature] || defaultMessage;
 }
 
 /**

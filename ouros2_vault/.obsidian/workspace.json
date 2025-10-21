@@ -139,12 +139,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Headlines Starters.md",
+                "file": "Setup/REVENUECAT_DASHBOARD_SETUP.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Headlines Starters"
+              "title": "REVENUECAT_DASHBOARD_SETUP"
             }
           }
         ],
@@ -299,8 +299,14 @@
   },
   "active": "ba7b3f4b8ed33a59",
   "lastOpenFiles": [
+    "Marketing/upgrade_modal_copy.md",
+    "Setup/REVENUECAT_DASHBOARD_SETUP.md",
+    "Setup/REVENUECAT_DASHBOARD_SETUP.md.tmp.8988.1760996022026",
+    "Setup",
+    "Marketing/Upgrade Plan Copy.md",
+    "Marketing/subscription_tiers_table.md",
+    "Marketing/Headlines Starters.md",
     "App Structure/Updated Reading Structures.md",
-    "Headlines Starters.md",
     "Prompts/Updated Daily Reading.md",
     "Marketing/APP_FEATURES_MARKETING.md",
     "App Structure",
@@ -310,13 +316,10 @@
     "Prompts/natal_interpretation_prompt.md",
     "APP_FEATURES_MARKETING.md.tmp.8988.1760971310769",
     "App Structure/DAILY_READING_DATA_STRUCTURE.md",
-    "Marketing/subscription_tiers_table.md",
     "Marketing/SUBSCRIPTION_TIERS_AND_LIMITS.md",
     "SUBSCRIPTION_TIERS_AND_LIMITS.md.tmp.22808.1760716999028",
     "SUBSCRIPTION_TIERS_AND_LIMITS.md.tmp.22808.1760716986785",
     "SUBSCRIPTION_TIERS_AND_LIMITS.md.tmp.22808.1760716957870",
-    "SUBSCRIPTION_TIERS_AND_LIMITS.md.tmp.22808.1760716956429",
-    "SUBSCRIPTION_TIERS_AND_LIMITS.md.tmp.22808.1760716954918",
     "Implementations/TAROT_UI_FIXES_FINAL.md",
     "Implementations/TAROT_UI_FIXES_CORRECTED.md",
     "Dev Progress/TAROT_UI_FIXES_COMPLETE.md",
@@ -331,9 +334,6 @@
     "Prompts/daily_horoscope_prompt_template.md",
     "Implementations/iching-json-migration-plan.md",
     "Dev Progress/DIAGNOSIS_chiron_return_hallucination.md",
-    "Prompts/dream_interpretation_prompt.md",
-    "Prompts/iching Prompt.md",
-    "Prompts/tarot_interpretation_prompt.md",
-    "Prompts/iching-interpretation-prompt.md"
+    "Prompts/dream_interpretation_prompt.md"
   ]
 }

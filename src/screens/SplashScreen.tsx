@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
 import { NavigationProps } from '../types';
-import { colors, spacing, typography } from '../styles';
+import { LoadingScreen } from '../components';
 
 export const SplashScreen: React.FC<NavigationProps> = ({ navigation }) => {
   useEffect(() => {
@@ -13,38 +12,5 @@ export const SplashScreen: React.FC<NavigationProps> = ({ navigation }) => {
     return () => clearTimeout(timer);
   }, [navigation]);
 
-  return (
-    <View style={styles.container}>
-      <View style={styles.loaderContainer}>
-        <View style={styles.circle} />
-        <Text style={styles.text}>Checking stars...</Text>
-      </View>
-    </View>
-  );
+  return <LoadingScreen context="general" />;
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  loaderContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  circle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    borderWidth: 3,
-    borderColor: colors.text.primary,
-    borderTopColor: 'transparent',
-    marginBottom: spacing.xl,
-  },
-  text: {
-    ...typography.h2,
-    textAlign: 'center',
-  },
-});

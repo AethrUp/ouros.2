@@ -5,6 +5,7 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Animated,
 } from 'react-native';
 import { NavigationProps } from '../types';
 import { HeaderBar, Button, TransitEffectivenessGraph, TransitStrengthBar, CosmicWeatherChart, ZodiacIcon, LoadingScreen, TarotIcon, IChingIcon, DreamIcon, LockedFeatureCard, Badge } from '../components';
@@ -35,6 +36,17 @@ export const HomeScreen: React.FC<NavigationProps> = ({ navigation }) => {
   const isMountedRef = useRef(true);
   const { tier, isFree, isPremium, isPro } = useSubscriptionTier();
   const [showPaywall, setShowPaywall] = useState(false);
+
+  // Animation values for sequential card fade-in
+  const fadeAnims = useRef([
+    new Animated.Value(0), // horoscopeCard
+    new Animated.Value(0), // transitSection
+    new Animated.Value(0), // cosmicWeatherSection
+    new Animated.Value(0), // categoriesSection
+    new Animated.Value(0), // journalPromptsSection
+    new Animated.Value(0), // synastrySection
+    new Animated.Value(0), // quickActions
+  ]).current;
 
   const {
     profile,
@@ -76,6 +88,27 @@ export const HomeScreen: React.FC<NavigationProps> = ({ navigation }) => {
   useEffect(() => {
     loadHoroscope();
   }, []);
+
+  // Trigger sequential fade-in animations when content is loaded
+  useEffect(() => {
+    if (!isLoadingDailyReading && dailyHoroscope) {
+      // Reset all animations
+      fadeAnims.forEach(anim => anim.setValue(0));
+
+      // Create staggered animations
+      const animations = fadeAnims.map((anim, index) =>
+        Animated.timing(anim, {
+          toValue: 1,
+          duration: 400,
+          delay: index * 100, // 100ms delay between each card
+          useNativeDriver: true,
+        })
+      );
+
+      // Start all animations in parallel (they're already staggered by delay)
+      Animated.parallel(animations).start();
+    }
+  }, [isLoadingDailyReading, dailyHoroscope]);
 
   const loadHoroscope = async (forceRegenerate = false) => {
     if (!natalChart || !profile || !birthData) {
@@ -329,19 +362,25 @@ export const HomeScreen: React.FC<NavigationProps> = ({ navigation }) => {
 
     if (isFree) {
       return (
-        <LockedFeatureCard
-          featureName="Synastry Readings"
-          featureDescription="Explore compatibility and relationship dynamics with friends and loved ones"
-          requiredTier="premium"
-          onUpgrade={() => setShowPaywall(true)}
-          style={{ marginHorizontal: spacing.lg, marginBottom: spacing.lg }}
-        >
-          {synastryContent}
-        </LockedFeatureCard>
+        <Animated.View style={{ opacity: fadeAnims[5] }}>
+          <LockedFeatureCard
+            featureName="Synastry Readings"
+            featureDescription="Explore compatibility and relationship dynamics with friends and loved ones"
+            requiredTier="premium"
+            onUpgrade={() => setShowPaywall(true)}
+            style={{ marginHorizontal: spacing.lg, marginBottom: spacing.lg }}
+          >
+            {synastryContent}
+          </LockedFeatureCard>
+        </Animated.View>
       );
     }
 
-    return synastryContent;
+    return (
+      <Animated.View style={{ opacity: fadeAnims[5] }}>
+        {synastryContent}
+      </Animated.View>
+    );
   };
 
   // Render category previews
@@ -383,19 +422,25 @@ export const HomeScreen: React.FC<NavigationProps> = ({ navigation }) => {
 
     if (isFree) {
       return (
-        <LockedFeatureCard
-          featureName="Category Insights"
-          featureDescription="Get personalized guidance for your selected life areas"
-          requiredTier="premium"
-          onUpgrade={() => setShowPaywall(true)}
-          style={{ marginHorizontal: spacing.lg, marginBottom: spacing.lg }}
-        >
-          {categoryContent}
-        </LockedFeatureCard>
+        <Animated.View style={{ opacity: fadeAnims[3] }}>
+          <LockedFeatureCard
+            featureName="Category Insights"
+            featureDescription="Get personalized guidance for your selected life areas"
+            requiredTier="premium"
+            onUpgrade={() => setShowPaywall(true)}
+            style={{ marginHorizontal: spacing.lg, marginBottom: spacing.lg }}
+          >
+            {categoryContent}
+          </LockedFeatureCard>
+        </Animated.View>
       );
     }
 
-    return categoryContent;
+    return (
+      <Animated.View style={{ opacity: fadeAnims[3] }}>
+        {categoryContent}
+      </Animated.View>
+    );
   };
 
   // Render journal prompts
@@ -425,19 +470,25 @@ export const HomeScreen: React.FC<NavigationProps> = ({ navigation }) => {
 
     if (isFree) {
       return (
-        <LockedFeatureCard
-          featureName="Journal Prompts"
-          featureDescription="Deepen your self-reflection with personalized daily journal prompts"
-          requiredTier="premium"
-          onUpgrade={() => setShowPaywall(true)}
-          style={{ marginHorizontal: spacing.lg, marginBottom: spacing.lg }}
-        >
-          {promptsContent}
-        </LockedFeatureCard>
+        <Animated.View style={{ opacity: fadeAnims[4] }}>
+          <LockedFeatureCard
+            featureName="Journal Prompts"
+            featureDescription="Deepen your self-reflection with personalized daily journal prompts"
+            requiredTier="premium"
+            onUpgrade={() => setShowPaywall(true)}
+            style={{ marginHorizontal: spacing.lg, marginBottom: spacing.lg }}
+          >
+            {promptsContent}
+          </LockedFeatureCard>
+        </Animated.View>
       );
     }
 
-    return promptsContent;
+    return (
+      <Animated.View style={{ opacity: fadeAnims[4] }}>
+        {promptsContent}
+      </Animated.View>
+    );
   };
 
   const content = (
@@ -470,7 +521,7 @@ export const HomeScreen: React.FC<NavigationProps> = ({ navigation }) => {
         {!isLoadingDailyReading && !dailyReadingError && dailyHoroscope && (
           <>
             {/* Main Horoscope Card */}
-            <View style={styles.horoscopeCard}>
+            <Animated.View style={[styles.horoscopeCard, { opacity: fadeAnims[0] }]}>
               {/* Transit Strength Bar */}
               {dailyHoroscope.fullContent?.astronomicalData?.transits?.aspects && (
                 <TransitStrengthBar
@@ -492,18 +543,31 @@ export const HomeScreen: React.FC<NavigationProps> = ({ navigation }) => {
                   size="small"
                 />
               </View>
-            </View>
+            </Animated.View>
 
             {/* Transit Effectiveness Graph */}
             {dailyHoroscope.fullContent?.transitAnalysis && (
-              isFree ? (
-                <LockedFeatureCard
-                  featureName="Today's Transits"
-                  featureDescription="See how planetary movements affect your chart with detailed transit analysis"
-                  requiredTier="premium"
-                  onUpgrade={() => setShowPaywall(true)}
-                  style={{ marginHorizontal: spacing.lg, marginBottom: spacing.lg }}
-                >
+              <Animated.View style={{ opacity: fadeAnims[1] }}>
+                {isFree ? (
+                  <LockedFeatureCard
+                    featureName="Today's Transits"
+                    featureDescription="See how planetary movements affect your chart with detailed transit analysis"
+                    requiredTier="premium"
+                    onUpgrade={() => setShowPaywall(true)}
+                    style={{ marginHorizontal: spacing.lg, marginBottom: spacing.lg }}
+                  >
+                    <View style={styles.transitSection}>
+                      <Text style={styles.cardSectionTitle}>TODAY'S TRANSITS</Text>
+                      <TransitEffectivenessGraph
+                        transits={[
+                          dailyHoroscope.fullContent.transitAnalysis.primary,
+                          ...(dailyHoroscope.fullContent.transitAnalysis.secondary || []),
+                        ]}
+                        maxTransits={3}
+                      />
+                    </View>
+                  </LockedFeatureCard>
+                ) : (
                   <View style={styles.transitSection}>
                     <Text style={styles.cardSectionTitle}>TODAY'S TRANSITS</Text>
                     <TransitEffectivenessGraph
@@ -514,42 +578,33 @@ export const HomeScreen: React.FC<NavigationProps> = ({ navigation }) => {
                       maxTransits={3}
                     />
                   </View>
-                </LockedFeatureCard>
-              ) : (
-                <View style={styles.transitSection}>
-                  <Text style={styles.cardSectionTitle}>TODAY'S TRANSITS</Text>
-                  <TransitEffectivenessGraph
-                    transits={[
-                      dailyHoroscope.fullContent.transitAnalysis.primary,
-                      ...(dailyHoroscope.fullContent.transitAnalysis.secondary || []),
-                    ]}
-                    maxTransits={3}
-                  />
-                </View>
-              )
+                )}
+              </Animated.View>
             )}
 
             {/* Cosmic Weather Chart */}
             {dailyHoroscope.preview?.weather && (
-              isFree ? (
-                <LockedFeatureCard
-                  featureName="Cosmic Weather"
-                  featureDescription="Track the overall astrological climate and its influence on your daily life"
-                  requiredTier="premium"
-                  onUpgrade={() => setShowPaywall(true)}
-                  style={{ marginHorizontal: spacing.lg, marginBottom: spacing.lg }}
-                >
+              <Animated.View style={{ opacity: fadeAnims[2] }}>
+                {isFree ? (
+                  <LockedFeatureCard
+                    featureName="Cosmic Weather"
+                    featureDescription="Track the overall astrological climate and its influence on your daily life"
+                    requiredTier="premium"
+                    onUpgrade={() => setShowPaywall(true)}
+                    style={{ marginHorizontal: spacing.lg, marginBottom: spacing.lg }}
+                  >
+                    <View style={styles.cosmicWeatherSection}>
+                      <Text style={styles.cardSectionTitle}>COSMIC WEATHER</Text>
+                      <CosmicWeatherChart weather={dailyHoroscope.preview.weather} />
+                    </View>
+                  </LockedFeatureCard>
+                ) : (
                   <View style={styles.cosmicWeatherSection}>
                     <Text style={styles.cardSectionTitle}>COSMIC WEATHER</Text>
                     <CosmicWeatherChart weather={dailyHoroscope.preview.weather} />
                   </View>
-                </LockedFeatureCard>
-              ) : (
-                <View style={styles.cosmicWeatherSection}>
-                  <Text style={styles.cardSectionTitle}>COSMIC WEATHER</Text>
-                  <CosmicWeatherChart weather={dailyHoroscope.preview.weather} />
-                </View>
-              )
+                )}
+              </Animated.View>
             )}
 
             {/* Category Previews */}
@@ -564,10 +619,10 @@ export const HomeScreen: React.FC<NavigationProps> = ({ navigation }) => {
         {renderRecentSynastry()}
 
         {/* Quick Actions */}
-        <View style={styles.quickActions}>
+        <Animated.View style={[styles.quickActions, { opacity: fadeAnims[6] }]}>
           <TouchableOpacity
             style={styles.actionCard}
-            onPress={() => navigation.navigate('journal', { screen: 'chart' })}
+            onPress={() => navigation.navigate('chart')}
           >
             <Text style={styles.actionTitle}>Natal Chart</Text>
             <Text style={styles.actionSubtitle}>View your birth chart</Text>
@@ -611,7 +666,7 @@ export const HomeScreen: React.FC<NavigationProps> = ({ navigation }) => {
               {isFree && <Badge variant="locked" />}
             </TouchableOpacity>
           </View>
-        </View>
+        </Animated.View>
 
         <View style={styles.bottomSpacer} />
       </ScrollView>

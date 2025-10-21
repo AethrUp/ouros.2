@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, Alert, TouchableOpacity, ScrollView } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NavigationProps } from '../types';
 import { HeaderBar } from '../components';
+import { UpgradePrompt } from '../components/UpgradePrompt';
+import { PaywallModal } from '../components/PaywallModal';
 import { colors, spacing, typography } from '../styles';
 import { useAppStore } from '../store';
 import { SubscriptionTier } from '../types/subscription';
@@ -13,6 +15,9 @@ export default function DevMenuScreen({ navigation }: NavigationProps) {
     updateSubscriptionTier,
     resetUsage,
   } = useAppStore();
+
+  const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
+  const [showPaywall, setShowPaywall] = useState(false);
 
   const handleSetTier = async (tier: SubscriptionTier) => {
     try {
@@ -138,6 +143,30 @@ export default function DevMenuScreen({ navigation }: NavigationProps) {
           </TouchableOpacity>
         </View>
 
+        {/* Test Upgrade Modals */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Test Upgrade UI</Text>
+          <Text style={styles.description}>
+            Test the upgrade prompt and paywall modals
+          </Text>
+
+          <View style={styles.buttonGroup}>
+            <TouchableOpacity
+              style={[styles.tierButton, { flex: 1 }]}
+              onPress={() => setShowUpgradePrompt(true)}
+            >
+              <Text style={styles.tierButtonText}>Upgrade Prompt</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.tierButton, { flex: 1, backgroundColor: colors.primary }]}
+              onPress={() => setShowPaywall(true)}
+            >
+              <Text style={styles.tierButtonText}>Paywall</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
         {/* Warning */}
         <View style={styles.warningContainer}>
           <Text style={styles.warningText}>
@@ -146,6 +175,26 @@ export default function DevMenuScreen({ navigation }: NavigationProps) {
           </Text>
         </View>
       </ScrollView>
+
+      {/* Upgrade Prompt Modal */}
+      <UpgradePrompt
+        visible={showUpgradePrompt}
+        onClose={() => setShowUpgradePrompt(false)}
+        onUpgrade={() => {
+          setShowUpgradePrompt(false);
+          setShowPaywall(true);
+        }}
+        feature="tarot"
+        currentTier={subscriptionState?.tier || 'free'}
+        currentUsage={0}
+      />
+
+      {/* Paywall Modal */}
+      <PaywallModal
+        visible={showPaywall}
+        onClose={() => setShowPaywall(false)}
+        onSuccess={() => setShowPaywall(false)}
+      />
     </View>
   );
 }

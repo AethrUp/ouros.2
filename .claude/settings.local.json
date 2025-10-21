@@ -37,7 +37,11 @@
       "Bash(del test-transits.ts)",
       "Bash(del test-transits.js)",
       "Read(//c/Users/joe/Dropbox/Design/aether/Apps/SkyChart/Build/**)",
-      "Read(//c/Users/joe/Downloads/**)"
+      "Read(//c/Users/joe/Downloads/**)",
+      "Bash(find src -type f ( -name \"*.tsx\" -o -name \"*.ts\" ) -exec grep -l \"upgrade.*premium\\|premium.*upgrade\\|SubscriptionModal\\|PremiumModal\" {} ;)",
+      "Bash(npm uninstall @react-native-community/datetimepicker)",
+      "Bash(npm uninstall react-native-date-picker)",
+      "WebFetch(domain:docs.expo.dev)"
     ],
     "deny": [],
     "ask": []

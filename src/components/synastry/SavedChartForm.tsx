@@ -8,8 +8,8 @@ import {
   TouchableOpacity,
   ScrollView,
   Alert,
-  Platform,
   KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -35,12 +35,9 @@ export const SavedChartForm: React.FC<SavedChartFormProps> = ({ visible, onClose
   const [timeUnknown, setTimeUnknown] = useState(false);
   const [location, setLocation] = useState<LocationData | null>(null);
 
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [showTimePicker, setShowTimePicker] = useState(false);
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
+  const [timePickerOpen, setTimePickerOpen] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
-
-  // Ref to prevent auto-focus on relationship field
-  const relationshipInputRef = React.useRef<TextInput>(null);
 
   const resetForm = () => {
     setName('');
@@ -110,6 +107,19 @@ export const SavedChartForm: React.FC<SavedChartFormProps> = ({ visible, onClose
     onClose();
   };
 
+  const formatDate = (date: Date) => {
+    const today = new Date();
+    const isToday = date.getFullYear() === today.getFullYear() &&
+                    date.getMonth() === today.getMonth() &&
+                    date.getDate() === today.getDate();
+
+    return isToday ? 'Birth Date' : date.toLocaleDateString();
+  };
+
+  const formatTime = (time: Date) => {
+    return time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
   return (
     <Modal visible={visible} animationType="slide" transparent={true} onRequestClose={handleClose}>
       <KeyboardAvoidingView
@@ -141,7 +151,6 @@ export const SavedChartForm: React.FC<SavedChartFormProps> = ({ visible, onClose
             />
 
             <TextInput
-              ref={relationshipInputRef}
               style={styles.input}
               placeholder="Relationship (Optional)"
               placeholderTextColor={colors.text.secondary}
@@ -152,86 +161,24 @@ export const SavedChartForm: React.FC<SavedChartFormProps> = ({ visible, onClose
 
             <TouchableOpacity
               style={styles.input}
-              onPress={() => !isGenerating && setShowDatePicker(true)}
+              onPress={() => !isGenerating && setDatePickerOpen(true)}
               disabled={isGenerating}
               activeOpacity={0.7}
             >
-              <Text style={birthDate.getFullYear() === new Date().getFullYear() && birthDate.getMonth() === new Date().getMonth() && birthDate.getDate() === new Date().getDate() ? styles.placeholder : styles.inputText}>
-                {birthDate.getFullYear() === new Date().getFullYear() && birthDate.getMonth() === new Date().getMonth() && birthDate.getDate() === new Date().getDate() ? 'Birth Date' : birthDate.toLocaleDateString()}
+              <Text style={formatDate(birthDate) === 'Birth Date' ? styles.placeholder : styles.inputText}>
+                {formatDate(birthDate)}
               </Text>
             </TouchableOpacity>
-
-            {showDatePicker && Platform.OS === 'ios' && (
-              <Modal
-                visible={true}
-                transparent={true}
-                animationType="fade"
-                onRequestClose={() => setShowDatePicker(false)}
-              >
-                <TouchableOpacity
-                  style={styles.pickerOverlay}
-                  activeOpacity={1}
-                  onPress={() => {
-                    setShowDatePicker(false);
-                    relationshipInputRef.current?.blur();
-                  }}
-                >
-                  <TouchableOpacity activeOpacity={1}>
-                    <View style={styles.pickerContainer}>
-                      <View style={styles.pickerHeader}>
-                        <TouchableOpacity onPress={() => {
-                          setShowDatePicker(false);
-                          relationshipInputRef.current?.blur();
-                        }}>
-                          <Text style={styles.pickerCancelText}>Cancel</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity onPress={() => {
-                          setShowDatePicker(false);
-                          relationshipInputRef.current?.blur();
-                        }}>
-                          <Text style={styles.pickerDoneText}>Done</Text>
-                        </TouchableOpacity>
-                      </View>
-                      <DateTimePicker
-                        value={birthDate}
-                        mode="date"
-                        display="spinner"
-                        onChange={(event, selectedDate) => {
-                          if (selectedDate) setBirthDate(selectedDate);
-                        }}
-                        maximumDate={new Date()}
-                        style={styles.picker}
-                      />
-                    </View>
-                  </TouchableOpacity>
-                </TouchableOpacity>
-              </Modal>
-            )}
-
-            {showDatePicker && Platform.OS === 'android' && (
-              <DateTimePicker
-                value={birthDate}
-                mode="date"
-                display="default"
-                onChange={(event, selectedDate) => {
-                  setShowDatePicker(false);
-                  if (selectedDate) setBirthDate(selectedDate);
-                  // Blur the relationship input to prevent auto-focus
-                  setTimeout(() => relationshipInputRef.current?.blur(), 100);
-                }}
-                maximumDate={new Date()}
-              />
-            )}
 
             <View style={styles.timeRow}>
               <TouchableOpacity
                 style={[styles.input, styles.timeInput, timeUnknown && styles.inputDisabled]}
-                onPress={() => !timeUnknown && !isGenerating && setShowTimePicker(true)}
+                onPress={() => !timeUnknown && !isGenerating && setTimePickerOpen(true)}
                 disabled={timeUnknown || isGenerating}
                 activeOpacity={0.7}
               >
                 <Text style={timeUnknown ? styles.placeholder : styles.inputText}>
-                  {timeUnknown ? 'Birth Time' : birthTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  {timeUnknown ? 'Birth Time' : formatTime(birthTime)}
                 </Text>
               </TouchableOpacity>
 
@@ -249,66 +196,6 @@ export const SavedChartForm: React.FC<SavedChartFormProps> = ({ visible, onClose
               </TouchableOpacity>
             </View>
 
-            {showTimePicker && Platform.OS === 'ios' && (
-              <Modal
-                visible={true}
-                transparent={true}
-                animationType="fade"
-                onRequestClose={() => setShowTimePicker(false)}
-              >
-                <TouchableOpacity
-                  style={styles.pickerOverlay}
-                  activeOpacity={1}
-                  onPress={() => {
-                    setShowTimePicker(false);
-                    relationshipInputRef.current?.blur();
-                  }}
-                >
-                  <TouchableOpacity activeOpacity={1}>
-                    <View style={styles.pickerContainer}>
-                      <View style={styles.pickerHeader}>
-                        <TouchableOpacity onPress={() => {
-                          setShowTimePicker(false);
-                          relationshipInputRef.current?.blur();
-                        }}>
-                          <Text style={styles.pickerCancelText}>Cancel</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity onPress={() => {
-                          setShowTimePicker(false);
-                          relationshipInputRef.current?.blur();
-                        }}>
-                          <Text style={styles.pickerDoneText}>Done</Text>
-                        </TouchableOpacity>
-                      </View>
-                      <DateTimePicker
-                        value={birthTime}
-                        mode="time"
-                        display="spinner"
-                        onChange={(event, selectedTime) => {
-                          if (selectedTime) setBirthTime(selectedTime);
-                        }}
-                        style={styles.picker}
-                      />
-                    </View>
-                  </TouchableOpacity>
-                </TouchableOpacity>
-              </Modal>
-            )}
-
-            {showTimePicker && Platform.OS === 'android' && (
-              <DateTimePicker
-                value={birthTime}
-                mode="time"
-                display="default"
-                onChange={(event, selectedTime) => {
-                  setShowTimePicker(false);
-                  if (selectedTime) setBirthTime(selectedTime);
-                  // Blur the relationship input to prevent auto-focus
-                  setTimeout(() => relationshipInputRef.current?.blur(), 100);
-                }}
-              />
-            )}
-
             <View style={styles.locationContainer}>
               <LocationPicker
                 onLocationSelect={setLocation}
@@ -316,6 +203,104 @@ export const SavedChartForm: React.FC<SavedChartFormProps> = ({ visible, onClose
               />
             </View>
           </ScrollView>
+
+          {datePickerOpen && (
+            Platform.OS === 'ios' ? (
+              <Modal
+                transparent
+                animationType="slide"
+                visible={datePickerOpen}
+                onRequestClose={() => setDatePickerOpen(false)}
+              >
+                <View style={styles.dateModalOverlay}>
+                  <View style={styles.dateModalContent}>
+                    <View style={styles.dateModalHeader}>
+                      <Text style={styles.dateModalTitle}>Select Date</Text>
+                      <TouchableOpacity onPress={() => setDatePickerOpen(false)}>
+                        <Text style={styles.dateModalButton}>Done</Text>
+                      </TouchableOpacity>
+                    </View>
+                    <DateTimePicker
+                      value={birthDate}
+                      mode="date"
+                      display="spinner"
+                      maximumDate={new Date()}
+                      onChange={(event, selectedDate) => {
+                        if (selectedDate) {
+                          setBirthDate(selectedDate);
+                        }
+                        if (Platform.OS === 'ios') {
+                          setDatePickerOpen(false);
+                        }
+                      }}
+                      textColor={colors.text.primary}
+                    />
+                  </View>
+                </View>
+              </Modal>
+            ) : (
+              <DateTimePicker
+                value={birthDate}
+                mode="date"
+                display="default"
+                maximumDate={new Date()}
+                onChange={(event, selectedDate) => {
+                  setDatePickerOpen(false);
+                  if (selectedDate) {
+                    setBirthDate(selectedDate);
+                  }
+                }}
+              />
+            )
+          )}
+
+          {timePickerOpen && (
+            Platform.OS === 'ios' ? (
+              <Modal
+                transparent
+                animationType="slide"
+                visible={timePickerOpen}
+                onRequestClose={() => setTimePickerOpen(false)}
+              >
+                <View style={styles.dateModalOverlay}>
+                  <View style={styles.dateModalContent}>
+                    <View style={styles.dateModalHeader}>
+                      <Text style={styles.dateModalTitle}>Select Time</Text>
+                      <TouchableOpacity onPress={() => setTimePickerOpen(false)}>
+                        <Text style={styles.dateModalButton}>Done</Text>
+                      </TouchableOpacity>
+                    </View>
+                    <DateTimePicker
+                      value={birthTime}
+                      mode="time"
+                      display="spinner"
+                      onChange={(event, selectedTime) => {
+                        if (selectedTime) {
+                          setBirthTime(selectedTime);
+                        }
+                        if (Platform.OS === 'ios') {
+                          setTimePickerOpen(false);
+                        }
+                      }}
+                      textColor={colors.text.primary}
+                    />
+                  </View>
+                </View>
+              </Modal>
+            ) : (
+              <DateTimePicker
+                value={birthTime}
+                mode="time"
+                display="default"
+                onChange={(event, selectedTime) => {
+                  setTimePickerOpen(false);
+                  if (selectedTime) {
+                    setBirthTime(selectedTime);
+                  }
+                }}
+              />
+            )
+          )}
 
           {/* Footer */}
           <View style={styles.footer}>
@@ -410,17 +395,23 @@ const styles = StyleSheet.create({
   locationContainer: {
     marginTop: spacing.sm,
   },
-  pickerOverlay: {
+  footer: {
+    padding: spacing.lg,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  dateModalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'flex-end',
   },
-  pickerContainer: {
-    backgroundColor: colors.background.primary,
+  dateModalContent: {
+    backgroundColor: colors.background.secondary,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
+    paddingBottom: spacing.xl,
   },
-  pickerHeader: {
+  dateModalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -429,24 +420,12 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
-  pickerCancelText: {
-    ...typography.body,
-    color: colors.text.secondary,
-    fontSize: 16,
+  dateModalTitle: {
+    ...typography.h3,
+    color: colors.text.primary,
   },
-  pickerDoneText: {
-    ...typography.body,
+  dateModalButton: {
+    ...typography.h4,
     color: colors.primary,
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  picker: {
-    width: '100%',
-    height: 200,
-  },
-  footer: {
-    padding: spacing.lg,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
   },
 });

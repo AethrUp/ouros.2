@@ -27,8 +27,15 @@ const getHouseSuffix = (house: number): string => {
 };
 
 export const NatalChartScreen: React.FC<NavigationProps> = ({ navigation }) => {
-  const { natalChart, birthData, setNatalChart, selectPlanet, selectHouse } = useAppStore();
-  const [isGenerating, setIsGenerating] = useState(false);
+  const {
+    natalChart,
+    birthData,
+    isCalculating,
+    setNatalChart,
+    setCalculating,
+    selectPlanet,
+    selectHouse,
+  } = useAppStore();
   const [currentTabIndex, setCurrentTabIndex] = useState(1); // Default to TABLE tab
   const tabScrollRef = useRef<ScrollView>(null);
 
@@ -38,7 +45,7 @@ export const NatalChartScreen: React.FC<NavigationProps> = ({ navigation }) => {
       return;
     }
 
-    setIsGenerating(true);
+    setCalculating(true);
     try {
       const result = await handleChartGeneration(birthData, {
         houseSystem: 'placidus',
@@ -59,7 +66,7 @@ export const NatalChartScreen: React.FC<NavigationProps> = ({ navigation }) => {
     } catch (error: any) {
       Alert.alert('Error', error.message || 'Failed to generate chart');
     } finally {
-      setIsGenerating(false);
+      setCalculating(false);
     }
   };
 
@@ -305,12 +312,12 @@ export const NatalChartScreen: React.FC<NavigationProps> = ({ navigation }) => {
           {
             icon: 'refresh',
             onPress: handleGenerateChart,
-            disabled: isGenerating,
+            disabled: isCalculating,
           },
         ]}
       />
 
-      {isGenerating ? (
+      {isCalculating ? (
         <LoadingScreen context="natal-chart" />
       ) : !natalChart ? (
         <View style={styles.noDataContainer}>

@@ -9,10 +9,11 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
+import { Button } from './Button';
 import { useSubscription } from '../hooks/useFeatureAccess';
 import { SubscriptionPackage } from '../types/subscription';
 import { getTierBenefits } from '../utils/featureGates';
-import { colors, typography, spacing } from '../styles/theme';
+import { theme } from '../styles/theme';
 
 interface PaywallModalProps {
   visible: boolean;
@@ -147,29 +148,24 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({
 
         {/* Bottom Actions */}
         <View style={styles.bottomActions}>
-          <TouchableOpacity
-            style={[styles.purchaseButton, (!selectedPackage || isPurchasing || isLoading) && styles.purchaseButtonDisabled]}
+          <Button
+            title={selectedPackage ? 'Continue' : 'Select a Plan'}
             onPress={handlePurchase}
+            variant="primary"
+            size="medium"
+            fullWidth
             disabled={!selectedPackage || isPurchasing || isLoading}
-          >
-            {isPurchasing ? (
-              <ActivityIndicator color="#FFFFFF" />
-            ) : (
-              <Text style={styles.purchaseButtonText}>
-                {selectedPackage ? 'Continue' : 'Select a Plan'}
-              </Text>
-            )}
-          </TouchableOpacity>
+            loading={isPurchasing}
+          />
 
-          <TouchableOpacity
+          <Button
+            title={isLoading ? 'Restoring...' : 'Restore Purchases'}
             onPress={handleRestore}
-            style={styles.restoreButton}
+            variant="text"
+            size="medium"
+            fullWidth
             disabled={isPurchasing || isLoading}
-          >
-            <Text style={styles.restoreButtonText}>
-              {isLoading ? 'Restoring...' : 'Restore Purchases'}
-            </Text>
-          </TouchableOpacity>
+          />
         </View>
       </View>
     </Modal>
@@ -274,206 +270,211 @@ const FeatureItem: React.FC<FeatureItemProps> = ({ text }) => (
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: theme.colors.background.primary,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: spacing.lg,
+    padding: theme.spacing.lg,
     paddingTop: 60,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: theme.colors.border,
   },
   title: {
-    ...typography.h1,
-    color: colors.text,
+    fontSize: 30,
+    fontWeight: '400',
+    color: '#F6D99F',
+    fontFamily: 'PTSerif_400Regular',
   },
   closeButton: {
-    padding: spacing.sm,
+    padding: theme.spacing.sm,
   },
   closeButtonText: {
-    ...typography.h2,
-    color: colors.textSecondary,
+    fontSize: 20,
+    fontWeight: '400',
+    color: 'rgba(255, 255, 255, 0.5)',
+    fontFamily: 'PTSerif_400Regular',
   },
   content: {
     flex: 1,
-    padding: spacing.lg,
+    padding: theme.spacing.lg,
   },
   tierSection: {
-    marginBottom: spacing.xl,
+    marginBottom: theme.spacing.xl,
   },
   tierHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: spacing.sm,
+    marginBottom: theme.spacing.sm,
   },
   tierTitle: {
-    ...typography.h2,
-    color: colors.text,
+    fontSize: 20,
+    fontWeight: '400',
+    color: '#F6D99F',
+    fontFamily: 'PTSerif_400Regular',
   },
   tierTitlePro: {
-    color: colors.primary,
+    color: '#F6D99F',
   },
   popularBadge: {
-    backgroundColor: colors.primary,
-    paddingHorizontal: spacing.sm,
+    backgroundColor: theme.colors.primary,
+    paddingHorizontal: theme.spacing.sm,
     paddingVertical: 4,
     borderRadius: 4,
-    marginLeft: spacing.sm,
+    marginLeft: theme.spacing.sm,
   },
   popularBadgeText: {
-    ...typography.caption,
-    color: '#FFFFFF',
-    fontWeight: '700',
     fontSize: 10,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    fontFamily: 'Inter',
   },
   tierDescription: {
-    ...typography.body,
-    color: colors.textSecondary,
-    marginBottom: spacing.lg,
+    fontSize: theme.fontSize.md,
+    fontWeight: '400',
+    color: 'rgba(255, 255, 255, 0.5)',
+    marginBottom: theme.spacing.lg,
+    fontFamily: 'Inter',
   },
   packagesContainer: {
     flexDirection: 'row',
-    gap: spacing.md,
-    marginBottom: spacing.lg,
+    gap: theme.spacing.md,
+    marginBottom: theme.spacing.lg,
   },
   packageCard: {
     flex: 1,
-    padding: spacing.lg,
+    padding: theme.spacing.lg,
     borderRadius: 12,
-    backgroundColor: colors.surface,
+    backgroundColor: theme.colors.background.card,
     borderWidth: 2,
-    borderColor: colors.border,
+    borderColor: theme.colors.border,
   },
   packageCardSelected: {
-    borderColor: colors.primary,
-    backgroundColor: colors.primary + '10',
+    borderColor: theme.colors.primary,
+    backgroundColor: theme.colors.primary + '10',
   },
   packageHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.sm,
+    marginBottom: theme.spacing.sm,
   },
   packagePeriod: {
-    ...typography.body,
-    color: colors.text,
+    fontSize: theme.fontSize.md,
     fontWeight: '600',
+    color: theme.colors.text.primary,
+    fontFamily: 'Inter',
   },
   packagePeriodSelected: {
-    color: colors.primary,
+    color: theme.colors.primary,
   },
   savingsBadge: {
-    backgroundColor: colors.success,
-    paddingHorizontal: spacing.sm,
+    backgroundColor: theme.colors.primary,
+    paddingHorizontal: theme.spacing.sm,
     paddingVertical: 2,
     borderRadius: 4,
   },
   savingsText: {
-    ...typography.caption,
-    color: '#FFFFFF',
-    fontWeight: '700',
     fontSize: 10,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    fontFamily: 'Inter',
   },
   packagePrice: {
-    ...typography.h2,
-    color: colors.text,
+    fontSize: 20,
+    fontWeight: '400',
+    color: '#F6D99F',
     marginBottom: 4,
+    fontFamily: 'PTSerif_400Regular',
   },
   packagePriceSelected: {
-    color: colors.primary,
+    color: '#F6D99F',
   },
   packagePricePerMonth: {
-    ...typography.caption,
-    color: colors.textSecondary,
+    fontSize: theme.fontSize.sm,
+    fontWeight: '400',
+    color: 'rgba(255, 255, 255, 0.5)',
+    fontFamily: 'Inter',
   },
   packagePricePerMonthSelected: {
-    color: colors.primary,
+    color: 'rgba(255, 255, 255, 0.5)',
   },
   benefitsList: {
-    gap: spacing.sm,
+    gap: theme.spacing.sm,
   },
   benefitItem: {
     flexDirection: 'row',
   },
   benefitBullet: {
-    ...typography.body,
-    color: colors.success,
-    marginRight: spacing.sm,
+    fontSize: theme.fontSize.md,
     fontWeight: '700',
+    color: theme.colors.primary,
+    marginRight: theme.spacing.sm,
+    fontFamily: 'Inter',
   },
   benefitText: {
-    ...typography.body,
-    color: colors.text,
+    fontSize: theme.fontSize.md,
+    fontWeight: '400',
+    color: theme.colors.text.primary,
     flex: 1,
+    fontFamily: 'Inter',
   },
   moreBenefits: {
-    ...typography.caption,
-    color: colors.primary,
-    marginTop: spacing.sm,
+    fontSize: theme.fontSize.sm,
+    fontWeight: '400',
+    color: theme.colors.primary,
+    marginTop: theme.spacing.sm,
     fontStyle: 'italic',
+    fontFamily: 'Inter',
   },
   featuresSection: {
-    marginTop: spacing.xl,
-    marginBottom: spacing.lg,
+    marginTop: theme.spacing.xl,
+    marginBottom: theme.spacing.lg,
   },
   featuresTitle: {
-    ...typography.h3,
-    color: colors.text,
-    marginBottom: spacing.md,
+    fontSize: theme.fontSize.md,
+    fontWeight: '400',
+    color: theme.colors.text.primary,
+    marginBottom: theme.spacing.md,
+    textTransform: 'uppercase',
+    letterSpacing: 1.26,
+    fontFamily: 'Inter',
   },
   featuresList: {
-    gap: spacing.sm,
+    gap: theme.spacing.sm,
   },
   featureItem: {
     flexDirection: 'row',
   },
   featureBullet: {
-    ...typography.body,
-    color: colors.primary,
-    marginRight: spacing.sm,
+    fontSize: theme.fontSize.md,
+    fontWeight: '400',
+    color: theme.colors.primary,
+    marginRight: theme.spacing.sm,
+    fontFamily: 'Inter',
   },
   featureText: {
-    ...typography.body,
-    color: colors.textSecondary,
+    fontSize: theme.fontSize.md,
+    fontWeight: '400',
+    color: 'rgba(255, 255, 255, 0.5)',
+    fontFamily: 'Inter',
   },
   legalText: {
-    ...typography.caption,
-    color: colors.textSecondary,
+    fontSize: theme.fontSize.sm,
+    fontWeight: '400',
+    color: 'rgba(255, 255, 255, 0.5)',
     textAlign: 'center',
-    marginTop: spacing.lg,
-    marginBottom: spacing.xl,
+    marginTop: theme.spacing.lg,
+    marginBottom: theme.spacing.xl,
     lineHeight: 18,
+    fontFamily: 'Inter',
   },
   bottomActions: {
-    padding: spacing.lg,
-    paddingBottom: spacing.xl,
+    padding: theme.spacing.lg,
+    paddingBottom: theme.spacing.xl,
     borderTopWidth: 1,
-    borderTopColor: colors.border,
-    backgroundColor: colors.background,
-  },
-  purchaseButton: {
-    backgroundColor: colors.primary,
-    padding: spacing.lg,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginBottom: spacing.md,
-  },
-  purchaseButtonDisabled: {
-    opacity: 0.5,
-  },
-  purchaseButtonText: {
-    ...typography.button,
-    color: '#FFFFFF',
-    fontWeight: '700',
-  },
-  restoreButton: {
-    padding: spacing.md,
-    alignItems: 'center',
-  },
-  restoreButtonText: {
-    ...typography.body,
-    color: colors.textSecondary,
+    borderTopColor: theme.colors.border,
+    backgroundColor: theme.colors.background.primary,
   },
 });

@@ -19,6 +19,12 @@ interface Category {
   description: string;
 }
 
+interface InterpretationStyle {
+  id: 'mystical' | 'psychological' | 'practical';
+  name: string;
+  description: string;
+}
+
 const CATEGORIES: Category[] = [
   { id: 'love', name: 'Love', description: 'Romance, relationships, attraction, and emotional connections' },
   { id: 'career', name: 'Career', description: 'Professional growth, ambition, success, and work dynamics' },
@@ -31,10 +37,37 @@ const CATEGORIES: Category[] = [
   { id: 'education', name: 'Education', description: 'Learning, skill development, knowledge acquisition, and intellectual growth' },
 ];
 
+const INTERPRETATION_STYLES: InterpretationStyle[] = [
+  {
+    id: 'mystical',
+    name: 'Mystical',
+    description: 'Connect to bigger themes and life lessons, wisdom traditions, and personal meaning-making'
+  },
+  {
+    id: 'psychological',
+    name: 'Psychological',
+    description: 'Explore inner patterns, motivations, and personal growth opportunities through accessible insights'
+  },
+  {
+    id: 'practical',
+    name: 'Practical',
+    description: 'Focus on real-world situations, concrete next steps, and actionable guidance for daily life'
+  },
+];
+
 export const OnboardingScreen: React.FC<NavigationProps> = ({ navigation, route }) => {
   const { date, time, location } = route.params as any;
+  const [currentStep, setCurrentStep] = useState<'categories' | 'style'>('categories');
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const { updatePreferences, updateBirthData, saveNatalChart, setAppLoading, user } = useAppStore();
+  const [selectedStyle, setSelectedStyle] = useState<'mystical' | 'psychological' | 'practical' | null>(null);
+  const {
+    updatePreferences,
+    updateBirthData,
+    saveNatalChart,
+    setAppLoading,
+    setCalculating,
+    user,
+  } = useAppStore();
 
   const toggleCategory = (categoryId: string) => {
     if (selectedCategories.includes(categoryId)) {
@@ -45,60 +78,84 @@ export const OnboardingScreen: React.FC<NavigationProps> = ({ navigation, route 
   };
 
   const handleContinue = async () => {
-    if (selectedCategories.length !== 3 || !date || !time || !location || !user) {
+    // Step 1: Categories selection
+    if (currentStep === 'categories') {
+      if (selectedCategories.length !== 3) {
+        return;
+      }
+      setCurrentStep('style');
       return;
     }
 
-    setAppLoading(true);
-    try {
-      // Step 1: Save selected categories to preferences
-      await updatePreferences({ focusAreas: selectedCategories });
-
-      // Step 2: Format and save birth data
-      const birthData = {
-        birthDate: date.toISOString().split('T')[0], // YYYY-MM-DD
-        birthTime: `${time.getHours().toString().padStart(2, '0')}:${time.getMinutes().toString().padStart(2, '0')}`,
-        timeUnknown: false,
-        birthLocation: location,
-        timezone: location.timezone,
-      };
-
-      console.log('💾 Saving birth data to database...');
-      await updateBirthData(birthData);
-
-      // Step 3: Generate natal chart
-      console.log('🌟 Generating natal chart...');
-      const result = await handleChartGeneration(birthData, {
-        houseSystem: 'placidus',
-        precision: 'professional',
-        includeReports: true,
-        includeAspects: true,
-        includeMinorAspects: false,
-        includeMidpoints: false,
-        forceRegenerate: true,
-      });
-
-      if (result.success && result.data?.chartData) {
-        // Step 4: Save natal chart to database
-        console.log('💾 Saving natal chart to database...');
-        await saveNatalChart(user.id, result.data.chartData, 'placidus');
-
-        // Birth data is now saved - AppNavigator will automatically switch to TabNavigator
-        console.log('✅ Onboarding complete!');
-      } else {
-        console.error('Chart generation failed:', result.message);
-        alert('Failed to generate chart. Please try again.');
+    // Step 2: Style selection - proceed with chart generation
+    if (currentStep === 'style') {
+      if (!selectedStyle || selectedCategories.length !== 3 || !date || !time || !location || !user) {
+        return;
       }
-    } catch (error: any) {
-      console.error('Chart generation/save error:', error);
-      alert(`An error occurred: ${error.message || 'Please try again.'}`);
-    } finally {
-      setAppLoading(false);
+
+      setAppLoading(true);
+      try {
+        // Save selected categories and interpretation style to preferences
+        await updatePreferences({
+          focusAreas: selectedCategories,
+          interpretationStyle: selectedStyle
+        });
+
+        // Format and save birth data
+        const birthData = {
+          birthDate: date.toISOString().split('T')[0], // YYYY-MM-DD
+          birthTime: `${time.getHours().toString().padStart(2, '0')}:${time.getMinutes().toString().padStart(2, '0')}`,
+          timeUnknown: false,
+          birthLocation: location,
+          timezone: location.timezone,
+        };
+
+        console.log('💾 Saving birth data to database...');
+        await updateBirthData(birthData);
+
+        // Generate natal chart
+        console.log('🌟 Generating natal chart...');
+        setCalculating(true);
+        try {
+          const result = await handleChartGeneration(birthData, {
+            houseSystem: 'placidus',
+            precision: 'professional',
+            includeReports: true,
+            includeAspects: true,
+            includeMinorAspects: false,
+            includeMidpoints: false,
+            forceRegenerate: true,
+          });
+
+          if (result.success && result.data?.chartData) {
+            // Save natal chart to database
+            console.log('💾 Saving natal chart to database...');
+            await saveNatalChart(user.id, result.data.chartData, 'placidus');
+
+            // Birth data is now saved - AppNavigator will automatically switch to TabNavigator
+            console.log('✅ Onboarding complete!');
+          } else {
+            console.error('Chart generation failed:', result.message);
+            alert('Failed to generate chart. Please try again.');
+          }
+        } finally {
+          setCalculating(false);
+        }
+      } catch (error: any) {
+        console.error('Chart generation/save error:', error);
+        alert(`An error occurred: ${error.message || 'Please try again.'}`);
+      } finally {
+        setAppLoading(false);
+      }
     }
   };
 
   const isSelected = (categoryId: string) => selectedCategories.includes(categoryId);
-  const canContinue = selectedCategories.length === 3;
+  const isStyleSelected = (styleId: 'mystical' | 'psychological' | 'practical') => selectedStyle === styleId;
+
+  const canContinue = currentStep === 'categories'
+    ? selectedCategories.length === 3
+    : selectedStyle !== null;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -107,54 +164,96 @@ export const OnboardingScreen: React.FC<NavigationProps> = ({ navigation, route 
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
-          <Text style={styles.title}>What brings you here?</Text>
-          <Text style={styles.subtitle}>
-            Select 3 areas you'd like to focus on
-          </Text>
-          <View style={styles.progressContainer}>
-            {[0, 1, 2].map((index) => (
-              <View
-                key={index}
-                style={[
-                  styles.progressBar,
-                  {
-                    opacity: index < selectedCategories.length ? 1 : 0.3,
-                  },
-                ]}
-              />
-            ))}
-          </View>
+          {currentStep === 'categories' ? (
+            <>
+              <Text style={styles.title}>What brings you here?</Text>
+              <Text style={styles.subtitle}>
+                Select 3 areas you'd like to focus on
+              </Text>
+              <View style={styles.progressContainer}>
+                {[0, 1, 2].map((index) => (
+                  <View
+                    key={index}
+                    style={[
+                      styles.progressBar,
+                      {
+                        opacity: index < selectedCategories.length ? 1 : 0.3,
+                      },
+                    ]}
+                  />
+                ))}
+              </View>
+            </>
+          ) : (
+            <>
+              <Text style={styles.title}>Choose your style</Text>
+              <Text style={styles.subtitle}>
+                How would you like your readings delivered?
+              </Text>
+            </>
+          )}
         </View>
 
-        <View style={styles.categoriesList}>
-          {CATEGORIES.map((category) => {
-            const selected = isSelected(category.id);
-            return (
-              <TouchableOpacity
-                key={category.id}
-                style={[
-                  styles.categoryCard,
-                  selected && styles.categoryCardSelected,
-                ]}
-                onPress={() => toggleCategory(category.id)}
-                activeOpacity={0.7}
-                disabled={!selected && selectedCategories.length >= 3}
-              >
-                <Text style={styles.categoryName}>
-                  {category.name}
-                </Text>
-                <Text style={styles.categoryDescription}>
-                  {category.description}
-                </Text>
-                {selected && (
-                  <View style={styles.selectedIndicator}>
-                    <Text style={styles.selectedIndicatorText}>✓</Text>
-                  </View>
-                )}
-              </TouchableOpacity>
-            );
-          })}
-        </View>
+        {currentStep === 'categories' ? (
+          <View style={styles.categoriesList}>
+            {CATEGORIES.map((category) => {
+              const selected = isSelected(category.id);
+              return (
+                <TouchableOpacity
+                  key={category.id}
+                  style={[
+                    styles.categoryCard,
+                    selected && styles.categoryCardSelected,
+                  ]}
+                  onPress={() => toggleCategory(category.id)}
+                  activeOpacity={0.7}
+                  disabled={!selected && selectedCategories.length >= 3}
+                >
+                  <Text style={styles.categoryName}>
+                    {category.name}
+                  </Text>
+                  <Text style={styles.categoryDescription}>
+                    {category.description}
+                  </Text>
+                  {selected && (
+                    <View style={styles.selectedIndicator}>
+                      <Text style={styles.selectedIndicatorText}>✓</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        ) : (
+          <View style={styles.categoriesList}>
+            {INTERPRETATION_STYLES.map((style) => {
+              const selected = isStyleSelected(style.id);
+              return (
+                <TouchableOpacity
+                  key={style.id}
+                  style={[
+                    styles.categoryCard,
+                    selected && styles.categoryCardSelected,
+                  ]}
+                  onPress={() => setSelectedStyle(style.id)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.categoryName}>
+                    {style.name}
+                  </Text>
+                  <Text style={styles.categoryDescription}>
+                    {style.description}
+                  </Text>
+                  {selected && (
+                    <View style={styles.selectedIndicator}>
+                      <Text style={styles.selectedIndicatorText}>✓</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        )}
       </ScrollView>
 
       <View style={styles.footer}>
@@ -189,12 +288,12 @@ const styles = StyleSheet.create({
     ...typography.h1,
     fontSize: 32,
     marginBottom: spacing.sm,
-    textAlign: 'center',
+    textAlign: 'left',
   },
   subtitle: {
     ...typography.h4,
     color: colors.text.secondary,
-    textAlign: 'center',
+    textAlign: 'left',
     marginBottom: spacing.md,
   },
   progressContainer: {

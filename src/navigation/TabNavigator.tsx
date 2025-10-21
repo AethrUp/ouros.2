@@ -44,6 +44,8 @@ const HomeStackNavigator: React.FC = () => {
     >
       <HomeStack.Screen name="HomeMain" component={HomeScreen} />
       <HomeStack.Screen name="DailyHoroscope" component={DailyHoroscopeScreen} />
+      <HomeStack.Screen name="chart" component={NatalChartScreen} />
+      <HomeStack.Screen name="PlanetDetail" component={PlanetDetailScreen} />
       <HomeStack.Screen name="Profile" component={ProfileScreen} />
       <HomeStack.Screen name="Subscription" component={SubscriptionScreen} />
       <HomeStack.Screen name="TestLoading" component={TestLoadingScreen} />

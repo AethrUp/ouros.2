@@ -84,7 +84,7 @@ export const AppNavigator: React.FC = () => {
   }, [isAuthenticated, user?.id, currentSession, currentIChingSession, dreamSessionStep]);
 
   if (isLoading) {
-    return <LoadingScreen context="general" overlay />;
+    return <LoadingScreen context="general" />;
   }
 
   // Not authenticated: show auth flow

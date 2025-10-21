@@ -43,15 +43,27 @@ export const IChingReadingDetailScreen: React.FC<IChingReadingDetailScreenProps>
   const handleJournal = (prompt?: string, promptIndex?: number) => {
     if (!reading) return;
 
+    // Extract human-readable interpretation text
+    let interpretationText: string;
+    if (typeof reading.interpretation === 'string') {
+      interpretationText = reading.interpretation;
+    } else if ('fullContent' in reading.interpretation) {
+      // V2 format (IChingInterpretationV2)
+      interpretationText = reading.interpretation.fullContent.overview;
+    } else if ('interpretation' in reading.interpretation) {
+      // V1 format (IChingInterpretation)
+      interpretationText = reading.interpretation.interpretation.overview;
+    } else {
+      interpretationText = 'No interpretation available';
+    }
+
     // Transform IChingReading to LinkedReading format
     const linkedReading: LinkedReading = {
       id: reading.id,
       reading_type: 'iching',
       title: `Hexagram ${reading.primaryHexagram.hexagram.number}: ${reading.primaryHexagram.hexagram.englishName}`,
       timestamp: reading.createdAt,
-      interpretation: typeof reading.interpretation === 'string'
-        ? reading.interpretation
-        : JSON.stringify(reading.interpretation),
+      interpretation: interpretationText,
       intention: prompt || reading.question, // Use prompt if provided
       metadata: {
         primaryHexagram: reading.primaryHexagram.hexagram.number,
