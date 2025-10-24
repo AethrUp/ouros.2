@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
-type LoadingContext = 'natal-chart' | 'tarot' | 'dream' | 'synastry' | 'iching' | 'general';
+type LoadingContext = 'natal-chart' | 'tarot' | 'dream' | 'synastry' | 'iching' | 'dashboard' | 'general';
 
 interface LoadingScreenProps {
   context?: LoadingContext;
@@ -44,6 +44,12 @@ const MESSAGE_SETS: Record<LoadingContext, string[]> = {
     'Interpreting hexagram wisdom',
     'Connecting with ancient guidance',
     'Reading the cosmic patterns',
+  ],
+  'dashboard': [
+    'Loading your cosmic dashboard',
+    'Preparing today\'s insights',
+    'Gathering celestial data',
+    'Calculating transits',
   ],
   'general': [
     'Loading',
