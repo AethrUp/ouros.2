@@ -8,7 +8,7 @@ import {
   Animated,
 } from 'react-native';
 import { NavigationProps } from '../types';
-import { HeaderBar, Button, TransitEffectivenessGraph, TransitStrengthBar, CosmicWeatherChart, ZodiacIcon, LoadingScreen, TarotIcon, IChingIcon, DreamIcon, LockedFeatureCard, Badge } from '../components';
+import { HeaderBar, Button, TransitEffectivenessGraph, TransitStrengthBar, CosmicWeatherChart, ZodiacIcon, LoadingScreen, TarotIcon, IChingIcon, DreamIcon, NatalIcon, JournalIcon, LockedFeatureCard, Badge } from '../components';
 import { colors, spacing, typography } from '../styles';
 import { useAppStore } from '../store';
 import { getDailyHoroscope } from '../handlers/horoscopeGeneration';
@@ -454,7 +454,12 @@ export const HomeScreen: React.FC<NavigationProps> = ({ navigation }) => {
         <Text style={styles.journalPromptsTitle}>JOURNAL PROMPTS</Text>
         {journalPrompts.map((prompt, index) => (
           <View key={index} style={styles.journalPromptCard}>
-            <Text style={styles.journalPromptText}>{prompt}</Text>
+            <View style={styles.journalPromptHeader}>
+              <View style={styles.journalIconContainer}>
+                <JournalIcon size={32} color="#F6D99F" />
+              </View>
+              <Text style={styles.journalPromptText}>{prompt}</Text>
+            </View>
             <View style={styles.startWritingButtonContainer}>
               <Button
                 title="Start Writing"
@@ -624,8 +629,15 @@ export const HomeScreen: React.FC<NavigationProps> = ({ navigation }) => {
             style={styles.actionCard}
             onPress={() => navigation.navigate('chart')}
           >
-            <Text style={styles.actionTitle}>Natal Chart</Text>
-            <Text style={styles.actionSubtitle}>View your birth chart</Text>
+            <View style={styles.natalChartHeader}>
+              <View style={styles.natalIcon}>
+                <NatalIcon size={48} color="#F6D99F" />
+              </View>
+              <View style={styles.natalChartTextContainer}>
+                <Text style={styles.actionTitle}>Natal Chart</Text>
+                <Text style={styles.actionSubtitle}>View your birth chart</Text>
+              </View>
+            </View>
           </TouchableOpacity>
 
           <View style={styles.actionRow}>
@@ -928,6 +940,16 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     marginBottom: spacing.md,
   },
+  natalChartHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  natalIcon: {
+    marginRight: spacing.md,
+  },
+  natalChartTextContainer: {
+    flex: 1,
+  },
   actionRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -986,10 +1008,19 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginBottom: spacing.md,
   },
+  journalPromptHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: spacing.md,
+  },
+  journalIconContainer: {
+    marginRight: spacing.sm,
+    marginTop: spacing.xs,
+  },
   journalPromptText: {
     ...typography.body,
     lineHeight: 20,
-    marginBottom: spacing.md,
+    flex: 1,
   },
   startWritingButtonContainer: {
     flexDirection: 'row',

@@ -139,12 +139,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Setup/REVENUECAT_DASHBOARD_SETUP.md",
+                "file": "REACT_NATIVE_TO_WEB_MIGRATION.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "REVENUECAT_DASHBOARD_SETUP"
+              "title": "REACT_NATIVE_TO_WEB_MIGRATION"
             }
           }
         ],
@@ -299,8 +299,16 @@
   },
   "active": "ba7b3f4b8ed33a59",
   "lastOpenFiles": [
-    "Marketing/upgrade_modal_copy.md",
     "Setup/REVENUECAT_DASHBOARD_SETUP.md",
+    "REACT_NATIVE_TO_WEB_MIGRATION.md",
+    "REACT_NATIVE_TO_WEB_MIGRATION.md.tmp.3976.1761311350768",
+    "Implementations/Settings Outline.md",
+    "App Info/tarot_oracle_method.md",
+    "App Info/iching_oracle_method.md",
+    "App Info/dream_interpretation_oracle_method.md",
+    "App Info/Untitled.md",
+    "App Info",
+    "Marketing/upgrade_modal_copy.md",
     "Setup/REVENUECAT_DASHBOARD_SETUP.md.tmp.8988.1760996022026",
     "Setup",
     "Marketing/Upgrade Plan Copy.md",
@@ -318,8 +326,6 @@
     "App Structure/DAILY_READING_DATA_STRUCTURE.md",
     "Marketing/SUBSCRIPTION_TIERS_AND_LIMITS.md",
     "SUBSCRIPTION_TIERS_AND_LIMITS.md.tmp.22808.1760716999028",
-    "SUBSCRIPTION_TIERS_AND_LIMITS.md.tmp.22808.1760716986785",
-    "SUBSCRIPTION_TIERS_AND_LIMITS.md.tmp.22808.1760716957870",
     "Implementations/TAROT_UI_FIXES_FINAL.md",
     "Implementations/TAROT_UI_FIXES_CORRECTED.md",
     "Dev Progress/TAROT_UI_FIXES_COMPLETE.md",
@@ -328,12 +334,6 @@
     "Dev Progress/PHASE_2_COMPLETE_SUMMARY.md",
     "Dev Progress/PHASE_2_PROGRESS.md",
     "Prompts/daily_synastry_forecast_prompt_v2.md",
-    "Prompts/iching_interpretation_prompt_v2.md",
-    "Prompts/tarot_interpretation_prompt_v2.md",
-    "Prompts/four_astrology_prompts.md",
-    "Prompts/daily_horoscope_prompt_template.md",
-    "Implementations/iching-json-migration-plan.md",
-    "Dev Progress/DIAGNOSIS_chiron_return_hallucination.md",
-    "Prompts/dream_interpretation_prompt.md"
+    "Prompts/iching_interpretation_prompt_v2.md"
   ]
 }

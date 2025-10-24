@@ -8,12 +8,13 @@ import {
   SubscriptionPackage,
 } from '../../types/subscription';
 import { supabase } from '../../utils/supabase';
-import {
-  syncSubscriptionWithRevenueCat,
-  getAvailablePackages,
-  purchasePackage as purchasePackageFromService,
-  restorePurchases as restorePurchasesFromService,
-} from '../../services/subscriptionService';
+// RevenueCat disabled for web-only deployment
+// import {
+//   syncSubscriptionWithRevenueCat,
+//   getAvailablePackages,
+//   purchasePackage as purchasePackageFromService,
+//   restorePurchases as restorePurchasesFromService,
+// } from '../../services/subscriptionService';
 
 export interface SubscriptionSlice {
   // Subscription state
@@ -160,20 +161,9 @@ export const createSubscriptionSlice: StateCreator<SubscriptionSlice> = (set, ge
   },
 
   syncWithRevenueCat: async () => {
-    set({ isLoadingSubscription: true, subscriptionError: null });
-    try {
-      const state = await syncSubscriptionWithRevenueCat();
-      set({
-        subscriptionState: state,
-        isLoadingSubscription: false,
-      });
-    } catch (error: any) {
-      console.error('Failed to sync with RevenueCat:', error);
-      set({
-        isLoadingSubscription: false,
-        subscriptionError: error.message || 'Failed to sync subscription',
-      });
-    }
+    // RevenueCat disabled - no-op for web deployment
+    console.log('⚠️ RevenueCat sync skipped (disabled for web)');
+    return;
   },
 
   updateSubscriptionTier: async (tier, isDebug = false) => {
@@ -357,57 +347,32 @@ export const createSubscriptionSlice: StateCreator<SubscriptionSlice> = (set, ge
 
   // Actions - Packages & Purchase
   loadAvailablePackages: async () => {
-    set({ isLoadingPackages: true });
-    try {
-      const packages = await getAvailablePackages();
-      set({
-        availablePackages: packages,
-        isLoadingPackages: false,
-      });
-    } catch (error: any) {
-      console.error('Failed to load packages:', error);
-      set({ isLoadingPackages: false });
-    }
+    // RevenueCat disabled - no packages available for web deployment
+    console.log('⚠️ Package loading skipped (RevenueCat disabled for web)');
+    set({
+      availablePackages: [],
+      isLoadingPackages: false,
+    });
   },
 
   purchasePackage: async (packageId) => {
-    set({ isPurchasing: true, purchaseError: null });
-    try {
-      await purchasePackageFromService(packageId);
-
-      // Sync with RevenueCat after purchase
-      await get().syncWithRevenueCat();
-
-      set({ isPurchasing: false });
-      console.log('✅ Purchase successful');
-    } catch (error: any) {
-      console.error('Purchase failed:', error);
-      set({
-        isPurchasing: false,
-        purchaseError: error.message || 'Purchase failed',
-      });
-      throw error;
-    }
+    // RevenueCat disabled - purchases not available for web deployment
+    console.log('⚠️ Purchase skipped (RevenueCat disabled for web)');
+    set({
+      isPurchasing: false,
+      purchaseError: 'In-app purchases are not available on web',
+    });
+    throw new Error('In-app purchases are not available on web');
   },
 
   restorePurchases: async () => {
-    set({ isPurchasing: true, purchaseError: null });
-    try {
-      await restorePurchasesFromService();
-
-      // Sync with RevenueCat after restore
-      await get().syncWithRevenueCat();
-
-      set({ isPurchasing: false });
-      console.log('✅ Purchases restored');
-    } catch (error: any) {
-      console.error('Restore failed:', error);
-      set({
-        isPurchasing: false,
-        purchaseError: error.message || 'Restore failed',
-      });
-      throw error;
-    }
+    // RevenueCat disabled - restore not available for web deployment
+    console.log('⚠️ Restore purchases skipped (RevenueCat disabled for web)');
+    set({
+      isPurchasing: false,
+      purchaseError: 'Purchase restoration is not available on web',
+    });
+    throw new Error('Purchase restoration is not available on web');
   },
 
   // Actions - Error handling

@@ -6,7 +6,8 @@ import { OnboardingNavigator } from './OnboardingNavigator';
 import { useAppStore } from '../store';
 import { LoadingScreen } from '../components';
 import { theme } from '../styles/theme';
-import { initializeRevenueCat } from '../services/subscriptionService';
+// RevenueCat disabled for web-only deployment
+// import { initializeRevenueCat } from '../services/subscriptionService';
 
 const navigationTheme = {
   ...DefaultTheme,
@@ -42,7 +43,8 @@ export const AppNavigator: React.FC = () => {
     }
   }, []);
 
-  // Initialize RevenueCat and load subscription when user is authenticated
+  // Initialize subscription when user is authenticated
+  // RevenueCat disabled - using Supabase-only subscription management
   useEffect(() => {
     if (!isAuthenticated || !user?.id) {
       return;
@@ -50,38 +52,20 @@ export const AppNavigator: React.FC = () => {
 
     const initializeSubscription = async () => {
       try {
-        // Check if there's an active oracle session before syncing
-        // This prevents re-renders during card reveal or interpretation
-        const hasActiveSession = currentSession !== null ||
-                                 currentIChingSession !== null ||
-                                 dreamSessionStep !== 'input';
-
-        if (hasActiveSession) {
-          console.log('⏸️ Skipping subscription sync - active oracle session detected');
-          await loadSubscriptionState();
-          return;
-        }
-
-        console.log('🔑 Initializing RevenueCat for user:', user.id);
-
-        // Initialize RevenueCat SDK
-        await initializeRevenueCat(user.id);
+        console.log('🔑 Loading subscription state for user:', user.id);
 
         // Load subscription state from Supabase
         await loadSubscriptionState();
 
-        // Sync with RevenueCat (will update Supabase if needed)
-        await syncWithRevenueCat();
-
         console.log('✅ Subscription system initialized');
       } catch (error) {
         console.error('❌ Failed to initialize subscription system:', error);
-        throw error;
+        // Don't throw - allow app to continue even if subscription load fails
       }
     };
 
     initializeSubscription();
-  }, [isAuthenticated, user?.id, currentSession, currentIChingSession, dreamSessionStep]);
+  }, [isAuthenticated, user?.id]);
 
   if (isLoading) {
     return <LoadingScreen context="general" />;

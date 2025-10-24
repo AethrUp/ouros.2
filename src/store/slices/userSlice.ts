@@ -57,9 +57,26 @@ export const createUserSlice: StateCreator<UserSlice> = (set, get) => ({
 
       const updatedProfile = { ...profile, ...updates };
 
-      // TODO: Implement actual API call
-      // const { supabase } = await import('../../utils/supabase');
-      // await supabase.from('profiles').update(updates).eq('id', profile.id);
+      // Update profile in Supabase
+      const { supabase } = await import('../../utils/supabase');
+
+      // Map camelCase to snake_case for database
+      const dbUpdates: any = {};
+      if (updates.displayName !== undefined) dbUpdates.display_name = updates.displayName;
+      if (updates.avatar !== undefined) dbUpdates.avatar = updates.avatar;
+      if (updates.timezone !== undefined) dbUpdates.timezone = updates.timezone;
+      if (updates.language !== undefined) dbUpdates.language = updates.language;
+
+      dbUpdates.updated_at = new Date().toISOString();
+
+      const { error } = await supabase
+        .from('profiles')
+        .update(dbUpdates)
+        .eq('id', profile.id);
+
+      if (error) {
+        throw new Error(error.message);
+      }
 
       set({
         profile: updatedProfile,

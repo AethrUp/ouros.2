@@ -5,6 +5,8 @@ export { ReadingsScreen } from './ReadingsScreen';
 export { JournalScreen } from './JournalScreen';
 export { JournalEntryScreen } from './JournalEntryScreen';
 export { ProfileScreen } from './ProfileScreen';
+export { ProfileEditScreen } from './ProfileEditScreen';
+export { SecurityDataScreen } from './SecurityDataScreen';
 export { LoginScreen } from './LoginScreen';
 export { RegisterScreen } from './RegisterScreen';
 export { SplashScreen } from './SplashScreen';

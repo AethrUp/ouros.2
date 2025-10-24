@@ -1,20 +1,19 @@
 import React, { useState, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView, Linking } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { NavigationProps } from '../types';
-import { HeaderBar } from '../components';
+import { HeaderBar, Button, PrivacyPolicyModal, TermsOfServiceModal } from '../components';
 import { DebugSubscriptionPanel } from '../components/DebugSubscriptionPanel';
 import { colors, spacing, typography } from '../styles';
 import { useAppStore } from '../store';
 
 export const ProfileScreen: React.FC<NavigationProps> = ({ navigation }) => {
-  const [isResetting, setIsResetting] = useState(false);
   const [showDebugPanel, setShowDebugPanel] = useState(false);
+  const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
+  const [showTermsOfService, setShowTermsOfService] = useState(false);
   const tapCount = useRef(0);
   const tapTimer = useRef<NodeJS.Timeout | null>(null);
 
-  const resetOnboarding = useAppStore((state) => state.resetOnboarding);
-  const clearChart = useAppStore((state) => state.clearChart);
-  const birthData = useAppStore((state) => state.birthData);
   const logout = useAppStore((state) => state.logout);
 
   // Triple-tap to open debug panel (dev only)
@@ -35,30 +34,24 @@ export const ProfileScreen: React.FC<NavigationProps> = ({ navigation }) => {
     }, 500);
   };
 
-  const handleResetOnboarding = () => {
+  const handleNotifications = async () => {
+    // Open system notification settings
+    await Linking.openSettings();
+  };
+
+  const handleLogout = () => {
     Alert.alert(
-      'Reset Onboarding',
-      'This will clear your birth data and natal chart. You will need to go through onboarding again. Are you sure?',
+      'Log Out',
+      'Are you sure you want to log out?',
       [
         {
           text: 'Cancel',
           style: 'cancel',
         },
         {
-          text: 'Reset',
+          text: 'Log Out',
           style: 'destructive',
-          onPress: async () => {
-            try {
-              setIsResetting(true);
-              await resetOnboarding();
-              clearChart();
-              Alert.alert('Success', 'Onboarding has been reset. Please restart the app.');
-            } catch (error: any) {
-              Alert.alert('Error', error.message || 'Failed to reset onboarding');
-            } finally {
-              setIsResetting(false);
-            }
-          },
+          onPress: () => logout(),
         },
       ]
     );
@@ -67,54 +60,110 @@ export const ProfileScreen: React.FC<NavigationProps> = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <HeaderBar
-        title="Profile"
-        rightActions={[
-          {
-            icon: 'log-out-outline',
-            onPress: () => logout(),
-          },
-        ]}
+        title="Settings"
       />
-      <View style={styles.content}>
-        <TouchableOpacity onPress={handleTitlePress} activeOpacity={1}>
-          <Text style={styles.text}>Profile Screen</Text>
-        </TouchableOpacity>
-
-        {birthData && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Birth Information</Text>
-            <Text style={styles.infoText}>Date: {birthData.birthDate}</Text>
-            <Text style={styles.infoText}>Time: {birthData.birthTime}</Text>
-            <Text style={styles.infoText}>Location: {birthData.birthLocation.name}</Text>
-          </View>
-        )}
-
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Profile Section */}
         <TouchableOpacity
-          style={styles.testButton}
-          onPress={() => navigation.navigate('TestLoading')}
+          style={styles.menuItem}
+          onPress={() => {
+            handleTitlePress();
+            navigation.navigate('ProfileEdit');
+          }}
         >
-          <Text style={styles.testButtonText}>Test Loading Screen</Text>
+          <View style={styles.menuItemLeft}>
+            <Ionicons name="person-outline" size={24} color={colors.text.primary} />
+            <Text style={styles.menuItemText}>Profile</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={24} color={colors.text.secondary} />
         </TouchableOpacity>
 
+        {/* Security and Data Section */}
+        <TouchableOpacity
+          style={styles.menuItem}
+          onPress={() => navigation.navigate('SecurityData')}
+        >
+          <View style={styles.menuItemLeft}>
+            <Ionicons name="shield-checkmark-outline" size={24} color={colors.text.primary} />
+            <Text style={styles.menuItemText}>Security and Data</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={24} color={colors.text.secondary} />
+        </TouchableOpacity>
+
+        {/* Notifications Section */}
+        <TouchableOpacity
+          style={styles.menuItem}
+          onPress={handleNotifications}
+        >
+          <View style={styles.menuItemLeft}>
+            <Ionicons name="notifications-outline" size={24} color={colors.text.primary} />
+            <Text style={styles.menuItemText}>Notifications</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={24} color={colors.text.secondary} />
+        </TouchableOpacity>
+
+        {/* Privacy Policy Section */}
+        <TouchableOpacity
+          style={styles.menuItem}
+          onPress={() => setShowPrivacyPolicy(true)}
+        >
+          <View style={styles.menuItemLeft}>
+            <Ionicons name="document-text-outline" size={24} color={colors.text.primary} />
+            <Text style={styles.menuItemText}>Privacy Policy</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={24} color={colors.text.secondary} />
+        </TouchableOpacity>
+
+        {/* Terms of Service Section */}
+        <TouchableOpacity
+          style={styles.menuItem}
+          onPress={() => setShowTermsOfService(true)}
+        >
+          <View style={styles.menuItemLeft}>
+            <Ionicons name="document-text-outline" size={24} color={colors.text.primary} />
+            <Text style={styles.menuItemText}>Terms of Service</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={24} color={colors.text.secondary} />
+        </TouchableOpacity>
+
+        {/* Developer Menu (dev only) */}
         {__DEV__ && (
           <TouchableOpacity
-            style={[styles.testButton, { backgroundColor: colors.primary }]}
+            style={styles.menuItem}
             onPress={() => navigation.navigate('DevMenu')}
           >
-            <Text style={styles.testButtonText}>Developer Menu</Text>
+            <View style={styles.menuItemLeft}>
+              <Ionicons name="code-slash-outline" size={24} color={colors.text.primary} />
+              <Text style={styles.menuItemText}>Developer Menu</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={24} color={colors.text.secondary} />
           </TouchableOpacity>
         )}
 
-        <TouchableOpacity
-          style={[styles.resetButton, isResetting && styles.resetButtonDisabled]}
-          onPress={handleResetOnboarding}
-          disabled={isResetting}
-        >
-          <Text style={styles.resetButtonText}>
-            {isResetting ? 'Resetting...' : 'Reset Onboarding'}
-          </Text>
-        </TouchableOpacity>
-      </View>
+        {/* Log Out Section */}
+        <View style={styles.logoutSection}>
+          <Button
+            title="Log Out"
+            onPress={handleLogout}
+            fullWidth
+            variant="primary"
+          />
+        </View>
+      </ScrollView>
+
+      {/* Modals */}
+      <PrivacyPolicyModal
+        visible={showPrivacyPolicy}
+        onClose={() => setShowPrivacyPolicy(false)}
+      />
+      <TermsOfServiceModal
+        visible={showTermsOfService}
+        onClose={() => setShowTermsOfService(false)}
+      />
 
       {/* Debug Panel (dev only) */}
       <DebugSubscriptionPanel
@@ -130,53 +179,34 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background.primary,
   },
-  content: {
+  scrollView: {
     flex: 1,
-    padding: spacing.lg,
   },
-  text: {
-    ...typography.h2,
-    marginBottom: spacing.xl,
+  content: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.xxl,
   },
-  section: {
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     backgroundColor: colors.background.card,
-    padding: spacing.lg,
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.lg,
     borderRadius: 10,
-    marginBottom: spacing.xl,
-  },
-  sectionTitle: {
-    ...typography.h3,
     marginBottom: spacing.md,
   },
-  infoText: {
-    ...typography.body,
-    fontSize: 14,
-    color: colors.text.secondary,
-    marginBottom: spacing.sm,
-  },
-  testButton: {
-    backgroundColor: colors.accent,
-    padding: spacing.md,
-    borderRadius: 10,
+  menuItemLeft: {
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: spacing.md,
+  },
+  menuItemText: {
+    ...typography.h4,
+    color: colors.text.primary,
+  },
+  logoutSection: {
     marginTop: spacing.lg,
-  },
-  testButtonText: {
-    ...typography.button,
-    color: colors.text.primary,
-  },
-  resetButton: {
-    backgroundColor: colors.error,
-    padding: spacing.md,
-    borderRadius: 10,
-    alignItems: 'center',
-    marginTop: 'auto',
-  },
-  resetButtonDisabled: {
-    opacity: 0.5,
-  },
-  resetButtonText: {
-    ...typography.button,
-    color: colors.text.primary,
   },
 });

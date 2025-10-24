@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
   Dimensions,
 } from 'react-native';
-import { LoadingScreen, FadedContent } from '../components';
+import { LoadingScreen, FadedContent, JournalIcon } from '../components';
 import { StatusBar } from 'expo-status-bar';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -724,14 +724,11 @@ const DailyHoroscopeScreen = () => {
                 activeOpacity={0.7}
               >
                 <View style={styles.promptItemContainer}>
-                  <Text style={styles.bodyText}>✦</Text>
-                  <Text style={[styles.promptText, { flex: 1, marginBottom: 0 }]}>{prompt}</Text>
-                  <Ionicons
-                    name="journal-outline"
-                    size={16}
-                    color={colors.text.secondary}
-                    style={styles.promptIcon}
+                  <JournalIcon
+                    size={40}
+                    color="#F6D99F"
                   />
+                  <Text style={[styles.promptText, { flex: 1, marginBottom: 0 }]}>{prompt}</Text>
                 </View>
               </TouchableOpacity>
             ))}
@@ -1175,14 +1172,15 @@ const styles = StyleSheet.create({
     fontSize: 11,
   },
   promptItemTouchable: {
-    marginBottom: spacing.xs,
-    borderRadius: 6,
-    padding: spacing.sm,
-    backgroundColor: 'rgba(255, 255, 255, 0.02)',
+    marginBottom: spacing.md,
+    borderRadius: 12,
+    padding: spacing.md,
+    backgroundColor: '#9B85AE80',
   },
   promptItemContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: spacing.sm,
   },
   promptItem: {
     flexDirection: 'row',
@@ -1192,7 +1190,6 @@ const styles = StyleSheet.create({
     ...typography.body,
     lineHeight: 20,
     flex: 1,
-    paddingLeft: spacing.sm,
   },
   promptIcon: {
     marginLeft: spacing.sm,

@@ -57,6 +57,50 @@ export const TAROT_SPREADS: SpreadLayout[] = [
   },
 
   {
+    id: 'five-elements',
+    name: 'Five Elements',
+    description: 'Connect with elemental wisdom and natural balance',
+    cardCount: 5,
+    positions: [
+      {
+        id: 'earth',
+        name: 'Earth',
+        meaning: 'Your grounding, practical foundation, and physical reality',
+        x: 0.5,
+        y: 0.5
+      },
+      {
+        id: 'water',
+        name: 'Water',
+        meaning: 'Your emotions, intuition, and flow',
+        x: 0.25,
+        y: 0.5
+      },
+      {
+        id: 'fire',
+        name: 'Fire',
+        meaning: 'Your passion, willpower, and creative spark',
+        x: 0.5,
+        y: 0.75
+      },
+      {
+        id: 'air',
+        name: 'Air',
+        meaning: 'Your thoughts, communication, and mental clarity',
+        x: 0.75,
+        y: 0.5
+      },
+      {
+        id: 'spirit',
+        name: 'Spirit',
+        meaning: 'Higher guidance and spiritual perspective',
+        x: 0.5,
+        y: 0.25
+      }
+    ]
+  },
+
+  {
     id: 'celtic-cross',
     name: 'Celtic Cross',
     description: 'Comprehensive 10-card reading for deep insight',

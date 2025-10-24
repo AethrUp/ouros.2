@@ -10,6 +10,8 @@ import {
   JournalScreen,
   JournalEntryScreen,
   ProfileScreen,
+  ProfileEditScreen,
+  SecurityDataScreen,
   DailyHoroscopeScreen,
   TarotScreen,
   TarotReadingDetailScreen,
@@ -47,6 +49,8 @@ const HomeStackNavigator: React.FC = () => {
       <HomeStack.Screen name="chart" component={NatalChartScreen} />
       <HomeStack.Screen name="PlanetDetail" component={PlanetDetailScreen} />
       <HomeStack.Screen name="Profile" component={ProfileScreen} />
+      <HomeStack.Screen name="ProfileEdit" component={ProfileEditScreen} />
+      <HomeStack.Screen name="SecurityData" component={SecurityDataScreen} />
       <HomeStack.Screen name="Subscription" component={SubscriptionScreen} />
       <HomeStack.Screen name="TestLoading" component={TestLoadingScreen} />
       <HomeStack.Screen name="DevMenu" component={DevMenuScreen} />

@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SpreadLayout } from '../../types/tarot';
 import { HeaderBar } from '../HeaderBar';
+import { InfoModal } from '../InfoModal';
+import { SPREAD_INFO } from '../../data/tarot/spreadInfo';
 import { theme } from '../../styles/theme';
 
 interface SpreadSelectorProps {
@@ -18,6 +20,15 @@ const SPREAD_ICONS: Record<string, any> = {
 };
 
 export const SpreadSelector: React.FC<SpreadSelectorProps> = ({ spreads, onSelect }) => {
+  const [infoModalVisible, setInfoModalVisible] = useState(false);
+  const [selectedSpread, setSelectedSpread] = useState<SpreadLayout | null>(null);
+
+  const handleInfoPress = (spread: SpreadLayout, event: any) => {
+    event.stopPropagation();
+    setSelectedSpread(spread);
+    setInfoModalVisible(true);
+  };
+
   return (
     <View style={styles.container}>
       <HeaderBar title="TAROT" />
@@ -34,6 +45,18 @@ export const SpreadSelector: React.FC<SpreadSelectorProps> = ({ spreads, onSelec
             onPress={() => onSelect(spread)}
             activeOpacity={0.7}
           >
+            <TouchableOpacity
+              onPress={(e) => handleInfoPress(spread, e)}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              style={styles.infoButtonCorner}
+            >
+              <Ionicons
+                name="information-circle-outline"
+                size={20}
+                color="rgba(255, 255, 255, 0.5)"
+              />
+            </TouchableOpacity>
+
             <View style={styles.spreadIcon}>
               <Ionicons
                 name={SPREAD_ICONS[spread.id] || 'apps-outline'}
@@ -49,6 +72,15 @@ export const SpreadSelector: React.FC<SpreadSelectorProps> = ({ spreads, onSelec
           </TouchableOpacity>
         ))}
       </ScrollView>
+
+      {selectedSpread && (
+        <InfoModal
+          visible={infoModalVisible}
+          title={selectedSpread.name}
+          sections={SPREAD_INFO[selectedSpread.id] || [{ title: '', content: 'No additional information available.' }]}
+          onClose={() => setInfoModalVisible(false)}
+        />
+      )}
     </View>
   );
 };
@@ -74,6 +106,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: theme.spacing.md,
+    position: 'relative',
   },
   spreadIcon: {
     width: 40,
@@ -96,5 +129,12 @@ const styles = StyleSheet.create({
     color: theme.colors.text.primary,
     fontFamily: 'Inter',
     lineHeight: 20,
+  },
+  infoButtonCorner: {
+    position: 'absolute',
+    top: theme.spacing.md,
+    right: theme.spacing.md,
+    padding: theme.spacing.xs,
+    zIndex: 10,
   },
 });

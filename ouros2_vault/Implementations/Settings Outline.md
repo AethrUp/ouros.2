@@ -1,0 +1,19 @@
+- Profile - Form with these fields
+	- Profile Image
+	- First Name
+	- Last Name
+	- User Name
+	- Email
+	- Birth Date
+	- Birth Time 
+	- Save [button]
+- Security and Data
+	- Change Password [button]
+	- Delete My Data [button]
+	- Delete My Account [button]
+- Notifications - Opens native notification settings
+- Privacy Policy
+	- Privacy Policy [modal
+- Terms Of Service
+	- TOS [modal]
+- Log Out
