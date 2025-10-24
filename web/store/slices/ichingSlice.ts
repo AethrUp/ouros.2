@@ -140,9 +140,20 @@ export const createIChingSlice: StateCreator<IChingSlice> = (set, get) => ({
     set({ isCastingHexagram: true, ichingError: null, ichingSessionStep: 'casting' });
 
     try {
-      // Import handler dynamically to avoid circular dependencies
-      const { handleCastHexagram } = await import('../../handlers/ichingReading');
-      const { primaryHexagram, relatingHexagram } = await handleCastHexagram(castingMethod);
+      // Call API route to cast hexagram
+      const response = await fetch('/api/iching/cast', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ method: castingMethod }),
+      });
+
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to cast hexagram');
+      }
+
+      const { primaryHexagram, relatingHexagram } = data;
 
       console.log('✅ Hexagram cast successfully');
 
@@ -184,16 +195,27 @@ export const createIChingSlice: StateCreator<IChingSlice> = (set, get) => ({
     set({ isGeneratingIChingInterpretation: true, ichingError: null, ichingSessionStep: 'interpretation' });
 
     try {
-      // Import handler dynamically
-      const { generateIChingInterpretation } = await import('../../handlers/ichingReading');
-      const interpretation = await generateIChingInterpretation(
-        question,
-        primaryHexagram,
-        relatingHexagram || undefined
-      );
+      // Call API route for interpretation
+      const response = await fetch('/api/iching/interpret', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          question,
+          primaryHexagram,
+          relatingHexagram: relatingHexagram || undefined,
+          style: 'psychological',
+          detailLevel: 'detailed',
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to generate interpretation');
+      }
 
       set({
-        ichingInterpretation: interpretation,
+        ichingInterpretation: data.interpretation,
         isGeneratingIChingInterpretation: false,
         ichingSessionStep: 'complete',
       });
@@ -223,19 +245,28 @@ export const createIChingSlice: StateCreator<IChingSlice> = (set, get) => ({
     }
 
     try {
-      // Import handler dynamically
-      const { saveIChingReading } = await import('../../handlers/ichingReading');
-      const reading = await saveIChingReading({
-        question,
-        castingMethod,
-        primaryHexagram,
-        relatingHexagram: relatingHexagram || undefined,
-        interpretation: ichingInterpretation,
+      // Call API route to save reading
+      const response = await fetch('/api/iching/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          question,
+          castingMethod,
+          primaryHexagram,
+          relatingHexagram: relatingHexagram || undefined,
+          interpretation: ichingInterpretation,
+        }),
       });
+
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to save reading');
+      }
 
       // Add to readings list
       set({
-        ichingReadings: [reading, ...get().ichingReadings],
+        ichingReadings: [data.reading, ...get().ichingReadings],
       });
 
       console.log('✅ I Ching reading saved successfully');

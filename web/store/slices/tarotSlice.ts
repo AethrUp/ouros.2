@@ -103,9 +103,20 @@ export const createTarotSlice: StateCreator<TarotSlice> = (set, get) => ({
     set({ isDrawing: true, tarotError: null, sessionStep: 'drawing' });
 
     try {
-      // Import handler dynamically to avoid circular dependencies
-      const { handleDrawCards } = await import('../../handlers/tarotReading');
-      const drawnCards = await handleDrawCards(selectedSpread);
+      // Call API route to draw cards
+      const response = await fetch('/api/tarot/draw', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ spread: selectedSpread }),
+      });
+
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to draw cards');
+      }
+
+      const drawnCards = data.drawnCards;
 
       console.log('✅ Cards drawn successfully:', drawnCards.length);
 
@@ -146,12 +157,26 @@ export const createTarotSlice: StateCreator<TarotSlice> = (set, get) => ({
     set({ isGeneratingInterpretation: true, sessionStep: 'interpretation', tarotError: null });
 
     try {
-      // Import handler dynamically
-      const { generateTarotInterpretation } = await import('../../handlers/tarotReading');
-      const interpretation = await generateTarotInterpretation(intention, drawnCards);
+      // Call API route for interpretation
+      const response = await fetch('/api/tarot/interpret', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          intention,
+          drawnCards,
+          style: 'psychological',
+          detailLevel: 'detailed',
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to generate interpretation');
+      }
 
       set({
-        interpretation,
+        interpretation: data.interpretation,
         isGeneratingInterpretation: false,
         sessionStep: 'complete'
       });
@@ -173,18 +198,27 @@ export const createTarotSlice: StateCreator<TarotSlice> = (set, get) => ({
     }
 
     try {
-      // Import handler dynamically
-      const { saveTarotReading } = await import('../../handlers/tarotReading');
-      const reading = await saveTarotReading({
-        intention,
-        spread: selectedSpread,
-        drawnCards,
-        interpretation
+      // Call API route to save reading
+      const response = await fetch('/api/tarot/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          intention,
+          spread: selectedSpread,
+          drawnCards,
+          interpretation
+        }),
       });
+
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to save reading');
+      }
 
       // Add to readings list
       set({
-        readings: [reading, ...get().readings]
+        readings: [data.reading, ...get().readings]
       });
     } catch (error) {
       console.error('Failed to save reading:', error);

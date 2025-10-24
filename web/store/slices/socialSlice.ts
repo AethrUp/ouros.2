@@ -11,8 +11,6 @@ import {
 } from '../../types/synastry';
 import { synastryAPI } from '../../handlers/synastryAPI';
 import { savedChartsAPI } from '../../handlers/savedChartsAPI';
-import { generateSynastryReading } from '../../handlers/synastryReading';
-import { getDailySynastryForecast } from '../../handlers/dailySynastryForecast';
 import { NatalChartData, BirthData } from '../../types/user';
 
 // Initial state
@@ -517,24 +515,25 @@ export const createSocialSlice: StateCreator<
     set({ isLoadingForecast: true, isGeneratingForecast: true, forecastError: null });
 
     try {
-      // Ensure focusArea is properly typed if provided
-      const typedOptions = options ? {
-        forceRegenerate: options.forceRegenerate,
-        focusArea: options.focusArea as 'friendship' | 'family' | 'business' | 'romantic' | 'general' | undefined
-      } : undefined;
+      // Call API route instead of handler
+      const response = await fetch('/api/synastry/forecast', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          synastryChartId: synastryChart.id,
+          synastryChart,
+          person1Chart,
+          person2Chart,
+          person1Name,
+          person2Name,
+          connectionId,
+          savedChartId,
+          forceRegenerate: options?.forceRegenerate,
+          focusArea: options?.focusArea || 'general',
+        }),
+      });
 
-      const result = await getDailySynastryForecast(
-        synastryChart,
-        person1Chart,
-        person2Chart,
-        person1Profile,
-        person2Profile,
-        person1Name,
-        person2Name,
-        connectionId,
-        savedChartId,
-        typedOptions
-      );
+      const result = await response.json();
 
       if (!result.success || !result.forecast) {
         throw new Error(result.error || 'Failed to generate forecast');

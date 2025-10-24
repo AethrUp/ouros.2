@@ -5,11 +5,6 @@
 
 import { StateCreator } from 'zustand';
 import { DreamState, DreamReading } from '../../types/dream';
-import {
-  generateDreamInterpretation,
-  saveDreamReading,
-  loadDreamHistory,
-} from '../../handlers/dreamReading';
 
 export interface DreamSlice extends DreamState {
   // Session actions
@@ -80,10 +75,25 @@ export const createDreamSlice: StateCreator<
     });
 
     try {
-      const interpretation = await generateDreamInterpretation(dreamDescription);
+      // Call API route instead of handler
+      const response = await fetch('/api/dream/interpret', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          dreamDescription,
+          style: 'psychological', // Get from preferences if available
+          detailLevel: 'detailed',
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to generate interpretation');
+      }
 
       set({
-        dreamInterpretation: interpretation,
+        dreamInterpretation: data.interpretation,
         dreamSessionStep: 'complete',
         isGeneratingDreamInterpretation: false,
       });
@@ -113,14 +123,24 @@ export const createDreamSlice: StateCreator<
     console.log('💾 Saving dream reading...');
 
     try {
-      const reading = await saveDreamReading({
-        dreamDescription,
-        interpretation: dreamInterpretation,
+      const response = await fetch('/api/dream/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          dreamDescription,
+          interpretation: dreamInterpretation,
+        }),
       });
+
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to save dream reading');
+      }
 
       // Add to readings history
       set({
-        dreamReadings: [reading, ...dreamReadings],
+        dreamReadings: [data.reading, ...dreamReadings],
       });
 
       console.log('✅ Dream reading saved');
@@ -149,13 +169,18 @@ export const createDreamSlice: StateCreator<
     console.log('📚 Loading dream reading history...');
 
     try {
-      const readings = await loadDreamHistory();
+      const response = await fetch('/api/dream/history');
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to load dream history');
+      }
 
       set({
-        dreamReadings: readings,
+        dreamReadings: data.readings,
       });
 
-      console.log(`✅ Loaded ${readings.length} dream readings`);
+      console.log(`✅ Loaded ${data.readings.length} dream readings`);
     } catch (error) {
       console.error('Failed to load dream history:', error);
     }
@@ -168,11 +193,15 @@ export const createDreamSlice: StateCreator<
     console.log('🗑️ Deleting dream reading:', id);
 
     try {
-      // Remove from Supabase
-      const { deleteDreamReading: deleteFromDB } = await import(
-        '../../handlers/dreamReading'
-      );
-      await deleteFromDB(id);
+      const response = await fetch(`/api/dream/history?id=${id}`, {
+        method: 'DELETE',
+      });
+
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to delete dream reading');
+      }
 
       // Remove from local state
       set({
