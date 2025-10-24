@@ -5,7 +5,7 @@
 
 // Configure your API endpoint here
 const API_BASE_URL =
-  process.env.EXPO_PUBLIC_SWISSEPH_API_URL ||
+  process.env.SWISSEPH_API_URL ||
   'https://astrologyapp-production.up.railway.app';
 
 export interface PlanetPositionRaw {

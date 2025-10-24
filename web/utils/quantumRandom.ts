@@ -26,7 +26,7 @@ export const getQuantumRandom = async (count: number): Promise<number[]> => {
     const timeoutId = setTimeout(() => controller.abort(), 5000);
 
     // Get API key from environment
-    const apiKey = process.env.EXPO_PUBLIC_QUANTUM_API_KEY;
+    const apiKey = process.env.QUANTUM_API_KEY;
 
     // ANU Quantum Random Number Generator API
     // Paid tier with API key authentication
@@ -124,7 +124,7 @@ export const testQuantumAPI = async (): Promise<{
 
   try {
     // Get API key from environment
-    const apiKey = process.env.EXPO_PUBLIC_QUANTUM_API_KEY;
+    const apiKey = process.env.QUANTUM_API_KEY;
 
     const headers: Record<string, string> = {
       'Accept': 'application/json',

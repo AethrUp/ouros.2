@@ -14,7 +14,7 @@ import { createSynastryPrompt, validateSynastryResponse } from '../utils/synastr
 
 // Initialize Anthropic client
 const anthropic = new Anthropic({
-  apiKey: process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY || '',
+  apiKey: process.env.ANTHROPIC_API_KEY || '',
 });
 
 const MODEL = 'claude-sonnet-4-20250514';
@@ -39,7 +39,7 @@ export const generateSynastryReading = async (
     console.log(`💫 Relationship: ${relationshipContext || 'general'}, Detail: ${detailLevel}`);
 
     // Check if API key is configured
-    if (!process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY) {
+    if (!process.env.ANTHROPIC_API_KEY) {
       throw new Error('Anthropic API key not configured');
     }
 
@@ -127,7 +127,7 @@ export const generateCompatibilitySummary = async (
   person2Name: string
 ): Promise<string> => {
   try {
-    if (!process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY) {
+    if (!process.env.ANTHROPIC_API_KEY) {
       // Fallback to generated summary
       return generateFallbackSummary(synastryChart, person1Name, person2Name);
     }

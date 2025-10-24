@@ -21,7 +21,7 @@ import { supabase } from '../utils/supabase';
 
 // Initialize Anthropic client
 const anthropic = new Anthropic({
-  apiKey: process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY || '',
+  apiKey: process.env.ANTHROPIC_API_KEY || '',
 });
 
 interface HoroscopeGenerationOptions {
@@ -585,10 +585,10 @@ export const getDailyHoroscope = async (
  * Validate Anthropic API key
  */
 export const validateAnthropicApiKey = (): boolean => {
-  const apiKey = process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY;
+  const apiKey = process.env.ANTHROPIC_API_KEY;
 
   if (!apiKey) {
-    console.error('❌ EXPO_PUBLIC_ANTHROPIC_API_KEY is not set in .env file');
+    console.error('❌ ANTHROPIC_API_KEY is not set in .env file');
     return false;
   }
 

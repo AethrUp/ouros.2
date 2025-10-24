@@ -8,7 +8,7 @@ import { BirthData, NatalChartData, PlanetPosition, PersonalizedDescription, Who
 
 // Initialize Anthropic client
 const anthropic = new Anthropic({
-  apiKey: process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY || '',
+  apiKey: process.env.ANTHROPIC_API_KEY || '',
 });
 
 // Planet names for display (keys match Swiss Ephemeris API capitalization)
