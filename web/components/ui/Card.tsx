@@ -4,19 +4,37 @@ import { cn } from '@/lib/utils';
 export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
   variant?: 'default' | 'outlined' | 'elevated';
+  interactive?: boolean;
+  padding?: 'none' | 'small' | 'medium' | 'large';
 }
 
+const paddingClasses = {
+  none: '',
+  small: 'p-4',
+  medium: 'p-6',
+  large: 'p-8',
+};
+
 export const Card = React.forwardRef<HTMLDivElement, CardProps>(
-  ({ className, children, variant = 'default', ...props }, ref) => {
+  ({ className, children, variant = 'default', interactive = false, padding, ...props }, ref) => {
     return (
       <div
         ref={ref}
         className={cn(
-          'rounded-lg bg-card',
+          'rounded-lg bg-card transition-all duration-200',
           variant === 'outlined' && 'border border-border',
           variant === 'elevated' && 'shadow-lg',
+          interactive && [
+            'cursor-pointer',
+            'hover:shadow-xl hover:-translate-y-1',
+            'active:translate-y-0 active:shadow-md',
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
+          ],
+          padding && paddingClasses[padding],
           className
         )}
+        tabIndex={interactive ? 0 : undefined}
+        role={interactive ? 'button' : undefined}
         {...props}
       >
         {children}

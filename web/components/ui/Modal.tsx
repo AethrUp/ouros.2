@@ -21,10 +21,10 @@ export interface ModalProps {
 }
 
 const sizeClasses = {
-  small: 'max-w-md',
-  medium: 'max-w-2xl',
-  large: 'max-w-4xl',
-  full: 'max-w-full mx-4',
+  small: 'w-full h-full lg:w-auto lg:h-auto lg:max-w-md lg:rounded-xl',
+  medium: 'w-full h-full lg:w-auto lg:h-auto lg:max-w-2xl lg:rounded-xl',
+  large: 'w-full h-full lg:w-auto lg:h-auto lg:max-w-4xl lg:rounded-xl',
+  full: 'w-full h-full lg:max-w-full lg:mx-4 lg:rounded-xl',
 };
 
 export const Modal: React.FC<ModalProps> = ({
@@ -84,16 +84,20 @@ export const Modal: React.FC<ModalProps> = ({
 
           {/* Modal Container */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            initial={{ opacity: 0, scale: 1, y: '100%' }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            exit={{ opacity: 0, scale: 1, y: '100%' }}
             transition={{
-              duration: 0.2,
+              duration: 0.3,
               ease: [0.4, 0, 0.2, 1],
             }}
             className={cn(
-              'relative w-full bg-card rounded-xl shadow-2xl',
-              'max-h-[90vh] flex flex-col',
+              'relative bg-card shadow-2xl',
+              'flex flex-col',
+              // Mobile: full screen
+              'rounded-none',
+              // Desktop: centered dialog with max-height
+              'lg:max-h-[90vh] lg:rounded-xl',
               sizeClasses[size],
               className
             )}

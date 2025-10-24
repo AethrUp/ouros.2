@@ -78,3 +78,107 @@ body {
 .text-secondary {
   color: rgb(var(--color-secondary));
 }
+
+/* Enhanced Focus Styles for Accessibility */
+*:focus-visible {
+  outline: 2px solid rgb(var(--color-primary));
+  outline-offset: 2px;
+}
+
+/* Button and Interactive Element Focus States */
+button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible {
+  outline: 2px solid rgb(var(--color-primary));
+  outline-offset: 2px;
+}
+
+/* Input Focus States */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid rgb(var(--color-primary));
+  outline-offset: 0;
+  border-color: rgb(var(--color-primary));
+}
+
+/* Smooth Transitions for Interactive Elements */
+a, button, [role="button"], input, textarea, select {
+  transition-property: background-color, border-color, color, opacity, transform;
+  transition-duration: 200ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Desktop Hover States */
+@media (hover: hover) and (pointer: fine) {
+  a:hover,
+  button:not(:disabled):hover,
+  [role="button"]:not([aria-disabled="true"]):hover {
+    cursor: pointer;
+  }
+
+  /* Subtle lift effect for cards */
+  .hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+  }
+
+  /* Opacity hover for images and icons */
+  .hover-opacity:hover {
+    opacity: 0.8;
+  }
+
+  /* Scale effect for interactive elements */
+  .hover-scale:hover {
+    transform: scale(1.02);
+  }
+}
+
+/* Active/Pressed States */
+button:active:not(:disabled),
+[role="button"]:active:not([aria-disabled="true"]) {
+  transform: scale(0.98);
+}
+
+/* Disabled States */
+button:disabled,
+[role="button"][aria-disabled="true"],
+input:disabled,
+textarea:disabled,
+select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Responsive Typography */
+@media (min-width: 640px) {
+  /* Tablet: slightly larger text */
+  body {
+    font-size: 16px;
+  }
+}
+
+@media (min-width: 1024px) {
+  /* Desktop: larger text and line height */
+  body {
+    font-size: 16px;
+    line-height: 1.6;
+  }
+}
+
+/* Responsive Container Spacing */
+.container-responsive {
+  padding: 1rem;
+}
+
+@media (min-width: 640px) {
+  .container-responsive {
+    padding: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container-responsive {
+    padding: 2rem;
+  }
+}
