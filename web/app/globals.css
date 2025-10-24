@@ -1,0 +1,80 @@
+@import "tailwindcss";
+
+:root {
+  /* Brand Colors - RGB values for Tailwind */
+  --color-primary: 129 184 181; /* #81B8B5 */
+  --color-secondary: 133 121 141; /* #85798D */
+  --color-accent: 129 184 181;
+
+  /* Background Colors */
+  --color-background-primary: 37 37 37; /* #252525 */
+  --color-background-secondary: 26 26 26; /* #1A1A1A */
+  --color-background-card: 67 67 67; /* #434343 */
+
+  /* UI Elements */
+  --color-border: 67 67 67;
+  --color-surface: 67 67 67;
+
+  /* Status Colors */
+  --color-success: 129 184 181;
+  --color-warning: 246 217 159; /* #F6D99F */
+  --color-error: 239 68 68; /* Red for errors */
+}
+
+@theme {
+  --color-primary: rgb(var(--color-primary) / <alpha-value>);
+  --color-secondary: rgb(var(--color-secondary) / <alpha-value>);
+  --color-accent: rgb(var(--color-accent) / <alpha-value>);
+
+  --color-background-primary: rgb(var(--color-background-primary) / <alpha-value>);
+  --color-background-secondary: rgb(var(--color-background-secondary) / <alpha-value>);
+  --color-background-card: rgb(var(--color-background-card) / <alpha-value>);
+
+  --color-border: rgb(var(--color-border) / <alpha-value>);
+  --color-surface: rgb(var(--color-surface) / <alpha-value>);
+
+  --color-success: rgb(var(--color-success) / <alpha-value>);
+  --color-warning: rgb(var(--color-warning) / <alpha-value>);
+  --color-error: rgb(var(--color-error) / <alpha-value>);
+
+  --font-inter: var(--font-inter);
+  --font-pt-serif: var(--font-pt-serif);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: rgb(var(--color-background-primary));
+  color: white;
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgb(var(--color-background-secondary));
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgb(var(--color-surface));
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--color-primary));
+}
+
+/* Utility classes */
+.text-secondary {
+  color: rgb(var(--color-secondary));
+}
