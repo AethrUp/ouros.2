@@ -1,4 +1,3 @@
-import * as ImagePicker from 'expo-image-picker';
 import { supabase } from '../utils/supabase';
 
 export interface AvatarUploadResult {
@@ -7,32 +6,53 @@ export interface AvatarUploadResult {
   error?: string;
 }
 
+export interface ImagePickerResult {
+  canceled: boolean;
+  assets?: Array<{ uri: string }>;
+}
+
 /**
- * Request camera roll permissions
+ * Request camera roll permissions (web version - always granted)
  */
 export const requestMediaLibraryPermissions = async (): Promise<boolean> => {
-  const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-  return status === 'granted';
+  // On web, file input doesn't require explicit permissions
+  return true;
 };
 
 /**
- * Pick an image from the device's media library
+ * Pick an image from the device's media library (web version)
  */
-export const pickImage = async (): Promise<ImagePicker.ImagePickerResult | null> => {
+export const pickImage = async (): Promise<ImagePickerResult | null> => {
   try {
-    const hasPermission = await requestMediaLibraryPermissions();
-    if (!hasPermission) {
-      throw new Error('Permission to access media library was denied');
-    }
+    return new Promise((resolve) => {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
+      input.onchange = (e: Event) => {
+        const file = (e.target as HTMLInputElement).files?.[0];
+        if (file) {
+          // Create a local URL for the file
+          const uri = URL.createObjectURL(file);
+          resolve({
+            canceled: false,
+            assets: [{ uri }]
+          });
+        } else {
+          resolve({
+            canceled: true
+          });
+        }
+      };
+
+      input.oncancel = () => {
+        resolve({
+          canceled: true
+        });
+      };
+
+      input.click();
     });
-
-    return result;
   } catch (error) {
     console.error('Error picking image:', error);
     return null;
@@ -132,7 +152,7 @@ export const pickAndUploadAvatar = async (
   // Pick image
   const pickerResult = await pickImage();
 
-  if (!pickerResult || pickerResult.canceled) {
+  if (!pickerResult || pickerResult.canceled || !pickerResult.assets || pickerResult.assets.length === 0) {
     return {
       success: false,
       error: 'Image selection cancelled',

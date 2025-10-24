@@ -7,10 +7,25 @@
 import { BirthData, NatalChartData } from '../types/user';
 import { ChartGenerationOptions, ChartGenerationResult } from '../types/chart';
 import SwissEphService from '../utils/swisseph';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { enrichChartWithInterpretations } from './planetHouseInterpretation';
 
 const CHART_STORAGE_KEY = 'natal_chart_data';
+
+// Web storage wrapper to replace AsyncStorage
+const webStorage = {
+  async getItem(key: string): Promise<string | null> {
+    if (typeof window === 'undefined') return null;
+    return localStorage.getItem(key);
+  },
+  async setItem(key: string, value: string): Promise<void> {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem(key, value);
+  },
+  async removeItem(key: string): Promise<void> {
+    if (typeof window === 'undefined') return;
+    localStorage.removeItem(key);
+  }
+};
 
 /**
  * Generate natal chart from birth data
@@ -114,7 +129,7 @@ const loadCachedChart = async (
   maxAgeHours: number
 ): Promise<any | null> => {
   try {
-    const cachedData = await AsyncStorage.getItem(CHART_STORAGE_KEY);
+    const cachedData = await webStorage.getItem(CHART_STORAGE_KEY);
     if (!cachedData) return null;
 
     const chartRecord = JSON.parse(cachedData);
@@ -147,7 +162,7 @@ const loadCachedChart = async (
  */
 const saveChartToCache = async (chartRecord: any): Promise<void> => {
   try {
-    await AsyncStorage.setItem(CHART_STORAGE_KEY, JSON.stringify(chartRecord));
+    await webStorage.setItem(CHART_STORAGE_KEY, JSON.stringify(chartRecord));
     console.log('💾 Chart saved to cache');
   } catch (error) {
     console.warn('⚠️ Failed to save chart to cache:', error);
@@ -171,7 +186,7 @@ const birthDataMatches = (cached: BirthData, current: BirthData): boolean => {
  */
 export const clearCachedChart = async (): Promise<void> => {
   try {
-    await AsyncStorage.removeItem(CHART_STORAGE_KEY);
+    await webStorage.removeItem(CHART_STORAGE_KEY);
     console.log('🧹 Cached chart cleared');
   } catch (error) {
     console.warn('⚠️ Failed to clear cached chart:', error);
