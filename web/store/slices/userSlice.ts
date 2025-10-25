@@ -17,7 +17,9 @@ export interface UserSlice {
   updateProfile: (updates: Partial<UserProfile>) => Promise<void>;
   setBirthData: (birthData: BirthData) => void;
   updateBirthData: (birthData: BirthData) => Promise<void>;
-  updatePreferences: (prefs: Partial<UserPreferences>) => void;
+  loadBirthData: (userId: string) => Promise<void>;
+  updatePreferences: (prefs: Partial<UserPreferences>) => Promise<void>;
+  loadPreferences: (userId: string) => Promise<void>;
   clearProfileError: () => void;
   setProfileLoading: (loading: boolean) => void;
   resetOnboarding: () => Promise<void>;
@@ -150,9 +152,145 @@ export const createUserSlice: StateCreator<UserSlice> = (set, get) => ({
     }
   },
 
-  updatePreferences: (prefs) => {
-    const { preferences } = get();
-    set({ preferences: { ...preferences, ...prefs } });
+  loadBirthData: async (userId) => {
+    set({ isLoadingProfile: true, profileError: null });
+    try {
+      const { supabase } = await import('../../utils/supabase');
+
+      const { data, error } = await supabase
+        .from('birth_data')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          // No birth data found - this is ok for new users
+          console.log('No birth data found for user');
+          set({ birthData: null, isLoadingProfile: false });
+          return;
+        }
+        throw new Error(error.message);
+      }
+
+      if (data) {
+        // Map snake_case to camelCase
+        const birthData: BirthData = {
+          birthDate: data.birth_date,
+          birthTime: data.birth_time,
+          timeUnknown: data.time_unknown,
+          birthLocation: {
+            name: data.location_name,
+            latitude: data.latitude,
+            longitude: data.longitude,
+            timezone: data.location_timezone,
+            timezoneOffset: 0, // This can be calculated from timezone if needed
+            country: data.country,
+            region: data.region,
+          },
+          timezone: data.location_timezone,
+        };
+
+        set({ birthData, isLoadingProfile: false });
+        console.log('✅ Birth data loaded from database');
+      }
+    } catch (error: any) {
+      console.error('❌ Failed to load birth data:', error);
+      set({
+        profileError: error.message || 'Failed to load birth data',
+        isLoadingProfile: false,
+      });
+    }
+  },
+
+  updatePreferences: async (prefs) => {
+    const { preferences, profile } = get();
+    const updatedPreferences = { ...preferences, ...prefs };
+
+    // Update local state first
+    set({ preferences: updatedPreferences });
+
+    // Save to Supabase if user is logged in
+    if (profile?.id) {
+      try {
+        const { supabase } = await import('../../utils/supabase');
+
+        // Map camelCase to snake_case for database
+        const dbPrefs: any = {};
+        if (prefs.interpretationStyle !== undefined) dbPrefs.interpretation_style = prefs.interpretationStyle;
+        if (prefs.detailLevel !== undefined) dbPrefs.detail_level = prefs.detailLevel;
+        if (prefs.focusAreas !== undefined) dbPrefs.focus_areas = prefs.focusAreas;
+        if (prefs.theme !== undefined) dbPrefs.theme = prefs.theme;
+        if (prefs.selectedDeck !== undefined) dbPrefs.selected_deck = prefs.selectedDeck;
+        if (prefs.houseSystem !== undefined) dbPrefs.house_system = prefs.houseSystem;
+        if (prefs.dailyHoroscope !== undefined) dbPrefs.daily_horoscope = prefs.dailyHoroscope;
+        if (prefs.readingReminders !== undefined) dbPrefs.reading_reminders = prefs.readingReminders;
+        if (prefs.journalPrompts !== undefined) dbPrefs.journal_prompts = prefs.journalPrompts;
+
+        dbPrefs.updated_at = new Date().toISOString();
+
+        const { error } = await supabase
+          .from('user_preferences')
+          .upsert({
+            user_id: profile.id,
+            ...dbPrefs,
+          }, {
+            onConflict: 'user_id',
+          });
+
+        if (error) {
+          console.error('Failed to save preferences to database:', error);
+          throw new Error(error.message);
+        }
+
+        console.log('✅ Preferences saved to database');
+      } catch (error: any) {
+        console.error('❌ Failed to update preferences:', error);
+        // Don't throw - preferences are already updated locally
+      }
+    }
+  },
+
+  loadPreferences: async (userId) => {
+    try {
+      const { supabase } = await import('../../utils/supabase');
+
+      const { data, error } = await supabase
+        .from('user_preferences')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          // No preferences found - use defaults
+          console.log('No preferences found, using defaults');
+          return;
+        }
+        throw new Error(error.message);
+      }
+
+      if (data) {
+        // Map snake_case to camelCase
+        const preferences: UserPreferences = {
+          interpretationStyle: data.interpretation_style,
+          detailLevel: data.detail_level,
+          focusAreas: data.focus_areas || [],
+          theme: data.theme,
+          selectedDeck: data.selected_deck,
+          houseSystem: data.house_system,
+          dailyHoroscope: data.daily_horoscope,
+          readingReminders: data.reading_reminders,
+          journalPrompts: data.journal_prompts,
+        };
+
+        set({ preferences });
+        console.log('✅ Preferences loaded from database');
+      }
+    } catch (error: any) {
+      console.error('❌ Failed to load preferences:', error);
+      // Don't throw - just use default preferences
+    }
   },
 
   clearProfileError: () => set({ profileError: null }),

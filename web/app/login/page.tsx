@@ -18,28 +18,29 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
+  const [touched, setTouched] = useState({ email: false, password: false });
 
-  const validateEmail = (value: string) => {
+  const validateEmail = (value: string, showError: boolean = true) => {
     if (!value) {
-      setEmailError('Email is required');
+      if (showError) setEmailError('Email is required');
       return false;
     }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(value)) {
-      setEmailError('Invalid email format');
+      if (showError) setEmailError('Invalid email format');
       return false;
     }
     setEmailError('');
     return true;
   };
 
-  const validatePassword = (value: string) => {
+  const validatePassword = (value: string, showError: boolean = true) => {
     if (!value) {
-      setPasswordError('Password is required');
+      if (showError) setPasswordError('Password is required');
       return false;
     }
     if (value.length < 6) {
-      setPasswordError('Password must be at least 6 characters');
+      if (showError) setPasswordError('Password must be at least 6 characters');
       return false;
     }
     setPasswordError('');
@@ -50,8 +51,8 @@ export default function LoginPage() {
     e.preventDefault();
     setError(null);
 
-    const isEmailValid = validateEmail(email);
-    const isPasswordValid = validatePassword(password);
+    const isEmailValid = validateEmail(email, true);
+    const isPasswordValid = validatePassword(password, true);
 
     if (!isEmailValid || !isPasswordValid) {
       return;
@@ -81,39 +82,28 @@ export default function LoginPage() {
         initial="initial"
         animate="animate"
         transition={transitions.spring}
-        className="w-full max-w-md"
+        className="w-full max-w-md lg:max-w-xl"
       >
         {/* Header */}
         <motion.div
           variants={staggerContainer}
           initial="initial"
           animate="animate"
-          className="text-center mb-8"
+          className="text-center mb-12"
         >
-          <motion.div variants={staggerItem}>
-            <Link href="/">
-              <h1 className="text-4xl font-bold font-serif cursor-pointer hover:text-primary transition-colors">
-                Ouros
-              </h1>
+          <motion.h1
+            variants={staggerItem}
+            className="text-3xl font-bold font-serif"
+          >
+            Welcome to Ouros
+          </motion.h1>
+
+          <motion.p variants={staggerItem} className="mt-4 text-sm text-secondary/70">
+            Don't have an account yet?{' '}
+            <Link href="/register" className="text-white hover:text-primary transition-colors">
+              Sign Up
             </Link>
-          </motion.div>
-
-          <motion.h2 variants={staggerItem} className="text-2xl font-semibold mt-6">
-            Welcome Back
-          </motion.h2>
-
-          <motion.p variants={staggerItem} className="mt-2 text-secondary">
-            Sign in to explore your cosmic path
           </motion.p>
-
-          <motion.div variants={staggerItem} className="mt-4">
-            <p className="text-sm text-secondary">
-              Don't have an account?{' '}
-              <Link href="/register" className="text-primary hover:underline font-medium">
-                Sign Up
-              </Link>
-            </p>
-          </motion.div>
         </motion.div>
 
         {/* Form */}
@@ -122,102 +112,103 @@ export default function LoginPage() {
           variants={staggerContainer}
           initial="initial"
           animate="animate"
-          className="space-y-6"
         >
           {/* Error Message */}
           {error && (
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="rounded-lg bg-error/10 border border-error/20 p-4 text-sm text-error"
+              className="rounded-lg bg-error/10 border border-error/20 p-4 text-sm text-error mb-6"
             >
               {error}
             </motion.div>
           )}
 
           {/* Email Input */}
-          <motion.div variants={staggerItem}>
+          <div className="mb-8">
             <Input
               id="email"
               type="email"
-              label="Email"
               required
               value={email}
               onChange={(e) => {
                 setEmail(e.target.value);
-                if (emailError) validateEmail(e.target.value);
+                if (touched.email) validateEmail(e.target.value, true);
               }}
-              onBlur={() => validateEmail(email)}
-              error={emailError}
-              placeholder="you@example.com"
-              leftIcon={<Mail className="w-5 h-5" />}
+              onBlur={() => {
+                setTouched(prev => ({ ...prev, email: true }));
+                validateEmail(email, true);
+              }}
+              error={touched.email ? emailError : ''}
+              placeholder="your email"
               autoComplete="email"
             />
-          </motion.div>
+          </div>
 
           {/* Password Input */}
-          <motion.div variants={staggerItem}>
+          <div className="mb-12">
             <Input
               id="password"
               type="password"
-              label="Password"
               required
               value={password}
               onChange={(e) => {
                 setPassword(e.target.value);
-                if (passwordError) validatePassword(e.target.value);
+                if (touched.password) validatePassword(e.target.value, true);
               }}
-              onBlur={() => validatePassword(password)}
-              error={passwordError}
-              placeholder="••••••••"
-              leftIcon={<Lock className="w-5 h-5" />}
+              onBlur={() => {
+                setTouched(prev => ({ ...prev, password: true }));
+                validatePassword(password, true);
+              }}
+              error={touched.password ? passwordError : ''}
+              placeholder="your password"
               autoComplete="current-password"
             />
-          </motion.div>
-
-          {/* Forgot Password */}
-          <motion.div variants={staggerItem} className="flex justify-end">
-            <Link
-              href="/forgot-password"
-              className="text-sm text-secondary hover:text-primary transition-colors"
-            >
-              Forgot password?
-            </Link>
-          </motion.div>
+          </div>
 
           {/* Submit Button */}
-          <motion.div variants={staggerItem}>
+          <div className="mb-10">
             <Button
               type="submit"
               variant="primary"
               size="large"
               loading={loading}
-              className="w-full"
+              className="w-full uppercase tracking-wide text-sm font-medium"
             >
-              {loading ? 'Signing in...' : 'Sign In'}
+              {loading ? 'LOGGING IN...' : 'LOGIN'}
             </Button>
-          </motion.div>
+          </div>
 
           {/* Divider */}
-          <motion.div variants={staggerItem} className="relative">
+          <div className="relative mb-10">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-border"></div>
             </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-4 bg-background text-secondary">Or continue with</span>
+            <div className="relative flex justify-center text-xs">
+              <span className="px-4 bg-background text-secondary/50">or</span>
             </div>
-          </motion.div>
+          </div>
 
           {/* Social Login Buttons */}
-          <motion.div variants={staggerItem} className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-4">
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => handleSocialLogin('apple')}
+              disabled={loading}
+              className="w-full h-12 flex items-center justify-center bg-[#565656] border-0 hover:bg-[#656565]"
+            >
+              <Apple className="w-6 h-6" />
+            </Button>
+
             <Button
               type="button"
               variant="secondary"
               onClick={() => handleSocialLogin('google')}
               disabled={loading}
-              className="w-full"
+              className="w-full h-12 flex items-center justify-center bg-[#565656] border-0 hover:bg-[#656565]"
             >
-              <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
+              <svg className="w-6 h-6" viewBox="0 0 24 24">
                 <path
                   fill="currentColor"
                   d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -235,20 +226,8 @@ export default function LoginPage() {
                   d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                 />
               </svg>
-              Google
             </Button>
-
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => handleSocialLogin('apple')}
-              disabled={loading}
-              className="w-full"
-            >
-              <Apple className="w-5 h-5 mr-2" />
-              Apple
-            </Button>
-          </motion.div>
+          </div>
         </motion.form>
       </motion.div>
     </div>

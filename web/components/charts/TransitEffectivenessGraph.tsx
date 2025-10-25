@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Legend } from 'recharts';
 import { cn } from '@/lib/utils';
 
 export interface TransitAnalysisItem {
@@ -75,51 +76,6 @@ const BootstrapIcons = {
   brightnessAltLow: 'M8 3a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 3zm8 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5zm-13.5.5a.5.5 0 0 0 0-1h-2a.5.5 0 0 0 0 1h2zm11.157-6.157a.5.5 0 0 1 0 .707l-1.414 1.414a.5.5 0 1 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0zm-9.9 2.121a.5.5 0 0 0 .707-.707L3.05 5.343a.5.5 0 1 0-.707.707l1.414 1.414zM8 7a4 4 0 0 0-4 4 .5.5 0 0 0 .5.5h7a.5.5 0 0 0 .5-.5 4 4 0 0 0-4-4zm0 4.5a3 3 0 0 1 2.959-2.5A3.5 3.5 0 0 1 8 11.5z',
 };
 
-// Generate smooth SVG path using Catmull-Rom spline
-const generateSmoothPath = (
-  strengthCurve: number[],
-  width: number,
-  height: number,
-  yMin: number,
-  yMax: number
-): string => {
-  const padding = { top: 15, right: 10, bottom: 35, left: 10 };
-  const chartWidth = width - padding.left - padding.right;
-  const chartHeight = height - padding.top - padding.bottom;
-  const xScale = chartWidth / 23; // 24 hours (0-23)
-  const yRange = yMax - yMin;
-  const yScale = chartHeight / yRange;
-
-  const points = strengthCurve.map((strength, hour) => ({
-    x: padding.left + hour * xScale,
-    y: padding.top + (yMax - strength) * yScale,
-  }));
-
-  if (points.length < 2) return '';
-
-  let path = `M ${points[0].x} ${points[0].y}`;
-
-  // Use Catmull-Rom spline for smoother curves
-  for (let i = 0; i < points.length - 1; i++) {
-    const p0 = points[Math.max(0, i - 1)];
-    const p1 = points[i];
-    const p2 = points[i + 1];
-    const p3 = points[Math.min(points.length - 1, i + 2)];
-
-    const tension = 0.5;
-
-    // Calculate control points
-    const cp1x = p1.x + ((p2.x - p0.x) / 6) * tension;
-    const cp1y = p1.y + ((p2.y - p0.y) / 6) * tension;
-    const cp2x = p2.x - ((p3.x - p1.x) / 6) * tension;
-    const cp2y = p2.y - ((p3.y - p1.y) / 6) * tension;
-
-    path += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2.x} ${p2.y}`;
-  }
-
-  return path;
-};
-
 // Get planet symbol
 const getPlanetSymbol = (planetName?: string): string => {
   if (!planetName) return '•';
@@ -139,15 +95,73 @@ const getAspectSymbol = (aspectType?: string): string => {
   return '☍';
 };
 
+// Custom legend component
+const CustomLegend = ({ transits }: { transits: TransitAnalysisItem[] }) => {
+  return (
+    <div className="flex justify-center items-center gap-6 mt-4">
+      {transits.map((transit, index) => {
+        const planetSymbol = getPlanetSymbol(transit.planet);
+        const aspectSymbol = getAspectSymbol(transit.aspectType);
+        const natalSymbol = getPlanetSymbol(transit.natalPlanet);
+
+        // Get color
+        const planetKey = transit.planet?.toLowerCase().replace(/\s/g, '') || '';
+        const color = PLANET_COLORS[planetKey] || FALLBACK_COLORS[index] || '#F6D99F';
+
+        return (
+          <div key={index} className="flex items-center gap-2">
+            <div
+              className="w-2.5 h-2.5 rounded-full"
+              style={{ backgroundColor: color }}
+            />
+            <div className="flex items-center text-base tracking-wider">
+              <span>{planetSymbol}</span>
+              <span className="opacity-50"> {aspectSymbol} </span>
+              <span>{natalSymbol}</span>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+// Custom Y-axis tick component
+const CustomYAxisTick = ({ x, y, payload }: any) => {
+  const labels: Record<number, string> = {
+    0: 'Low',
+    25: '',
+    50: 'Medium',
+    75: '',
+    100: 'High',
+  };
+
+  const label = labels[payload.value] || '';
+
+  if (!label) return null;
+
+  return (
+    <g transform={`translate(${x},${y})`}>
+      <text
+        x={0}
+        y={0}
+        dy={4}
+        textAnchor="end"
+        fill="#FFFFFF"
+        fontSize={12}
+        opacity={0.8}
+      >
+        {label}
+      </text>
+    </g>
+  );
+};
+
 export const TransitEffectivenessGraph: React.FC<TransitEffectivenessGraphProps> = ({
   transits,
   maxTransits = 3,
   className,
 }) => {
-  const graphWidth = 600; // Fixed width for consistency
-  const graphHeight = 126;
-  const padding = { top: 15, right: 10, bottom: 35, left: 10 };
-
   // Filter to only transits with timing data
   const validTransits = transits
     .filter((t) => t.timingData?.strengthCurve?.length === 24)
@@ -157,148 +171,82 @@ export const TransitEffectivenessGraph: React.FC<TransitEffectivenessGraphProps>
     return null;
   }
 
-  // Calculate scales with dynamic Y-axis range
-  const chartWidth = graphWidth - padding.left - padding.right;
-  const chartHeight = graphHeight - padding.top - padding.bottom;
-
-  // Find min and max values across all transits
-  let minStrength = 100;
-  let maxStrength = 0;
-  validTransits.forEach((transit) => {
-    transit.timingData?.strengthCurve.forEach((strength) => {
-      minStrength = Math.min(minStrength, strength);
-      maxStrength = Math.max(maxStrength, strength);
+  // Transform data for Recharts
+  const chartData = Array.from({ length: 24 }, (_, hour) => {
+    const dataPoint: any = { hour };
+    validTransits.forEach((transit, index) => {
+      dataPoint[`transit${index}`] = transit.timingData?.strengthCurve[hour] || 0;
     });
+    return dataPoint;
   });
 
-  // Add padding to range
-  const range = Math.max(maxStrength - minStrength, 40);
-  const rangePadding = range * 0.25;
-  const yMin = Math.max(0, minStrength - rangePadding);
-  const yMax = Math.min(100, maxStrength + rangePadding);
-
   return (
-    <div className={cn('p-4 bg-card border border-border rounded-lg', className)}>
+    <div className={cn('h-full p-4 bg-card border border-border rounded-lg flex flex-col', className)}>
       {/* Graph */}
-      <svg
-        width="100%"
-        height={graphHeight}
-        viewBox={`0 0 ${graphWidth} ${graphHeight}`}
-        className="overflow-visible"
-      >
-        {/* Y-axis grid lines */}
-        {[0, 0.5, 1].map((fraction) => {
-          const y = padding.top + (1 - fraction) * chartHeight;
-          return (
-            <line
-              key={`y-${fraction}`}
-              x1={padding.left}
-              y1={y}
-              x2={padding.left + chartWidth}
-              y2={y}
-              stroke="rgb(var(--color-border))"
-              strokeWidth="1"
-              opacity="0.2"
+      <div className="flex-1 min-h-0">
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 30 }}>
+            <CartesianGrid
+              strokeDasharray="3 3"
+              stroke="rgba(255, 255, 255, 0.1)"
+              horizontalPoints={[0, 25, 50, 75, 100]}
             />
-          );
-        })}
+            <XAxis
+              dataKey="hour"
+              stroke="#FFFFFF"
+              tick={false}
+              axisLine={{ stroke: 'rgba(255, 255, 255, 0.3)' }}
+            />
+            <YAxis
+              stroke="#FFFFFF"
+              tick={<CustomYAxisTick />}
+              axisLine={{ stroke: 'rgba(255, 255, 255, 0.3)' }}
+              domain={[0, 100]}
+              ticks={[0, 25, 50, 75, 100]}
+            />
+            {validTransits.map((transit, index) => {
+              const planetKey = transit.planet?.toLowerCase().replace(/\s/g, '') || '';
+              const color = PLANET_COLORS[planetKey] || FALLBACK_COLORS[index] || '#F6D99F';
 
-        {/* X-axis time of day icons */}
+              return (
+                <Line
+                  key={index}
+                  type="natural"
+                  dataKey={`transit${index}`}
+                  stroke={color}
+                  strokeWidth={3}
+                  dot={false}
+                  animationDuration={1000}
+                />
+              );
+            })}
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* Time of day icons */}
+      <div className="flex justify-between px-2 pb-2">
         {[
           { icon: 'moonStars' },
           { icon: 'brightnessAltHighFill' },
           { icon: 'sunFill' },
           { icon: 'brightnessAltLow' },
-        ].map(({ icon }, index, array) => {
-          const iconSize = 16;
-          const isFirst = index === 0;
-          const isLast = index === array.length - 1;
-          let x;
-          if (isFirst) {
-            x = padding.left;
-          } else if (isLast) {
-            x = padding.left + chartWidth - iconSize;
-          } else {
-            const spacing = chartWidth / (array.length - 1);
-            x = padding.left + index * spacing - iconSize / 2;
-          }
-          return (
-            <path
-              key={`x-icon-${index}`}
-              d={BootstrapIcons[icon as keyof typeof BootstrapIcons]}
-              fill="#FFFFFF"
-              opacity="0.8"
-              transform={`translate(${x}, ${padding.top + chartHeight + 12}) scale(${iconSize / 16})`}
-            />
-          );
-        })}
-
-        {/* Transit curves */}
-        {validTransits.map((transit, index) => {
-          if (!transit.timingData?.strengthCurve) return null;
-
-          const path = generateSmoothPath(
-            transit.timingData.strengthCurve,
-            graphWidth,
-            graphHeight,
-            yMin,
-            yMax
-          );
-
-          // Get color based on transiting planet
-          const planetKey = transit.planet?.toLowerCase().replace(/\s/g, '') || '';
-          const color = PLANET_COLORS[planetKey] || FALLBACK_COLORS[index] || '#F6D99F';
-
-          return (
-            <path
-              key={index}
-              d={path}
-              stroke={color}
-              strokeWidth="3"
-              fill="none"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          );
-        })}
-
-        {/* Bottom axis */}
-        <line
-          x1={padding.left}
-          y1={padding.top + chartHeight}
-          x2={padding.left + chartWidth}
-          y2={padding.top + chartHeight}
-          stroke="rgb(var(--color-border))"
-          strokeWidth="1"
-        />
-      </svg>
+        ].map(({ icon }, index) => (
+          <svg
+            key={`x-icon-${index}`}
+            width="24"
+            height="24"
+            viewBox="0 0 16 16"
+            fill="#FFFFFF"
+            opacity="0.8"
+          >
+            <path d={BootstrapIcons[icon as keyof typeof BootstrapIcons]} />
+          </svg>
+        ))}
+      </div>
 
       {/* Legend */}
-      <div className="flex justify-center items-center gap-6 mt-4">
-        {validTransits.map((transit, index) => {
-          const planetSymbol = getPlanetSymbol(transit.planet);
-          const aspectSymbol = getAspectSymbol(transit.aspectType);
-          const natalSymbol = getPlanetSymbol(transit.natalPlanet);
-
-          // Get color
-          const planetKey = transit.planet?.toLowerCase().replace(/\s/g, '') || '';
-          const color = PLANET_COLORS[planetKey] || FALLBACK_COLORS[index] || '#F6D99F';
-
-          return (
-            <div key={index} className="flex items-center gap-2">
-              <div
-                className="w-2.5 h-2.5 rounded-full"
-                style={{ backgroundColor: color }}
-              />
-              <div className="flex items-center text-base tracking-wider">
-                <span>{planetSymbol}</span>
-                <span className="opacity-50"> {aspectSymbol} </span>
-                <span>{natalSymbol}</span>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+      <CustomLegend transits={validTransits} />
     </div>
   );
 };

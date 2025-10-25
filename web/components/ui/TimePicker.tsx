@@ -1,6 +1,6 @@
 'use client';
 
-import React, { forwardRef } from 'react';
+import React, { forwardRef, useId } from 'react';
 import { Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -22,43 +22,47 @@ export const TimePicker = forwardRef<HTMLInputElement, TimePickerProps>(
       disabled,
       id,
       showSeconds = false,
+      onFocus,
       ...props
     },
     ref
   ) => {
-    const inputId = id || `time-${Math.random().toString(36).substr(2, 9)}`;
+    const generatedId = useId();
+    const inputId = id || generatedId;
+
+    const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+      // Try to show the picker on focus
+      try {
+        e.target.showPicker?.();
+      } catch (error) {
+        // Silently fail if showPicker is not supported
+      }
+      onFocus?.(e);
+    };
 
     return (
       <div className="w-full">
-        {label && (
-          <label
-            htmlFor={inputId}
-            className="block text-sm font-medium text-white mb-2"
-          >
-            {label}
-            {props.required && <span className="text-error ml-1">*</span>}
-          </label>
-        )}
         <div className="relative">
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary pointer-events-none">
-            <Clock className="w-5 h-5" />
-          </div>
           <input
             id={inputId}
             type="time"
+            placeholder={label}
             step={showSeconds ? '1' : undefined}
             className={cn(
-              'flex h-12 w-full rounded-lg border border-border bg-card pl-10 pr-4 py-3',
-              'text-base text-white',
-              'focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent',
+              'flex h-14 w-full rounded-lg pl-6 pr-5 py-4 mb-4',
+              'text-base text-white placeholder:text-white/50 placeholder:uppercase placeholder:tracking-wide placeholder:text-sm',
+              'bg-[#141414]',
+              'border-0',
+              'focus:outline-none focus:ring-2 focus:ring-primary/50',
               'disabled:cursor-not-allowed disabled:opacity-50',
               'transition-all duration-200',
               '[color-scheme:dark]', // Makes native time picker dark
-              error && 'border-error focus:ring-error',
+              error && 'ring-2 ring-error focus:ring-error',
               className
             )}
             ref={ref}
             disabled={disabled}
+            onFocus={handleFocus}
             aria-invalid={error ? 'true' : 'false'}
             aria-describedby={
               error ? 'error-message' : helperText ? 'helper-text' : undefined

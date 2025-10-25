@@ -1,54 +1,51 @@
 @import "tailwindcss";
 
-:root {
-  /* Brand Colors - RGB values for Tailwind */
-  --color-primary: 129 184 181; /* #81B8B5 */
-  --color-secondary: 133 121 141; /* #85798D */
-  --color-accent: 129 184 181;
+@theme {
+  /* Brand Colors - Matching Mobile */
+  --color-primary: #F6D99F; /* Gold - main brand color */
+  --color-secondary: rgba(255, 255, 255, 0.5); /* 50% white - secondary text */
+  --color-accent: #F6D99F; /* Gold accent */
+  --color-gold: #F6D99F; /* Gold - for headings and highlights */
 
   /* Background Colors */
-  --color-background-primary: 37 37 37; /* #252525 */
-  --color-background-secondary: 26 26 26; /* #1A1A1A */
-  --color-background-card: 67 67 67; /* #434343 */
+  --color-background: #252525;
+  --color-background-secondary: #1a1a1a;
+  --color-card: #434343;
 
   /* UI Elements */
-  --color-border: 67 67 67;
-  --color-surface: 67 67 67;
+  --color-border: #434343;
+  --color-surface: #434343;
 
   /* Status Colors */
-  --color-success: 129 184 181;
-  --color-warning: 246 217 159; /* #F6D99F */
-  --color-error: 239 68 68; /* Red for errors */
-}
+  --color-success: #F6D99F;
+  --color-warning: rgba(255, 255, 255, 0.5);
+  --color-error: rgba(255, 255, 255, 0.5);
 
-@theme {
-  --color-primary: rgb(var(--color-primary) / <alpha-value>);
-  --color-secondary: rgb(var(--color-secondary) / <alpha-value>);
-  --color-accent: rgb(var(--color-accent) / <alpha-value>);
-
-  --color-background-primary: rgb(var(--color-background-primary) / <alpha-value>);
-  --color-background-secondary: rgb(var(--color-background-secondary) / <alpha-value>);
-  --color-background-card: rgb(var(--color-background-card) / <alpha-value>);
-
-  --color-border: rgb(var(--color-border) / <alpha-value>);
-  --color-surface: rgb(var(--color-surface) / <alpha-value>);
-
-  --color-success: rgb(var(--color-success) / <alpha-value>);
-  --color-warning: rgb(var(--color-warning) / <alpha-value>);
-  --color-error: rgb(var(--color-error) / <alpha-value>);
-
+  /* Fonts */
   --font-inter: var(--font-inter);
   --font-pt-serif: var(--font-pt-serif);
+
+  /* Spacing - Mobile Design System */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-xxl: 48px;
+
+  /* Border Radius */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
 }
 
 * {
-  margin: 0;
-  padding: 0;
   box-sizing: border-box;
 }
 
 body {
-  background: rgb(var(--color-background-primary));
+  background: #252525;
   color: white;
   font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -62,26 +59,62 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: rgb(var(--color-background-secondary));
+  background: #1a1a1a;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgb(var(--color-surface));
+  background: #434343;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgb(var(--color-primary));
+  background: #F6D99F;
+}
+
+/* Typography - Mobile Design System */
+h1 {
+  font-family: var(--font-pt-serif), serif;
+  font-size: 30px;
+  font-weight: 400;
+  color: #FFFFFF;
+}
+
+h2 {
+  font-family: var(--font-pt-serif), serif;
+  font-size: 20px;
+  font-weight: 400;
+  color: #F6D99F; /* Gold for section headings */
+}
+
+h3 {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  color: #FFFFFF;
+  text-transform: uppercase;
+  letter-spacing: 1.26px;
 }
 
 /* Utility classes */
 .text-secondary {
-  color: rgb(var(--color-secondary));
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.text-gold {
+  color: #F6D99F;
+}
+
+/* Card styles matching mobile */
+.card {
+  background-color: #434343;
+  border: 1px solid #434343;
+  border-radius: 12px;
+  padding: 24px;
 }
 
 /* Enhanced Focus Styles for Accessibility */
 *:focus-visible {
-  outline: 2px solid rgb(var(--color-primary));
+  outline: 2px solid #F6D99F;
   outline-offset: 2px;
 }
 
@@ -89,7 +122,7 @@ body {
 button:focus-visible,
 a:focus-visible,
 [role="button"]:focus-visible {
-  outline: 2px solid rgb(var(--color-primary));
+  outline: 2px solid #F6D99F;
   outline-offset: 2px;
 }
 
@@ -97,9 +130,9 @@ a:focus-visible,
 input:focus-visible,
 textarea:focus-visible,
 select:focus-visible {
-  outline: 2px solid rgb(var(--color-primary));
+  outline: 2px solid #F6D99F;
   outline-offset: 0;
-  border-color: rgb(var(--color-primary));
+  border-color: #F6D99F;
 }
 
 /* Smooth Transitions for Interactive Elements */
@@ -154,14 +187,14 @@ select:disabled {
 @media (min-width: 640px) {
   /* Tablet: slightly larger text */
   body {
-    font-size: 16px;
+    font-size: 18px;
   }
 }
 
 @media (min-width: 1024px) {
   /* Desktop: larger text and line height */
   body {
-    font-size: 16px;
+    font-size: 18px;
     line-height: 1.6;
   }
 }

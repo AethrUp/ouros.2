@@ -3,7 +3,7 @@ import Link from "next/link";
 export default function Home() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center px-4">
-      <div className="text-center space-y-8 max-w-2xl">
+      <div className="text-center space-y-8 max-w-[1200px] w-full">
         <h1 className="text-5xl font-bold font-serif">
           Ouros
         </h1>

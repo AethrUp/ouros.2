@@ -14,7 +14,7 @@ export interface TarotCard {
   keywords: string[];
   element?: string;
   astrology?: string;
-  imageUri: any; // SVG component or require() result for images
+  imageUri?: string; // Web uses string paths for images
 }
 
 export interface TarotReading {

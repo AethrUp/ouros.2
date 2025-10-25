@@ -3,53 +3,38 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import {
-  Home,
-  Sparkles,
-  User,
-  BookOpen,
-  Users,
-  Star,
-} from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface NavItem {
   label: string;
   href: string;
-  icon: React.ReactNode;
   badge?: number;
 }
 
 const NAV_ITEMS: NavItem[] = [
   {
-    label: 'Home',
+    label: 'HOME',
     href: '/dashboard',
-    icon: <Home className="w-6 h-6" />,
   },
   {
-    label: 'Oracle',
+    label: 'ORACLE',
     href: '/oracle',
-    icon: <Sparkles className="w-6 h-6" />,
   },
   {
-    label: 'Chart',
+    label: 'CHART',
     href: '/chart',
-    icon: <Star className="w-6 h-6" />,
   },
   {
-    label: 'Journal',
+    label: 'JOURNAL',
     href: '/journal',
-    icon: <BookOpen className="w-6 h-6" />,
   },
   {
-    label: 'Friends',
+    label: 'FRIENDS',
     href: '/friends',
-    icon: <Users className="w-6 h-6" />,
   },
   {
-    label: 'Profile',
+    label: 'PROFILE',
     href: '/profile',
-    icon: <User className="w-6 h-6" />,
   },
 ];
 
@@ -73,15 +58,14 @@ export const Navigation: React.FC = () => {
               key={item.href}
               href={item.href}
               className={cn(
-                'flex items-center gap-3 px-4 py-3 rounded-lg transition-all',
-                'hover:bg-background-secondary',
+                'flex items-center px-4 py-3 transition-all border-b-2',
+                'hover:border-white',
                 isActive(item.href)
-                  ? 'bg-primary/10 text-primary font-medium'
-                  : 'text-white'
+                  ? 'border-white text-white font-medium'
+                  : 'border-transparent text-white/50'
               )}
             >
-              {item.icon}
-              <span className="text-base">{item.label}</span>
+              <span className="text-base" style={{ letterSpacing: '0.15em' }}>{item.label}</span>
               {item.badge !== undefined && item.badge > 0 && (
                 <span className="ml-auto flex items-center justify-center min-w-[20px] h-5 px-2 text-xs font-bold text-white bg-primary rounded-full">
                   {item.badge}
@@ -100,19 +84,21 @@ export const Navigation: React.FC = () => {
               key={item.href}
               href={item.href}
               className={cn(
-                'flex flex-col items-center justify-center gap-1 px-3 py-2 min-w-[60px] transition-colors',
-                isActive(item.href) ? 'text-primary' : 'text-secondary'
+                'flex flex-col items-center justify-center px-3 py-2 min-w-[60px] transition-all border-b-2',
+                'hover:border-white',
+                isActive(item.href)
+                  ? 'border-white text-white'
+                  : 'border-transparent text-white/50'
               )}
             >
-              <div className="relative">
-                {item.icon}
+              <span className="text-xs font-medium" style={{ letterSpacing: '0.15em' }}>
+                {item.label}
                 {item.badge !== undefined && item.badge > 0 && (
-                  <span className="absolute -top-1 -right-1 flex items-center justify-center min-w-[16px] h-4 px-1 text-xs font-bold text-white bg-error rounded-full">
+                  <span className="ml-1 inline-flex items-center justify-center min-w-[16px] h-4 px-1 text-xs font-bold text-white bg-error rounded-full">
                     {item.badge > 9 ? '9+' : item.badge}
                   </span>
                 )}
-              </div>
-              <span className="text-xs font-medium">{item.label}</span>
+              </span>
             </Link>
           ))}
         </div>

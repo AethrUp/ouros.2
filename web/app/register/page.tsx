@@ -317,7 +317,7 @@ export default function RegisterPage() {
             <Button
               type="submit"
               variant="primary"
-              size="large"
+              size="medium"
               loading={loading}
               className="w-full"
             >

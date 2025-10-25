@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import RadionicSpinner from './RadionicSpinner';
 
 type LoadingContext = 'natal-chart' | 'tarot' | 'dream' | 'synastry' | 'iching' | 'dashboard' | 'general';
 
@@ -56,65 +57,6 @@ const MESSAGE_SETS: Record<LoadingContext, string[]> = {
     'Just a moment',
     'Preparing your insights',
   ],
-};
-
-// Radionic Spinner Component (Web version)
-const RadionicSpinner: React.FC = () => {
-  return (
-    <div className="relative w-64 h-64">
-      {/* Outer rotating ring */}
-      <motion.div
-        className="absolute inset-0 rounded-full border-2 border-primary/30"
-        animate={{ rotate: 360 }}
-        transition={{
-          duration: 8,
-          repeat: Infinity,
-          ease: "linear",
-        }}
-      />
-
-      {/* Middle rotating ring */}
-      <motion.div
-        className="absolute inset-6 rounded-full border-2 border-primary/50"
-        animate={{ rotate: -360 }}
-        transition={{
-          duration: 6,
-          repeat: Infinity,
-          ease: "linear",
-        }}
-      />
-
-      {/* Inner rotating ring */}
-      <motion.div
-        className="absolute inset-12 rounded-full border-2 border-primary/70"
-        animate={{ rotate: 360 }}
-        transition={{
-          duration: 4,
-          repeat: Infinity,
-          ease: "linear",
-        }}
-      />
-
-      {/* Center pulsing circle */}
-      <motion.div
-        className="absolute inset-20 rounded-full bg-primary/20"
-        animate={{
-          scale: [1, 1.2, 1],
-          opacity: [0.3, 0.6, 0.3],
-        }}
-        transition={{
-          duration: 2,
-          repeat: Infinity,
-          ease: "easeInOut",
-        }}
-      />
-
-      {/* Center core */}
-      <div className="absolute inset-0 flex items-center justify-center">
-        <div className="w-4 h-4 rounded-full bg-primary shadow-lg shadow-primary/50" />
-      </div>
-    </div>
-  );
 };
 
 export const LoadingScreen: React.FC<LoadingScreenProps> = ({

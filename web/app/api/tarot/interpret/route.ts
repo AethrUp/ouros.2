@@ -2,6 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
+import { DrawnCard, CardInsight } from '@/types/tarot';
+import {
+  constructTarotPrompt,
+  constructOverviewPrompt,
+  constructCardPrompt,
+  constructMetaPrompt,
+  constructStaticInterpretation,
+  validateTarotResponse
+} from '@/lib/tarotPromptTemplate';
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY || '',
@@ -111,53 +120,22 @@ export async function POST(request: NextRequest) {
   }
 }
 
-function constructTarotPrompt({
-  intention,
-  cards,
-  context,
-  style,
-  detailLevel
-}: any): string {
-  let prompt = `You are an expert tarot reader with deep knowledge of symbolism, archetypes, and divination. Provide an insightful interpretation of this tarot reading.\n\n`;
+/**
+ * Helper: Parse and clean JSON response from AI
+ */
+function parseAIResponse(text: string): any {
+  let cleanedText = text.trim();
 
-  prompt += `INTENTION/QUESTION:\n${intention || 'General guidance'}\n\n`;
-
-  prompt += `CARDS DRAWN:\n`;
-  cards.forEach((drawnCard: any, index: number) => {
-    prompt += `${index + 1}. ${drawnCard.card.name} (${drawnCard.orientation}) - Position: ${drawnCard.position}\n`;
-    prompt += `   Position Meaning: ${drawnCard.positionMeaning}\n`;
-  });
-  prompt += `\n`;
-
-  // Add personalization
-  if (context.birthData?.sun) {
-    prompt += `QUERENT'S ASTROLOGICAL CONTEXT:\n`;
-    prompt += `Sun Sign: ${context.birthData.sun.sign.name}\n`;
-    if (context.birthData.moon) {
-      prompt += `Moon Sign: ${context.birthData.moon.sign.name}\n`;
-    }
-    prompt += `\n`;
+  // Remove markdown code fences if present
+  if (cleanedText.startsWith('```json')) {
+    cleanedText = cleanedText.substring(7);
+  } else if (cleanedText.startsWith('```')) {
+    cleanedText = cleanedText.substring(3);
   }
 
-  // Style guidance
-  if (style === 'mystical') {
-    prompt += `INTERPRETATION STYLE: Use a mystical and spiritual approach, exploring esoteric symbolism and divine messages.\n\n`;
-  } else if (style === 'psychological') {
-    prompt += `INTERPRETATION STYLE: Use a psychological approach, exploring the cards as mirrors of the inner self and unconscious patterns.\n\n`;
-  } else if (style === 'practical') {
-    prompt += `INTERPRETATION STYLE: Use a practical approach, focusing on actionable insights and real-world applications.\n\n`;
+  if (cleanedText.endsWith('```')) {
+    cleanedText = cleanedText.substring(0, cleanedText.length - 3);
   }
 
-  prompt += `DETAIL LEVEL: ${detailLevel}\n\n`;
-
-  prompt += `Please provide a comprehensive reading that includes:\n`;
-  prompt += `1. Overview of the reading\n`;
-  prompt += `2. Interpretation of each card in its position\n`;
-  prompt += `3. How the cards relate to each other\n`;
-  prompt += `4. Guidance and advice based on the reading\n`;
-  prompt += `5. A key insight or message\n\n`;
-
-  prompt += `Write in a warm, insightful tone that honors both the mystery of the tarot and the practical needs of the querent.`;
-
-  return prompt;
+  return JSON.parse(cleanedText.trim());
 }

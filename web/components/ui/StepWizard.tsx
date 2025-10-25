@@ -227,6 +227,7 @@ export const StepWizard: React.FC<StepWizardProps> = ({
             <Button
               type="button"
               variant="ghost"
+              size="small"
               onClick={goToPrevious}
               disabled={loading}
               className="gap-2"
@@ -239,6 +240,7 @@ export const StepWizard: React.FC<StepWizardProps> = ({
             <Button
               type="button"
               variant="ghost"
+              size="small"
               onClick={onCancel}
               disabled={loading}
             >
@@ -252,6 +254,7 @@ export const StepWizard: React.FC<StepWizardProps> = ({
             <Button
               type="button"
               variant="secondary"
+              size="small"
               onClick={handleSkip}
               disabled={loading}
             >
@@ -261,6 +264,7 @@ export const StepWizard: React.FC<StepWizardProps> = ({
           <Button
             type="button"
             variant="primary"
+            size="small"
             onClick={goToNext}
             loading={loading}
             className="gap-2"

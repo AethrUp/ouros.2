@@ -137,13 +137,13 @@ export default function DashboardPage() {
           variants={staggerContainer}
           initial="initial"
           animate="animate"
-          className="space-y-6 px-4 pt-6"
+          className="space-y-6 px-4 pt-6 max-w-4xl mx-auto"
         >
           {/* Main Horoscope Card */}
-          <motion.div variants={staggerItem} className="bg-card border border-border rounded-lg p-6">
+          <motion.div variants={staggerItem} className="card">
             <div className="flex items-start justify-between mb-4">
               <div>
-                <h1 className="text-2xl font-bold mb-1">{mockHoroscope.preview.title}</h1>
+                <h2 className="mb-1">{mockHoroscope.preview.title}</h2>
                 <p className="text-sm text-secondary">
                   {new Date().toLocaleDateString('en-US', {
                     weekday: 'long',
@@ -157,95 +157,87 @@ export default function DashboardPage() {
               )}
             </div>
 
-            <p className="text-white leading-relaxed mb-6">{mockHoroscope.preview.summary}</p>
+            <p className="text-white leading-relaxed mb-6 text-sm">{mockHoroscope.preview.summary}</p>
 
             <Button variant="primary" onClick={() => router.push('/horoscope')} className="w-full">
               Read Full Horoscope
             </Button>
           </motion.div>
 
-          {/* Today's Transits */}
-          {mockHoroscope.fullContent?.transitAnalysis && (
+          {/* Transits & Cosmic Weather - Side by side on desktop */}
+          {(mockHoroscope.fullContent?.transitAnalysis || mockHoroscope.preview?.weather) && (
             <motion.div variants={staggerItem}>
-              <div className="px-4">
-                <h2 className="text-sm font-semibold tracking-wider text-secondary mb-3">
-                  TODAY'S TRANSITS
-                </h2>
-              </div>
-              <TransitEffectivenessGraph
-                transits={[
-                  mockHoroscope.fullContent.transitAnalysis.primary,
-                  ...(mockHoroscope.fullContent.transitAnalysis.secondary || []),
-                ]}
-                maxTransits={3}
-                className="mx-4"
-              />
-            </motion.div>
-          )}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-          {/* Cosmic Weather Chart */}
-          {mockHoroscope.preview?.weather && (
-            <motion.div variants={staggerItem}>
-              <div className="px-4">
-                <h2 className="text-sm font-semibold tracking-wider text-secondary mb-3">
-                  COSMIC WEATHER
-                </h2>
+                {/* Today's Transits */}
+                {mockHoroscope.fullContent?.transitAnalysis && (
+                  <div className="flex flex-col">
+                    <h3 className="mb-3">Today's Transits</h3>
+                    <div className="flex-1">
+                      <TransitEffectivenessGraph
+                        transits={[
+                          mockHoroscope.fullContent.transitAnalysis.primary,
+                          ...(mockHoroscope.fullContent.transitAnalysis.secondary || []),
+                        ]}
+                        maxTransits={3}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Cosmic Weather Chart */}
+                {mockHoroscope.preview?.weather && (
+                  <div className="flex flex-col">
+                    <h3 className="mb-3">Cosmic Weather</h3>
+                    <div className="flex-1">
+                      <CosmicWeatherChart weather={mockHoroscope.preview.weather} />
+                    </div>
+                  </div>
+                )}
+
               </div>
-              <CosmicWeatherChart weather={mockHoroscope.preview.weather} className="mx-4" />
             </motion.div>
           )}
 
           {/* Journal Prompts */}
-          <motion.div variants={staggerItem} className="px-4">
-            <div className="bg-card border border-border rounded-lg p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <BookOpen className="w-5 h-5 text-primary" />
-                <h2 className="text-sm font-semibold tracking-wider text-secondary">
-                  JOURNAL PROMPTS
-                </h2>
-              </div>
-              <div className="space-y-4">
-                {journalPrompts.slice(0, 2).map((prompt, index) => (
-                  <button
-                    key={index}
+          <motion.div variants={staggerItem}>
+            <h3 className="mb-3">Journal Prompts</h3>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+              {journalPrompts.map((prompt, index) => (
+                <div key={index} className="card p-4 flex flex-col">
+                  <div className="flex items-start gap-3 mb-4 flex-1">
+                    <Sparkles className="w-4 h-4 text-primary mt-1 flex-shrink-0" />
+                    <p className="text-sm text-white">
+                      {prompt}
+                    </p>
+                  </div>
+                  <Button
+                    variant="primary"
+                    size="sm"
                     onClick={() => router.push(`/journal?prompt=${encodeURIComponent(prompt)}`)}
-                    className="w-full text-left p-4 bg-surface rounded-lg hover:bg-surface/80 transition-colors group"
+                    className="w-full"
                   >
-                    <div className="flex items-start gap-3">
-                      <Sparkles className="w-4 h-4 text-primary mt-1 flex-shrink-0" />
-                      <p className="text-sm text-white group-hover:text-primary transition-colors">
-                        {prompt}
-                      </p>
-                    </div>
-                  </button>
-                ))}
-              </div>
-              <Button
-                variant="ghost"
-                onClick={() => router.push('/journal')}
-                className="w-full mt-4"
-              >
-                View All Prompts
-              </Button>
+                    START WRITING
+                  </Button>
+                </div>
+              ))}
             </div>
           </motion.div>
 
           {/* Quick Actions */}
-          <motion.div variants={staggerItem} className="px-4">
-            <h2 className="text-sm font-semibold tracking-wider text-secondary mb-3">
-              QUICK ACTIONS
-            </h2>
+          <motion.div variants={staggerItem}>
+            <h3 className="mb-3">Quick Actions</h3>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {quickActions.map((action) => (
                 <Link
                   key={action.href}
                   href={action.href}
-                  className="bg-card border border-border rounded-lg p-4 hover:border-primary transition-colors group text-center"
+                  className="card p-4 hover:border-primary transition-colors group text-center"
                 >
                   <div className="text-3xl mb-2">{action.icon}</div>
-                  <h3 className="text-sm font-medium mb-1 group-hover:text-primary transition-colors">
+                  <p className="text-sm font-medium mb-1 group-hover:text-primary transition-colors">
                     {action.title}
-                  </h3>
+                  </p>
                   <p className="text-xs text-secondary">{action.description}</p>
                 </Link>
               ))}
@@ -253,13 +245,11 @@ export default function DashboardPage() {
           </motion.div>
 
           {/* Friends & Synastry Placeholder */}
-          <motion.div variants={staggerItem} className="px-4 pb-6">
-            <div className="bg-card border border-border rounded-lg p-6">
+          <motion.div variants={staggerItem} className="pb-6">
+            <div className="card">
               <div className="flex items-center gap-3 mb-4">
                 <Users className="w-5 h-5 text-primary" />
-                <h2 className="text-sm font-semibold tracking-wider text-secondary">
-                  SYNASTRY READINGS
-                </h2>
+                <h3>Synastry Readings</h3>
               </div>
               <p className="text-sm text-secondary mb-4">
                 Connect with friends to explore your astrological compatibility

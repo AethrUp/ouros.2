@@ -43,16 +43,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { data, error } = await supabase
-      .from('tarot_readings')
+    const { data, error} = await supabase
+      .from('readings')
       .insert({
         user_id: user.id,
+        reading_type: 'tarot',
+        timestamp: new Date().toISOString(),
         intention,
-        spread_id: spread.id,
-        spread_name: spread.name,
-        drawn_cards: drawnCards,
         interpretation,
-        created_at: new Date().toISOString(),
+        metadata: {
+          spread_id: spread.id,
+          spread_name: spread.name,
+          cards: drawnCards,
+          interpretation_source: 'ai'
+        }
       })
       .select()
       .single();
@@ -64,12 +68,15 @@ export async function POST(request: NextRequest) {
       reading: {
         id: data.id,
         userId: data.user_id,
+        createdAt: data.timestamp,
         intention: data.intention,
-        spreadId: data.spread_id,
-        spreadName: data.spread_name,
-        drawnCards: data.drawn_cards,
+        spread: {
+          id: data.metadata.spread_id,
+          name: data.metadata.spread_name,
+        },
+        cards: data.metadata.cards,
         interpretation: data.interpretation,
-        createdAt: data.created_at,
+        interpretationSource: 'ai',
       },
     });
   } catch (error: any) {
