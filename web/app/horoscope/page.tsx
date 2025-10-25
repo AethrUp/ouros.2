@@ -97,7 +97,7 @@ export default function HoroscopePage() {
   // Build dynamic tabs based on available data
   const buildTabs = () => {
     const tabs: Array<{ id: string; label: string }> = [];
-    const fullContent = dailyHoroscope?.fullContent || {};
+    const fullContent = (dailyHoroscope?.fullContent || {}) as any;
     const transitAnalysis = fullContent.transitAnalysis;
 
     tabs.push({ id: 'main', label: 'OVERVIEW' });
