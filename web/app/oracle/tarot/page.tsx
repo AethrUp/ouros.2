@@ -54,7 +54,7 @@ export default function TarotPage() {
         );
 
       case 'drawing':
-        return <LoadingScreen message="Drawing your cards..." />;
+        return <LoadingScreen messages={["Drawing your cards..."]} />;
 
       case 'reveal':
         if (drawnCards.length > 0) {
@@ -65,11 +65,11 @@ export default function TarotPage() {
             />
           );
         }
-        return <LoadingScreen message="Preparing cards..." />;
+        return <LoadingScreen messages={["Preparing cards..."]} />;
 
       case 'interpretation':
         if (isGeneratingInterpretation) {
-          return <LoadingScreen message="Generating your reading..." />;
+          return <LoadingScreen messages={["Generating your reading..."]} />;
         }
         // Fall through to complete if ready
         if (interpretation && selectedSpread) {
@@ -83,7 +83,7 @@ export default function TarotPage() {
             />
           );
         }
-        return <LoadingScreen message="Preparing interpretation..." />;
+        return <LoadingScreen messages={["Preparing interpretation..."]} />;
 
       case 'complete':
         if (!selectedSpread || !interpretation) {
