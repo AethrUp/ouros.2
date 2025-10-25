@@ -213,7 +213,7 @@ export default function DashboardPage() {
                   </div>
                   <Button
                     variant="primary"
-                    size="sm"
+                    size="small"
                     onClick={() => router.push(`/journal?prompt=${encodeURIComponent(prompt)}`)}
                     className="w-full"
                   >
