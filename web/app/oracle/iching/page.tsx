@@ -42,7 +42,7 @@ export default function IChingPage() {
               <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 mb-6">
                 <span className="text-5xl">☯️</span>
               </div>
-              <h2 className="text-4xl font-bold font-serif mb-4 text-primary">I Ching Oracle</h2>
+              <h2 className="text-4xl font-serif mb-4 text-primary">I Ching Oracle</h2>
               <p className="text-secondary text-lg max-w-2xl mx-auto">
                 Consult the Book of Changes, an ancient Chinese divination system that has guided
                 seekers for over 3,000 years
@@ -56,7 +56,7 @@ export default function IChingPage() {
               animate="animate"
               className="mb-12"
             >
-              <h3 className="text-xl font-semibold mb-6 text-center">Choose Your Method</h3>
+              <h3 className="text-xl  mb-6 text-center">Choose Your Method</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto">
                 {methods.map((method) => (
                   <motion.button
@@ -71,7 +71,7 @@ export default function IChingPage() {
                     disabled={method.premium}
                   >
                     <div className="text-4xl mb-4 text-center">{method.icon}</div>
-                    <h4 className="text-lg font-semibold mb-2 text-white">{method.name}</h4>
+                    <h4 className="text-lg font-medium mb-2 text-white">{method.name}</h4>
                     <p className="text-sm text-secondary">{method.description}</p>
                     {method.premium && (
                       <div className="mt-3 text-xs text-yellow-500">Premium Feature</div>
@@ -88,7 +88,7 @@ export default function IChingPage() {
                   <Sparkles className="w-8 h-8 text-primary" />
                 </div>
                 <div>
-                  <h3 className="text-2xl font-bold mb-3">I Ching Experience Coming Soon</h3>
+                  <h3 className="text-2xl  mb-3">I Ching Experience Coming Soon</h3>
                   <p className="text-secondary max-w-lg mx-auto leading-relaxed">
                     We're creating an immersive I Ching consultation experience with animated coin
                     tosses, hexagram formation, and deep interpretations of the changing lines.
@@ -98,7 +98,7 @@ export default function IChingPage() {
                 {/* Features List */}
                 <div className="max-w-md mx-auto pt-6">
                   <div className="bg-surface rounded-lg p-6">
-                    <h4 className="text-sm font-semibold text-white mb-4">Upcoming Features:</h4>
+                    <h4 className="text-sm font-medium text-white mb-4">Upcoming Features:</h4>
                     <ul className="text-sm text-secondary space-y-3 text-left">
                       <li className="flex items-start gap-3">
                         <span className="text-primary">•</span>

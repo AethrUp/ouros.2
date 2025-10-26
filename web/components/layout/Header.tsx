@@ -135,7 +135,7 @@ export const Header: React.FC<HeaderProps> = ({
             >
               {action.icon}
               {action.badge !== undefined && action.badge > 0 && (
-                <span className="absolute -top-1 -right-1 flex items-center justify-center min-w-[18px] h-[18px] px-1 text-xs font-bold text-white bg-error rounded-full">
+                <span className="absolute -top-1 -right-1 flex items-center justify-center min-w-[18px] h-[18px] px-1 text-xs text-white bg-error rounded-full">
                   {action.badge > 99 ? '99+' : action.badge}
                 </span>
               )}

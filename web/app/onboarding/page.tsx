@@ -326,7 +326,7 @@ export default function OnboardingPage() {
       content: (
         <div className="space-y-8">
           <div className="text-center mb-8">
-            <h2 className="text-2xl font-serif font-semibold mb-2">When were you born?</h2>
+            <h2 className="text-2xl font-serif mb-2">When were you born?</h2>
           </div>
 
           <div className="grid grid-cols-3 gap-4">
@@ -378,7 +378,7 @@ export default function OnboardingPage() {
       content: (
         <div className="space-y-6">
           <div className="text-center mb-8">
-            <h2 className="text-2xl font-serif font-semibold mb-2">Where were you born?</h2>
+            <h2 className="text-2xl font-serif mb-2">Where were you born?</h2>
           </div>
 
           <div className="relative">
@@ -427,7 +427,7 @@ export default function OnboardingPage() {
       content: (
         <div className="space-y-6">
           <div className="text-center mb-8">
-            <h2 className="text-2xl font-serif font-semibold mb-2">What brings you here?</h2>
+            <h2 className="text-2xl font-serif mb-2">What brings you here?</h2>
             <p className="text-secondary">
               Select 3 areas you'd like to focus on
             </p>
@@ -507,7 +507,7 @@ export default function OnboardingPage() {
       content: (
         <div className="space-y-6">
           <div className="text-center mb-8">
-            <h2 className="text-2xl font-serif font-semibold mb-2">Choose your style</h2>
+            <h2 className="text-2xl font-serif mb-2">Choose your style</h2>
             <p className="text-secondary">
               How would you like your readings delivered?
             </p>
@@ -578,7 +578,7 @@ export default function OnboardingPage() {
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
               <span className="text-3xl">✨</span>
             </div>
-            <h2 className="text-2xl font-serif font-semibold mb-2">Almost There!</h2>
+            <h2 className="text-2xl font-serif mb-2">Almost There!</h2>
             <p className="text-secondary">
               Review your information before we create your cosmic profile
             </p>
@@ -587,13 +587,13 @@ export default function OnboardingPage() {
           <div className="bg-card border border-border rounded-lg divide-y divide-border">
             {/* Birth Info */}
             <div className="p-5">
-              <h3 className="text-sm font-medium text-secondary mb-3">Birth Information</h3>
+              <h3 className="text-sm text-secondary mb-3">Birth Information</h3>
               <div className="space-y-3">
                 <div className="flex items-start gap-3">
                   <Calendar className="w-5 h-5 text-primary mt-0.5" />
                   <div className="flex-1">
                     <p className="text-sm text-secondary">Date</p>
-                    <p className="font-medium">
+                    <p>
                       {data.birthDate
                         ? new Date(data.birthDate).toLocaleDateString('en-US', {
                             year: 'numeric',
@@ -609,7 +609,7 @@ export default function OnboardingPage() {
                   <Clock className="w-5 h-5 text-primary mt-0.5" />
                   <div className="flex-1">
                     <p className="text-sm text-secondary">Time</p>
-                    <p className="font-medium">
+                    <p>
                       {data.birthTime
                         ? new Date(`2000-01-01T${data.birthTime}`).toLocaleTimeString('en-US', {
                             hour: 'numeric',
@@ -625,7 +625,7 @@ export default function OnboardingPage() {
                   <MapPin className="w-5 h-5 text-primary mt-0.5" />
                   <div className="flex-1">
                     <p className="text-sm text-secondary">Location</p>
-                    <p className="font-medium">{data.birthLocation?.name || 'Not set'}</p>
+                    <p>{data.birthLocation?.name || 'Not set'}</p>
                   </div>
                 </div>
               </div>
@@ -633,7 +633,7 @@ export default function OnboardingPage() {
 
             {/* Preferences */}
             <div className="p-5">
-              <h3 className="text-sm font-medium text-secondary mb-3">Your Preferences</h3>
+              <h3 className="text-sm text-secondary mb-3">Your Preferences</h3>
               <div className="space-y-3">
                 <div>
                   <p className="text-sm text-secondary mb-2">Focus Areas</p>
@@ -658,7 +658,7 @@ export default function OnboardingPage() {
                     {data.interpretationStyle && (
                       <>
                         {INTERPRETATION_STYLES.find((s) => s.id === data.interpretationStyle)?.icon}
-                        <span className="font-medium capitalize">
+                        <span className=" capitalize">
                           {data.interpretationStyle}
                         </span>
                       </>
@@ -683,7 +683,7 @@ export default function OnboardingPage() {
     <div className="flex min-h-screen flex-col bg-background">
       {/* Header */}
       <div className="text-center py-8">
-        <h1 className="text-4xl font-bold font-serif text-white">
+        <h1 className="text-4xl font-serif text-white">
           Ouros
         </h1>
       </div>

@@ -113,7 +113,7 @@ export const Modal: React.FC<ModalProps> = ({
                   {title && (
                     <h2
                       id="modal-title"
-                      className="text-2xl font-semibold text-white font-serif"
+                      className="text-2xl text-white font-serif"
                     >
                       {title}
                     </h2>

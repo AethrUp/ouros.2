@@ -65,7 +65,7 @@ export const PasswordStrength: React.FC<PasswordStrengthProps> = ({
         <div className="flex items-center justify-between">
           <span className="text-xs text-secondary">Password strength</span>
           {strength.label && (
-            <span className={cn('text-xs font-medium', {
+            <span className={cn('text-xs', {
               'text-error': strength.score === 1,
               'text-warning': strength.score === 2,
               'text-primary': strength.score === 3,

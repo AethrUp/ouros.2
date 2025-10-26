@@ -43,15 +43,26 @@ export function CardReveal({ drawnCards, onComplete }: CardRevealProps) {
       className="max-w-5xl mx-auto px-4 py-8"
     >
       {/* Header */}
-      <div className="text-center mb-12">
-        <h2 className="text-4xl md:text-5xl lg:text-6xl font-serif font-bold text-primary mb-4">
+      <div className="text-center mb-8">
+        <h2 className="text-4xl md:text-5xl lg:text-6xl font-serif text-primary mb-6">
           Your Cards
         </h2>
-        <p className="text-secondary text-base md:text-lg">
-          {isCurrentCardRevealed
-            ? `Card ${currentCardIndex + 1} of ${drawnCards.length}`
-            : 'Tap the card to reveal it'}
-        </p>
+
+        {/* Progress Dots */}
+        <div className="flex justify-center gap-2">
+          {drawnCards.map((_, index) => (
+            <div
+              key={index}
+              className={`w-2 h-2 rounded-full transition-colors duration-300 ${
+                index < currentCardIndex
+                  ? 'bg-accent'
+                  : index === currentCardIndex
+                  ? 'bg-primary'
+                  : 'bg-surface'
+              }`}
+            />
+          ))}
+        </div>
       </div>
 
       {/* Single Card Display */}
@@ -71,71 +82,65 @@ export function CardReveal({ drawnCards, onComplete }: CardRevealProps) {
               disabled={isCurrentCardRevealed}
               className={`relative group ${!isCurrentCardRevealed ? 'cursor-pointer' : 'cursor-default'}`}
             >
-              <motion.div
-                initial={false}
-                animate={{
-                  rotateY: isCurrentCardRevealed ? 180 : 0,
-                }}
-                transition={{
-                  duration: 0.6,
-                  ease: 'easeInOut',
-                }}
+              <div
                 style={{
-                  transformStyle: 'preserve-3d',
                   position: 'relative',
+                  aspectRatio: '198/342',
+                  overflow: 'hidden',
                 }}
-                className="w-48 h-80 md:w-56 md:h-96 lg:w-64 lg:h-[28rem]"
+                className="w-64 md:w-80 lg:w-96"
               >
                 {/* Card Back */}
-                <div
-                  className="absolute inset-0"
-                  style={{
-                    backfaceVisibility: 'hidden',
-                    WebkitBackfaceVisibility: 'hidden',
+                <motion.div
+                  initial={false}
+                  animate={{
+                    x: isCurrentCardRevealed ? '-100%' : '0%',
                   }}
+                  transition={{
+                    duration: 0.4,
+                    ease: 'easeInOut',
+                  }}
+                  className="absolute inset-0 w-full h-full border-4 md:border-[6px] border-accent rounded-lg overflow-hidden"
                 >
-                  <div className="w-full h-full bg-card border-4 md:border-[6px] border-accent rounded-lg overflow-hidden flex items-center justify-center">
-                    <Image
-                      src={CARD_BACK_IMAGE}
-                      alt="Card Back"
-                      fill
-                      className="object-contain p-2"
-                      unoptimized
-                    />
-                  </div>
-                </div>
+                  <Image
+                    src={CARD_BACK_IMAGE}
+                    alt="Card Back"
+                    fill
+                    className="object-contain"
+                    unoptimized
+                  />
+                </motion.div>
 
                 {/* Card Front */}
-                <div
-                  className="absolute inset-0"
-                  style={{
-                    backfaceVisibility: 'hidden',
-                    WebkitBackfaceVisibility: 'hidden',
-                    transform: 'rotateY(180deg)',
+                <motion.div
+                  initial={false}
+                  animate={{
+                    x: isCurrentCardRevealed ? '0%' : '100%',
                   }}
+                  transition={{
+                    duration: 0.4,
+                    ease: 'easeInOut',
+                  }}
+                  className={`absolute inset-0 w-full h-full border-2 md:border-4 border-primary rounded-lg overflow-hidden ${
+                    currentCard.orientation === 'reversed' ? 'rotate-180' : ''
+                  }`}
                 >
-                  <div
-                    className={`w-full h-full bg-card border-2 md:border-4 border-primary rounded-lg overflow-hidden flex items-center justify-center ${
-                      currentCard.orientation === 'reversed' ? 'rotate-180' : ''
-                    }`}
-                  >
-                    <Image
-                      src={currentCard.card.imageUri}
-                      alt={currentCard.card.name}
-                      fill
-                      className="object-contain p-2"
-                      unoptimized
-                    />
-                  </div>
-                </div>
-              </motion.div>
+                  <Image
+                    src={currentCard.card.imageUri ?? ''}
+                    alt={currentCard.card.name}
+                    fill
+                    className="object-contain p-2"
+                    unoptimized
+                  />
+                </motion.div>
+              </div>
 
               {/* Tap prompt for unrevealed cards */}
               {!isCurrentCardRevealed && (
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="absolute -bottom-10 left-1/2 transform -translate-x-1/2 text-sm md:text-base text-accent font-medium whitespace-nowrap"
+                  className="absolute -bottom-10 left-1/2 transform -translate-x-1/2 text-sm md:text-base text-accent whitespace-nowrap"
                 >
                   Tap to reveal
                 </motion.div>
@@ -154,7 +159,7 @@ export function CardReveal({ drawnCards, onComplete }: CardRevealProps) {
                   exit={{ opacity: 0 }}
                   className="space-y-4 text-center max-w-2xl mx-auto"
                 >
-                  <h3 className="text-xl md:text-2xl lg:text-3xl font-serif font-semibold text-secondary">
+                  <h3 className="text-xl md:text-2xl lg:text-3xl font-serif text-secondary">
                     {currentCard.position}
                   </h3>
                   <p className="text-base md:text-lg lg:text-xl text-secondary/70 leading-relaxed">
@@ -169,20 +174,24 @@ export function CardReveal({ drawnCards, onComplete }: CardRevealProps) {
                   transition={{ delay: 0.3 }}
                   className="space-y-4 text-center max-w-2xl mx-auto"
                 >
-                  <div className="flex items-center justify-center gap-3 flex-wrap">
-                    <h3 className="text-2xl md:text-3xl lg:text-4xl font-serif font-bold text-primary">
+                  <div className="space-y-2">
+                    <h3 className="text-2xl md:text-3xl lg:text-4xl font-serif text-primary">
                       {currentCard.card.name}
                     </h3>
-                    <span className="text-sm md:text-base text-secondary px-3 py-1.5 bg-surface rounded">
-                      {currentCard.orientation === 'upright' ? 'Upright' : 'Reversed'}
-                    </span>
+                    {currentCard.orientation === 'reversed' && (
+                      <div className="flex justify-center">
+                        <span className="text-sm md:text-base text-secondary">
+                          Reversed
+                        </span>
+                      </div>
+                    )}
                   </div>
 
-                  <p className="text-base md:text-lg lg:text-xl font-medium text-secondary">
+                  <p className="text-base md:text-lg lg:text-xl uppercase tracking-[0.15em] text-white">
                     {currentCard.position}
                   </p>
 
-                  <p className="text-base md:text-lg lg:text-xl text-secondary/80 leading-relaxed">
+                  <p className="text-base md:text-lg lg:text-xl text-white leading-relaxed">
                     {currentCard.orientation === 'upright'
                       ? currentCard.card.uprightMeaning
                       : currentCard.card.reversedMeaning}
@@ -207,35 +216,18 @@ export function CardReveal({ drawnCards, onComplete }: CardRevealProps) {
         </motion.div>
       </AnimatePresence>
 
-      {/* Progress Indicator */}
-      <div className="mt-8 flex justify-center gap-2">
-        {drawnCards.map((_, index) => (
-          <div
-            key={index}
-            className={`w-2 h-2 rounded-full transition-colors duration-300 ${
-              index < currentCardIndex
-                ? 'bg-accent'
-                : index === currentCardIndex
-                ? 'bg-primary'
-                : 'bg-surface'
-            }`}
-          />
-        ))}
-      </div>
-
       {/* Next/Continue Button */}
       {isCurrentCardRevealed && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
-          className="mt-8"
+          className="mt-8 flex justify-center"
         >
           <Button
             onClick={handleNext}
             variant="primary"
-            size="large"
-            fullWidth
+            size="medium"
           >
             {isLastCard ? 'Continue to Interpretation' : 'Next Card'}
           </Button>

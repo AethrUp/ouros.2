@@ -3,7 +3,7 @@
 @theme {
   /* Brand Colors - Matching Mobile */
   --color-primary: #F6D99F; /* Gold - main brand color */
-  --color-secondary: rgba(255, 255, 255, 0.5); /* 50% white - secondary text */
+  --color-secondary: rgba(255, 255, 255, 1); /* White - secondary text */
   --color-accent: #F6D99F; /* Gold accent */
   --color-gold: #F6D99F; /* Gold - for headings and highlights */
 
@@ -21,9 +21,9 @@
   --color-warning: rgba(255, 255, 255, 0.5);
   --color-error: rgba(255, 255, 255, 0.5);
 
-  /* Fonts */
-  --font-inter: var(--font-inter);
-  --font-pt-serif: var(--font-pt-serif);
+  /* Fonts - Tailwind v4 syntax */
+  --font-sans: var(--font-inter), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-serif: var(--font-pt-serif), serif;
 
   /* Spacing - Mobile Design System */
   --spacing-xs: 4px;
@@ -47,7 +47,7 @@
 body {
   background: #252525;
   color: white;
-  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -71,46 +71,6 @@ body {
   background: #F6D99F;
 }
 
-/* Typography - Mobile Design System */
-h1 {
-  font-family: var(--font-pt-serif), serif;
-  font-size: 30px;
-  font-weight: 400;
-  color: #FFFFFF;
-}
-
-h2 {
-  font-family: var(--font-pt-serif), serif;
-  font-size: 20px;
-  font-weight: 400;
-  color: #F6D99F; /* Gold for section headings */
-}
-
-h3 {
-  font-family: var(--font-inter), sans-serif;
-  font-size: 14px;
-  font-weight: 400;
-  color: #FFFFFF;
-  text-transform: uppercase;
-  letter-spacing: 1.26px;
-}
-
-/* Utility classes */
-.text-secondary {
-  color: rgba(255, 255, 255, 0.5);
-}
-
-.text-gold {
-  color: #F6D99F;
-}
-
-/* Card styles matching mobile */
-.card {
-  background-color: #434343;
-  border: 1px solid #434343;
-  border-radius: 12px;
-  padding: 24px;
-}
 
 /* Enhanced Focus Styles for Accessibility */
 *:focus-visible {

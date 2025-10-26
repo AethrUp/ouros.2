@@ -28,7 +28,7 @@ export function SpreadSelector({ spreads, onSelect }: SpreadSelectorProps) {
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       <div className="text-center mb-12">
-        <h2 className="text-3xl md:text-4xl font-serif font-bold text-primary mb-4">
+        <h2 className="text-3xl md:text-4xl font-serif text-primary mb-4">
           Choose Your Spread
         </h2>
         <p className="text-secondary text-lg">
@@ -68,7 +68,7 @@ export function SpreadSelector({ spreads, onSelect }: SpreadSelectorProps) {
                 {SPREAD_ICONS[spread.id] || '🔯'}
               </div>
               <div className="flex-1">
-                <h3 className="text-xl font-serif font-semibold text-primary mb-1">
+                <h3 className="text-xl font-serif text-primary mb-1">
                   {spread.name}
                 </h3>
                 <p className="text-sm text-secondary">

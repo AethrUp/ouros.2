@@ -61,13 +61,13 @@ export const Navigation: React.FC = () => {
                 'flex items-center px-4 py-3 transition-all border-b-2',
                 'hover:border-white',
                 isActive(item.href)
-                  ? 'border-white text-white font-medium'
+                  ? 'border-white text-white'
                   : 'border-transparent text-white/50'
               )}
             >
               <span className="text-base" style={{ letterSpacing: '0.15em' }}>{item.label}</span>
               {item.badge !== undefined && item.badge > 0 && (
-                <span className="ml-auto flex items-center justify-center min-w-[20px] h-5 px-2 text-xs font-bold text-white bg-primary rounded-full">
+                <span className="ml-auto flex items-center justify-center min-w-[20px] h-5 px-2 text-xs text-white bg-primary rounded-full">
                   {item.badge}
                 </span>
               )}
@@ -91,10 +91,10 @@ export const Navigation: React.FC = () => {
                   : 'border-transparent text-white/50'
               )}
             >
-              <span className="text-xs font-medium" style={{ letterSpacing: '0.15em' }}>
+              <span className="text-xs" style={{ letterSpacing: '0.15em' }}>
                 {item.label}
                 {item.badge !== undefined && item.badge > 0 && (
-                  <span className="ml-1 inline-flex items-center justify-center min-w-[16px] h-4 px-1 text-xs font-bold text-white bg-error rounded-full">
+                  <span className="ml-1 inline-flex items-center justify-center min-w-[16px] h-4 px-1 text-xs text-white bg-error rounded-full">
                     {item.badge > 9 ? '9+' : item.badge}
                   </span>
                 )}

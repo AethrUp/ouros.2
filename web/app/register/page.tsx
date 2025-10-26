@@ -140,13 +140,13 @@ export default function RegisterPage() {
         >
           <motion.div variants={staggerItem}>
             <Link href="/">
-              <h1 className="text-4xl font-bold font-serif cursor-pointer hover:text-primary transition-colors">
+              <h1 className="text-4xl font-serif cursor-pointer hover:text-primary transition-colors">
                 Ouros
               </h1>
             </Link>
           </motion.div>
 
-          <motion.h2 variants={staggerItem} className="text-2xl font-semibold mt-6">
+          <motion.h2 variants={staggerItem} className="text-2xl mt-6">
             Create Account
           </motion.h2>
 
@@ -157,7 +157,7 @@ export default function RegisterPage() {
           <motion.div variants={staggerItem} className="mt-4">
             <p className="text-sm text-secondary">
               Already have an account?{' '}
-              <Link href="/login" className="text-primary hover:underline font-medium">
+              <Link href="/login" className="text-primary hover:underline">
                 Sign In
               </Link>
             </p>

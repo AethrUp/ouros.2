@@ -34,7 +34,7 @@ export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
     return (
       <div className="w-full">
         {label && (
-          <label className="block text-sm font-medium text-white mb-2">
+          <label className="block text-sm  text-white mb-2">
             {label}
             {props.required && <span className="text-error ml-1">*</span>}
           </label>

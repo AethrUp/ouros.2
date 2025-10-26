@@ -101,7 +101,7 @@ Trust that your dreams are guiding you toward greater self-understanding and who
         <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 mb-6">
           <Moon className="w-10 h-10 text-primary" />
         </div>
-        <h2 className="text-3xl font-bold font-serif mb-4">Dream Interpretation</h2>
+        <h2 className="text-3xl font-serif mb-4">Dream Interpretation</h2>
         <p className="text-secondary text-lg">
           Share your dream and discover its hidden meanings
         </p>
@@ -109,7 +109,7 @@ Trust that your dreams are guiding you toward greater self-understanding and who
 
       <div className="bg-card border border-border rounded-lg p-8">
         <div className="mb-6">
-          <label htmlFor="dream" className="block text-sm font-medium text-white mb-3">
+          <label htmlFor="dream" className="block text-sm text-white mb-3">
             Describe Your Dream
           </label>
           <TextArea
@@ -130,7 +130,7 @@ Trust that your dreams are guiding you toward greater self-understanding and who
         </div>
 
         <div className="bg-surface/50 rounded-lg p-4 mb-6">
-          <h3 className="text-sm font-medium text-white mb-2 flex items-center gap-2">
+          <h3 className="text-sm text-white mb-2 flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-primary" />
             Tips for Better Interpretations
           </h3>
@@ -177,7 +177,7 @@ Trust that your dreams are guiding you toward greater self-understanding and who
     >
       {/* Dream Description */}
       <div className="bg-card border border-border rounded-lg p-6 mb-6">
-        <h3 className="text-sm font-semibold text-secondary mb-3 flex items-center gap-2">
+        <h3 className="text-sm  text-secondary mb-3 flex items-center gap-2">
           <Moon className="w-4 h-4" />
           YOUR DREAM
         </h3>
@@ -186,7 +186,7 @@ Trust that your dreams are guiding you toward greater self-understanding and who
 
       {/* Interpretation */}
       <div className="bg-card border border-border rounded-lg p-8 mb-6">
-        <h3 className="text-2xl font-bold font-serif mb-6 text-primary">
+        <h3 className="text-2xl font-serif mb-6 text-primary">
           Dream Interpretation
         </h3>
         <div className="prose prose-invert max-w-none">

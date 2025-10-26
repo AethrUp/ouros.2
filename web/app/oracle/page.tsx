@@ -48,7 +48,7 @@ export default function OraclePage() {
           <div className="max-w-4xl mx-auto">
             {/* Header */}
             <motion.div variants={staggerItem} className="mb-12 text-center">
-              <h2 className="text-4xl font-bold font-serif mb-4 text-primary">
+              <h2 className="text-4xl font-serif mb-4 text-primary">
                 Choose Your Oracle
               </h2>
               <p className="text-secondary text-lg max-w-2xl mx-auto">
@@ -86,7 +86,7 @@ export default function OraclePage() {
                             className="w-20 h-20"
                           />
                         </div>
-                        <h3 className="text-2xl font-bold font-serif mb-3 text-center text-gold transition-colors">
+                        <h3 className="text-2xl font-serif mb-3 text-center text-gold transition-colors">
                           {oracle.title}
                         </h3>
                         <p className="text-white/50 text-center text-sm leading-relaxed">
@@ -107,7 +107,7 @@ export default function OraclePage() {
               <div className="flex items-start gap-3">
                 <Info className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
                 <div>
-                  <h3 className="text-sm font-semibold text-white mb-2">
+                  <h3 className="text-sm  text-white mb-2">
                     Quantum Random Number Generator
                   </h3>
                   <p className="text-sm text-secondary leading-relaxed">

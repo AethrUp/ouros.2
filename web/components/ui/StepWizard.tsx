@@ -136,7 +136,7 @@ export const StepWizard: React.FC<StepWizardProps> = ({
                   onClick={() => goToStep(index)}
                   disabled={index > currentIndex}
                   className={cn(
-                    'flex items-center justify-center w-10 h-10 rounded-full font-medium text-sm transition-all',
+                    'flex items-center justify-center w-10 h-10 rounded-full text-sm transition-all',
                     index === currentIndex &&
                       'bg-primary text-white ring-4 ring-primary/20 scale-110',
                     index < currentIndex &&
@@ -178,7 +178,7 @@ export const StepWizard: React.FC<StepWizardProps> = ({
               >
                 <p
                   className={cn(
-                    'text-sm font-medium transition-colors',
+                    'text-sm transition-colors',
                     index === currentIndex
                       ? 'text-white'
                       : index < currentIndex

@@ -35,7 +35,7 @@ export default function ProfilePage() {
               <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 mb-4">
                 <User className="w-10 h-10 text-primary" />
               </div>
-              <h2 className="text-2xl font-bold mb-2">
+              <h2 className="text-2xl  mb-2">
                 {profile?.displayName || user?.email?.split('@')[0] || 'User'}
               </h2>
               <p className="text-secondary">{user?.email}</p>
@@ -48,7 +48,7 @@ export default function ProfilePage() {
                 className="bg-card border border-border rounded-lg p-6"
               >
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold">Birth Information</h3>
+                  <h3 className="text-lg ">Birth Information</h3>
                   <Button
                     variant="ghost"
                     size="small"
@@ -64,7 +64,7 @@ export default function ProfilePage() {
                     <Calendar className="w-5 h-5 text-primary mt-0.5" />
                     <div>
                       <p className="text-sm text-secondary">Birth Date</p>
-                      <p className="font-medium">
+                      <p>
                         {new Date(birthData.birthDate).toLocaleDateString('en-US', {
                           year: 'numeric',
                           month: 'long',
@@ -77,7 +77,7 @@ export default function ProfilePage() {
                     <Star className="w-5 h-5 text-primary mt-0.5" />
                     <div>
                       <p className="text-sm text-secondary">Birth Time</p>
-                      <p className="font-medium">
+                      <p>
                         {birthData.birthTime
                           ? new Date(`2000-01-01T${birthData.birthTime}`).toLocaleTimeString(
                               'en-US',
@@ -96,7 +96,7 @@ export default function ProfilePage() {
                       <MapPin className="w-5 h-5 text-primary mt-0.5" />
                       <div>
                         <p className="text-sm text-secondary">Birth Location</p>
-                        <p className="font-medium">{birthData.birthLocation.name}</p>
+                        <p>{birthData.birthLocation.name}</p>
                         <p className="text-xs text-secondary mt-1">
                           {birthData.birthLocation.timezone}
                         </p>
@@ -112,7 +112,7 @@ export default function ProfilePage() {
               variants={staggerItem}
               className="bg-card border border-border rounded-lg p-6"
             >
-              <h3 className="text-lg font-semibold mb-4">Account Settings</h3>
+              <h3 className="text-lg  mb-4">Account Settings</h3>
               <div className="space-y-3">
                 <Button
                   variant="secondary"
@@ -155,7 +155,7 @@ export default function ProfilePage() {
                 variants={staggerItem}
                 className="bg-card border border-border rounded-lg p-6"
               >
-                <h3 className="text-lg font-semibold mb-4">Your Focus Areas</h3>
+                <h3 className="text-lg  mb-4">Your Focus Areas</h3>
                 <div className="flex flex-wrap gap-2">
                   {(profile as any).selectedCategories.map((category: string) => (
                     <span

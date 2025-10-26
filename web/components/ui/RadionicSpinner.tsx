@@ -67,25 +67,22 @@ const RadionicSpinner: React.FC = () => {
 
   useEffect(() => {
     // Start continuous rotations
-    const ring1Animation = animate(ring1Rotation, 360, {
+    const ring1Animation = animate(ring1Rotation, [0, 360], {
       duration: 5,
       repeat: Infinity,
       ease: 'linear',
-      from: 0,
     });
 
-    const ring2Animation = animate(ring2Rotation, -360, {
+    const ring2Animation = animate(ring2Rotation, [0, -360], {
       duration: 7,
       repeat: Infinity,
       ease: 'linear',
-      from: 0,
     });
 
-    const ellipseAnimation = animate(ellipseAngle, 360, {
+    const ellipseAnimation = animate(ellipseAngle, [0, 360], {
       duration: 8,
       repeat: Infinity,
       ease: 'linear',
-      from: 0,
     });
 
     // Zodiac symbol cycling with fade effect

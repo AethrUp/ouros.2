@@ -3,13 +3,14 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { useAppStore } from '@/store';
 import { MainLayout } from '@/components/layout';
 import { Button, LoadingScreen } from '@/components/ui';
 import { TransitEffectivenessGraph, CosmicWeatherChart } from '@/components/charts';
 import { staggerContainer, staggerItem, fadeInUp } from '@/lib/animations';
-import { Sparkles, BookOpen, Users, UserPlus, Star } from 'lucide-react';
+import { Sparkles, BookOpen, Users, UserPlus } from 'lucide-react';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -100,25 +101,25 @@ export default function DashboardPage() {
       title: 'Tarot Reading',
       description: 'Draw cards for guidance',
       href: '/oracle/tarot',
-      icon: '🃏',
+      iconPath: '/icons/tarotIcon.svg',
     },
     {
       title: 'I Ching',
       description: 'Cast coins for wisdom',
       href: '/oracle/iching',
-      icon: '☯️',
+      iconPath: '/icons/ichingIcon.svg',
     },
     {
       title: 'Dream Journal',
       description: 'Record your dreams',
       href: '/oracle/dreams',
-      icon: '🌙',
+      iconPath: '/icons/dreamIcon.svg',
     },
     {
       title: 'Natal Chart',
       description: 'View your chart',
       href: '/chart',
-      icon: '⭐',
+      iconPath: '/icons/natalIcon.svg',
     },
   ];
 
@@ -234,8 +235,16 @@ export default function DashboardPage() {
                   href={action.href}
                   className="card p-4 hover:border-primary transition-colors group text-center"
                 >
-                  <div className="text-3xl mb-2">{action.icon}</div>
-                  <p className="text-sm font-medium mb-1 group-hover:text-primary transition-colors">
+                  <div className="flex items-center justify-center mb-3">
+                    <Image
+                      src={action.iconPath}
+                      alt={action.title}
+                      width={48}
+                      height={48}
+                      className="group-hover:scale-110 transition-transform"
+                    />
+                  </div>
+                  <p className="text-sm mb-1 group-hover:text-primary transition-colors">
                     {action.title}
                   </p>
                   <p className="text-xs text-secondary">{action.description}</p>

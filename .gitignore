@@ -22,3 +22,5 @@ web-build/
 
 # Windows null device file
 nul
+
+.vercel

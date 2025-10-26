@@ -30,7 +30,7 @@ export function IntentionInput({
       className="max-w-2xl mx-auto px-4 py-8"
     >
       <div className="mb-8">
-        <h2 className="text-3xl md:text-4xl font-serif font-bold text-primary mb-4">
+        <h2 className="text-3xl md:text-4xl font-serif text-primary mb-4">
           Set Your Intention
         </h2>
 
@@ -54,7 +54,7 @@ export function IntentionInput({
 
           <button
             onClick={() => setShowFullText(!showFullText)}
-            className="text-primary text-sm font-medium hover:underline"
+            className="text-primary text-sm hover:underline"
           >
             {showFullText ? 'LESS' : 'MORE'}
           </button>

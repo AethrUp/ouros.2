@@ -103,7 +103,7 @@ export function InterpretationDisplay({
     if (!isV2 || !fullContent) return null;
     return (
       <div className="space-y-4">
-        <h3 className="text-2xl font-serif font-semibold text-primary uppercase tracking-wide">Overview</h3>
+        <h3 className="text-2xl font-serif text-primary uppercase tracking-wide">Overview</h3>
         <p className="text-secondary leading-relaxed whitespace-pre-wrap">{fullContent.overview}</p>
       </div>
     );
@@ -116,7 +116,7 @@ export function InterpretationDisplay({
 
     return (
       <div className="space-y-4">
-        <h3 className="text-2xl font-serif font-semibold text-primary uppercase tracking-wide">{cardInsight.position}</h3>
+        <h3 className="text-2xl font-serif text-primary uppercase tracking-wide">{cardInsight.position}</h3>
         <p className="text-secondary leading-relaxed whitespace-pre-wrap">{cardInsight.interpretation}</p>
       </div>
     );
@@ -126,15 +126,15 @@ export function InterpretationDisplay({
     if (!isV2 || !fullContent) return null;
     return (
       <div className="space-y-4">
-        <h3 className="text-2xl font-serif font-semibold text-primary uppercase tracking-wide">Synthesis</h3>
+        <h3 className="text-2xl font-serif text-primary uppercase tracking-wide">Synthesis</h3>
 
         <div>
-          <h4 className="text-lg font-semibold text-primary mb-2 uppercase tracking-wide">The Story</h4>
+          <h4 className="text-lg  text-primary mb-2 uppercase tracking-wide">The Story</h4>
           <p className="text-secondary leading-relaxed whitespace-pre-wrap">{fullContent.synthesis.narrative}</p>
         </div>
 
         <div>
-          <h4 className="text-lg font-semibold text-primary mb-2 uppercase tracking-wide">Main Theme</h4>
+          <h4 className="text-lg  text-primary mb-2 uppercase tracking-wide">Main Theme</h4>
           <p className="text-secondary leading-relaxed whitespace-pre-wrap">{fullContent.synthesis.mainTheme}</p>
         </div>
       </div>
@@ -147,12 +147,12 @@ export function InterpretationDisplay({
 
     return (
       <div className="space-y-4">
-        <h3 className="text-2xl font-serif font-semibold text-primary uppercase tracking-wide">Guidance</h3>
+        <h3 className="text-2xl font-serif text-primary uppercase tracking-wide">Guidance</h3>
 
         <p className="text-secondary leading-relaxed whitespace-pre-wrap">{guidance.understanding}</p>
 
         <div>
-          <h4 className="text-lg font-semibold text-primary mb-2 uppercase tracking-wide">Action Steps</h4>
+          <h4 className="text-lg  text-primary mb-2 uppercase tracking-wide">Action Steps</h4>
           <ul className="space-y-2">
             {guidance.actionSteps.map((step, index) => (
               <li key={index} className="flex gap-2 text-secondary">
@@ -164,7 +164,7 @@ export function InterpretationDisplay({
         </div>
 
         <div>
-          <h4 className="text-lg font-semibold text-primary mb-2 uppercase tracking-wide">Things to Embrace</h4>
+          <h4 className="text-lg  text-primary mb-2 uppercase tracking-wide">Things to Embrace</h4>
           <ul className="space-y-2">
             {guidance.thingsToEmbrace.map((item, index) => (
               <li key={index} className="flex gap-2 text-secondary">
@@ -176,7 +176,7 @@ export function InterpretationDisplay({
         </div>
 
         <div>
-          <h4 className="text-lg font-semibold text-primary mb-2 uppercase tracking-wide">Things to Release</h4>
+          <h4 className="text-lg  text-primary mb-2 uppercase tracking-wide">Things to Release</h4>
           <ul className="space-y-2">
             {guidance.thingsToRelease.map((item, index) => (
               <li key={index} className="flex gap-2 text-secondary">
@@ -196,20 +196,20 @@ export function InterpretationDisplay({
 
     return (
       <div className="space-y-4">
-        <h3 className="text-2xl font-serif font-semibold text-primary uppercase tracking-wide">Timing</h3>
+        <h3 className="text-2xl font-serif text-primary uppercase tracking-wide">Timing</h3>
 
         <div>
-          <h4 className="text-lg font-semibold text-primary mb-2 uppercase tracking-wide">Right Now</h4>
+          <h4 className="text-lg  text-primary mb-2 uppercase tracking-wide">Right Now</h4>
           <p className="text-secondary leading-relaxed whitespace-pre-wrap">{timing.immediateAction}</p>
         </div>
 
         <div>
-          <h4 className="text-lg font-semibold text-primary mb-2 uppercase tracking-wide">Near Future</h4>
+          <h4 className="text-lg  text-primary mb-2 uppercase tracking-wide">Near Future</h4>
           <p className="text-secondary leading-relaxed whitespace-pre-wrap">{timing.nearFuture}</p>
         </div>
 
         <div>
-          <h4 className="text-lg font-semibold text-primary mb-2 uppercase tracking-wide">Long Term</h4>
+          <h4 className="text-lg  text-primary mb-2 uppercase tracking-wide">Long Term</h4>
           <p className="text-secondary leading-relaxed whitespace-pre-wrap">{timing.longTerm}</p>
         </div>
       </div>
@@ -221,7 +221,7 @@ export function InterpretationDisplay({
 
     return (
       <div className="space-y-4">
-        <h3 className="text-2xl font-serif font-semibold text-primary uppercase tracking-wide">Key Insight</h3>
+        <h3 className="text-2xl font-serif text-primary uppercase tracking-wide">Key Insight</h3>
         <div className="bg-primary/10 border border-primary/20 rounded-lg p-6">
           <p className="text-primary text-lg font-serif italic text-center leading-relaxed">
             {fullContent.keyInsight}
@@ -236,7 +236,7 @@ export function InterpretationDisplay({
 
     return (
       <div className="space-y-4">
-        <h3 className="text-2xl font-serif font-semibold text-primary uppercase tracking-wide">Reflection Prompts</h3>
+        <h3 className="text-2xl font-serif text-primary uppercase tracking-wide">Reflection Prompts</h3>
         <p className="text-xs text-secondary italic mb-4">
           Click a prompt to journal about it
         </p>
@@ -248,7 +248,7 @@ export function InterpretationDisplay({
               className="w-full text-left bg-surface/50 hover:bg-surface rounded-lg p-4 transition-colors group"
             >
               <div className="flex items-start gap-3">
-                <span className="text-secondary font-semibold">{index + 1}.</span>
+                <span className="text-secondary">{index + 1}.</span>
                 <span className="text-secondary flex-1 group-hover:text-primary transition-colors">
                   {prompt}
                 </span>
@@ -267,7 +267,7 @@ export function InterpretationDisplay({
 
     return (
       <div className="space-y-4">
-        <h3 className="text-2xl font-serif font-semibold text-primary uppercase tracking-wide">Your Reading</h3>
+        <h3 className="text-2xl font-serif text-primary uppercase tracking-wide">Your Reading</h3>
         <p className="text-secondary leading-relaxed whitespace-pre-wrap">{legacyText}</p>
       </div>
     );
@@ -313,7 +313,7 @@ export function InterpretationDisplay({
     >
       {/* Header */}
       <div className="text-center mb-8">
-        <h2 className="text-3xl md:text-4xl font-serif font-bold text-primary mb-2">
+        <h2 className="text-3xl md:text-4xl font-serif text-primary mb-2">
           Your Reading
         </h2>
         <p className="text-secondary">{spread.name}</p>
@@ -322,7 +322,7 @@ export function InterpretationDisplay({
       {/* Intention */}
       {intention && (
         <div className="bg-surface rounded-lg p-6 mb-8">
-          <h3 className="text-sm font-semibold text-primary mb-2">Your Intention</h3>
+          <h3 className="text-sm  text-primary mb-2">Your Intention</h3>
           <p className="text-secondary italic">{intention}</p>
         </div>
       )}
@@ -342,7 +342,7 @@ export function InterpretationDisplay({
           >
             <div className="relative w-full aspect-[198/342] mb-3 bg-card rounded-xl overflow-hidden border-2 border-primary">
               <Image
-                src={drawnCard.card.imageUri}
+                src={drawnCard.card.imageUri || ''}
                 alt={drawnCard.card.name}
                 fill
                 className={`object-cover ${drawnCard.orientation === 'reversed' ? 'rotate-180' : ''}`}
@@ -355,7 +355,7 @@ export function InterpretationDisplay({
             <p className="text-xs text-secondary text-center mb-2">
               {drawnCard.orientation === 'upright' ? 'Upright' : 'Reversed'}
             </p>
-            <p className="text-xs text-secondary text-center font-medium uppercase tracking-wider">
+            <p className="text-xs text-secondary text-center uppercase tracking-wider">
               {drawnCard.position}
             </p>
           </motion.div>
@@ -377,7 +377,7 @@ export function InterpretationDisplay({
               <button
                 key={section.id}
                 onClick={() => setCurrentSectionIndex(index)}
-                className={`px-3 py-2 text-xs font-semibold tracking-wider whitespace-nowrap transition-colors ${
+                className={`px-3 py-2 text-xs tracking-wider whitespace-nowrap transition-colors ${
                   currentSectionIndex === index
                     ? 'text-primary border-b-2 border-primary'
                     : 'text-secondary hover:text-primary'
@@ -445,7 +445,7 @@ export function InterpretationDisplay({
 
         {onJournal && (
           <Button
-            onClick={onJournal}
+            onClick={() => onJournal()}
             variant="primary"
             size="large"
             className="flex-1 flex items-center justify-center gap-2"

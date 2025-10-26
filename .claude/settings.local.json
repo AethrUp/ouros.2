@@ -41,7 +41,17 @@
       "Bash(find src -type f ( -name \"*.tsx\" -o -name \"*.ts\" ) -exec grep -l \"upgrade.*premium\\|premium.*upgrade\\|SubscriptionModal\\|PremiumModal\" {} ;)",
       "Bash(npm uninstall @react-native-community/datetimepicker)",
       "Bash(npm uninstall react-native-date-picker)",
-      "WebFetch(domain:docs.expo.dev)"
+      "WebFetch(domain:docs.expo.dev)",
+      "Bash(npm run build:*)",
+      "Bash(find:*)",
+      "Bash(npm run dev:*)",
+      "Bash(del tailwind.config.ts)",
+      "Bash(del \"D:\\AppsBuild\\ouros2\\web\\app\\api\\location\\search\\route.ts\")",
+      "Bash(git rm:*)",
+      "Bash(git restore:*)",
+      "Bash(taskkill:*)",
+      "Bash(vercel --version:*)",
+      "Bash(vercel --prod:*)"
     ],
     "deny": [],
     "ask": []

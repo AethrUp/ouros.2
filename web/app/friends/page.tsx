@@ -23,7 +23,7 @@ export default function FriendsPage() {
               <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 mb-6">
                 <Users className="w-10 h-10 text-primary" />
               </div>
-              <h2 className="text-4xl font-bold font-serif mb-4 text-primary">
+              <h2 className="text-4xl font-serif mb-4 text-primary">
                 Friends & Synastry
               </h2>
               <p className="text-secondary text-lg max-w-2xl mx-auto">
@@ -39,7 +39,7 @@ export default function FriendsPage() {
                   <Sparkles className="w-8 h-8 text-primary" />
                 </div>
                 <div>
-                  <h3 className="text-2xl font-bold mb-3">Social Features Coming Soon</h3>
+                  <h3 className="text-2xl  mb-3">Social Features Coming Soon</h3>
                   <p className="text-secondary max-w-lg mx-auto leading-relaxed">
                     We're building a comprehensive social and synastry system that lets you
                     connect with friends and explore your astrological compatibility.
@@ -49,7 +49,7 @@ export default function FriendsPage() {
                 {/* Features List */}
                 <div className="max-w-md mx-auto pt-6">
                   <div className="bg-surface rounded-lg p-6">
-                    <h4 className="text-sm font-semibold text-white mb-4">Upcoming Features:</h4>
+                    <h4 className="text-sm font-medium text-white mb-4">Upcoming Features:</h4>
                     <ul className="text-sm text-secondary space-y-3 text-left">
                       <li className="flex items-start gap-3">
                         <span className="text-primary">•</span>
@@ -98,7 +98,7 @@ export default function FriendsPage() {
               <div className="flex items-start gap-3">
                 <Heart className="w-6 h-6 text-primary flex-shrink-0 mt-0.5" />
                 <div>
-                  <h3 className="text-lg font-semibold mb-2 text-primary">What is Synastry?</h3>
+                  <h3 className="text-lg  mb-2 text-primary">What is Synastry?</h3>
                   <p className="text-white text-sm leading-relaxed">
                     Synastry is the ancient art of comparing two natal charts to understand
                     relationship dynamics. By analyzing how planets in one chart interact with

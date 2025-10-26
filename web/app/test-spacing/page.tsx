@@ -1,7 +1,7 @@
 export default function TestSpacing() {
   return (
     <div className="min-h-screen bg-background-primary p-8">
-      <h1 className="text-2xl font-bold mb-6">Spacing Test Page</h1>
+      <h1 className="text-2xl  mb-6">Spacing Test Page</h1>
 
       <div className="space-y-4">
         {/* Padding Tests */}

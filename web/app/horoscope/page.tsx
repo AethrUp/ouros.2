@@ -3,8 +3,8 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Sparkles, Calendar, RefreshCw, Moon, Heart, MessageCircle, Loader2,
-  Sun, Sunrise, Sunset, TrendingUp, Brain, Smile, Target, AlertCircle,
+  Sparkles, Calendar, RefreshCw, Loader2, Heart,
+  Sun, Sunrise, Sunset, Moon, TrendingUp, Brain, Smile, Target, AlertCircle,
   Book, Flower2
 } from 'lucide-react';
 import { MainLayout } from '@/components/layout';
@@ -142,7 +142,7 @@ export default function HoroscopePage() {
             className="text-center"
           >
             <Loader2 className="w-12 h-12 text-primary animate-spin mx-auto mb-4" />
-            <h3 className="text-xl font-semibold mb-2">Generating Your Daily Horoscope</h3>
+            <h3 className="text-xl  mb-2">Generating Your Daily Horoscope</h3>
             <p className="text-secondary">Analyzing transits and creating personalized insights...</p>
           </motion.div>
         </div>
@@ -165,7 +165,7 @@ export default function HoroscopePage() {
             >
               <div className="bg-card border border-border rounded-lg p-12">
                 <Calendar className="w-16 h-16 text-primary mx-auto mb-6" />
-                <h3 className="text-2xl font-bold mb-3">Complete Your Profile First</h3>
+                <h3 className="text-2xl  mb-3">Complete Your Profile First</h3>
                 <p className="text-secondary max-w-lg mx-auto leading-relaxed mb-6">
                   To generate your personalized daily horoscope, we need your natal chart.
                   Please complete your birth information in the onboarding flow.
@@ -196,7 +196,7 @@ export default function HoroscopePage() {
             >
               <div className="bg-card border border-border rounded-lg p-12">
                 <Sparkles className="w-16 h-16 text-primary mx-auto mb-6" />
-                <h3 className="text-2xl font-bold mb-3">Ready to Generate Your Horoscope</h3>
+                <h3 className="text-2xl  mb-3">Ready to Generate Your Horoscope</h3>
                 <p className="text-secondary max-w-lg mx-auto leading-relaxed mb-6">
                   Click below to generate your personalized daily horoscope based on current transits
                   and your natal chart.
@@ -228,14 +228,18 @@ export default function HoroscopePage() {
             {/* Header */}
             <motion.div variants={staggerItem} className="flex items-center justify-between mb-6">
               <div>
-                <h2 className="text-3xl font-bold font-serif text-primary">Daily Horoscope</h2>
+                <h2 className="text-3xl font-serif text-primary">Daily Horoscope</h2>
                 <p className="text-secondary mt-1">
-                  {new Date(dailyHoroscope.date).toLocaleDateString('en-US', {
-                    weekday: 'long',
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                  })}
+                  {(() => {
+                    const [year, month, day] = dailyHoroscope.date.split('-').map(Number);
+                    const date = new Date(year, month - 1, day);
+                    return date.toLocaleDateString('en-US', {
+                      weekday: 'long',
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                    });
+                  })()}
                 </p>
               </div>
               <Button
@@ -260,11 +264,11 @@ export default function HoroscopePage() {
                       className={`relative px-2 py-2 transition-all whitespace-nowrap ${
                         activeTab === tab.id
                           ? 'text-white'
-                          : 'text-white/50 hover:text-white/75'
+                          : 'text-white hover:text-white'
                       }`}
                       style={{ letterSpacing: '0.15em' }}
                     >
-                      <span className="text-sm font-medium">{tab.label}</span>
+                      <span className="text-sm">{tab.label}</span>
                       {activeTab === tab.id && (
                         <motion.div
                           layoutId="activeTab"
@@ -338,9 +342,9 @@ function MainReadingTab({ fullContent, preview, content }: any) {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {preview.weather.moon && (
               <div className="flex items-start gap-3 p-4 bg-surface rounded-lg">
-                <Moon className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                <span className="text-2xl text-primary flex-shrink-0">☽</span>
                 <div>
-                  <div className="font-semibold text-sm text-primary mb-1 uppercase tracking-wider">Moon</div>
+                  <div className=" text-sm text-primary mb-1 uppercase tracking-wider">Moon</div>
                   <p className="text-sm text-secondary">
                     {typeof preview.weather.moon === 'string'
                       ? preview.weather.moon
@@ -351,9 +355,9 @@ function MainReadingTab({ fullContent, preview, content }: any) {
             )}
             {preview.weather.venus && (
               <div className="flex items-start gap-3 p-4 bg-surface rounded-lg">
-                <Heart className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                <span className="text-2xl text-primary flex-shrink-0">♀</span>
                 <div>
-                  <div className="font-semibold text-sm text-primary mb-1 uppercase tracking-wider">Venus</div>
+                  <div className=" text-sm text-primary mb-1 uppercase tracking-wider">Venus</div>
                   <p className="text-sm text-secondary">
                     {typeof preview.weather.venus === 'string'
                       ? preview.weather.venus
@@ -364,9 +368,9 @@ function MainReadingTab({ fullContent, preview, content }: any) {
             )}
             {preview.weather.mercury && (
               <div className="flex items-start gap-3 p-4 bg-surface rounded-lg">
-                <MessageCircle className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                <span className="text-2xl text-primary flex-shrink-0">☿</span>
                 <div>
-                  <div className="font-semibold text-sm text-primary mb-1 uppercase tracking-wider">Mercury</div>
+                  <div className=" text-sm text-primary mb-1 uppercase tracking-wider">Mercury</div>
                   <p className="text-sm text-secondary">
                     {typeof preview.weather.mercury === 'string'
                       ? preview.weather.mercury
@@ -483,7 +487,7 @@ function TransitsTab({ fullContent }: any) {
             <TransitTimeline transit={transit} />
           )}
 
-          <h4 className="text-lg font-semibold mb-2 text-primary">{transit.aspect}</h4>
+          <h4 className="text-lg font-medium mb-2 text-primary">{transit.aspect}</h4>
           <p className="leading-relaxed text-secondary mb-4">{transit.interpretation}</p>
           {transit.advice && (
             <div className="bg-surface rounded-lg p-4">
@@ -705,7 +709,7 @@ function CategoriesTab({ dailyHoroscope, profile, activeCategory, setActiveCateg
                 }`}
               >
                 <Icon className="w-4 h-4" />
-                <span className="text-sm font-medium capitalize">{category}</span>
+                <span className="text-sm  capitalize">{category}</span>
               </button>
             );
           })}
@@ -715,7 +719,7 @@ function CategoriesTab({ dailyHoroscope, profile, activeCategory, setActiveCateg
       {/* Active Category Content */}
       {activeCategory && categoryAdvice && categoryAdvice[activeCategory] && (
         <div className="bg-card border border-border rounded-lg p-6">
-          <h3 className="text-3xl font-serif text-primary mb-4 capitalize">
+          <h3 className="text-3xl font-serif text-[#F6D99F] mb-4 capitalize">
             {categoryAdvice[activeCategory].title
               ? categoryAdvice[activeCategory].title.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '').trim()
               : activeCategory}
