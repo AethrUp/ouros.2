@@ -53,8 +53,8 @@ export const PlanetDetailModal = ({
         {/* Header */}
         <div className="text-center border-b border-border pb-6">
           <PlanetIcon planet={planetKey} size={48} className="text-primary mb-3" />
-          <h2 className="text-4xl  capitalize font-serif text-white">
-            {planetKey}
+          <h2 className="text-4xl capitalize font-serif text-white">
+            {planetKey} in {planet.sign}
           </h2>
           <button
             onClick={onClose}
@@ -79,18 +79,19 @@ export const PlanetDetailModal = ({
         {/* Position Section */}
         <div className="grid grid-cols-3 gap-4">
           <div className="text-center p-6 bg-surface rounded-lg border border-border">
-            <ZodiacIcon sign={planet.sign} size={36} className="text-primary mb-3" />
-            <div className="text-sm text-secondary mt-2 uppercase tracking-wide">
+            <div className="h-[2.25rem] flex items-center justify-center mb-2">
+              <ZodiacIcon sign={planet.sign} size={36} className="text-primary" />
+            </div>
+            <div className="text-sm text-secondary uppercase tracking-wide">
               Sign
             </div>
-            <div className="text-lg  capitalize mt-1">{planet.sign}</div>
           </div>
           <div className="text-center p-6 bg-surface rounded-lg border border-border">
-            <div className="text-4xl text-primary mb-2">{planet.house}</div>
+            <div className="text-4xl font-serif text-primary mb-2 h-[2.25rem] flex items-center justify-center">{planet.house}</div>
             <div className="text-sm text-secondary uppercase tracking-wide">House</div>
           </div>
           <div className="text-center p-6 bg-surface rounded-lg border border-border">
-            <div className="text-2xl font-mono text-primary mb-2">
+            <div className="text-4xl font-serif text-primary mb-2 h-[2.25rem] flex items-center justify-center">
               {formatDegrees(planet.degree % 30)}
             </div>
             <div className="text-sm text-secondary uppercase tracking-wide">Position</div>

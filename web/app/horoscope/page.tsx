@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { MainLayout } from '@/components/layout';
 import { Button } from '@/components/ui';
+import { LoadingScreen } from '@/components/ui/LoadingScreen';
 import { useAppStore } from '@/store';
 import { fadeInUp, transitions, staggerContainer, staggerItem } from '@/lib/animations';
 
@@ -131,23 +132,7 @@ export default function HoroscopePage() {
 
   // Loading state
   if (isLoading || isGeneratingHoroscope) {
-    return (
-      <MainLayout headerTitle="Daily Horoscope" showBack>
-        <div className="min-h-screen bg-background pb-20 lg:pb-8 flex items-center justify-center">
-          <motion.div
-            variants={fadeInUp}
-            initial="initial"
-            animate="animate"
-            transition={transitions.spring}
-            className="text-center"
-          >
-            <Loader2 className="w-12 h-12 text-primary animate-spin mx-auto mb-4" />
-            <h3 className="text-xl  mb-2">Generating Your Daily Horoscope</h3>
-            <p className="text-secondary">Analyzing transits and creating personalized insights...</p>
-          </motion.div>
-        </div>
-      </MainLayout>
-    );
+    return <LoadingScreen context="horoscope" />;
   }
 
   // No natal chart state
@@ -475,23 +460,19 @@ function TransitsTab({ fullContent }: any) {
     <div className="space-y-6">
       {allTransits.map(({ transit, number }) => (
         <div key={number} className="bg-card border border-border rounded-lg p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-3xl font-serif text-primary">Transit {number}</h3>
-            {transit.timing && (
-              <span className="text-sm text-secondary italic">{transit.timing}</span>
-            )}
-          </div>
+          <h3 className="text-3xl font-serif text-primary mb-4">Transit {number}</h3>
+
+          <h4 className="text-xl font-serif text-primary mb-4">{transit.aspect}</h4>
+          <p className="leading-relaxed text-secondary mb-6">{transit.interpretation}</p>
 
           {/* Transit Timeline */}
           {transit.timingData?.strengthCurve && transit.timingData.strengthCurve.length > 0 && (
-            <TransitTimeline transit={transit} />
+            <TransitTimeline transit={transit} timing={transit.timing} />
           )}
 
-          <h4 className="text-lg font-medium mb-2 text-primary">{transit.aspect}</h4>
-          <p className="leading-relaxed text-secondary mb-4">{transit.interpretation}</p>
           {transit.advice && (
-            <div className="bg-surface rounded-lg p-4">
-              <p className="text-sm text-secondary">{transit.advice}</p>
+            <div className="bg-surface rounded-lg p-4 mt-6">
+              <p className="leading-relaxed text-secondary">{transit.advice}</p>
             </div>
           )}
         </div>
@@ -500,8 +481,30 @@ function TransitsTab({ fullContent }: any) {
   );
 }
 
+// Get planet color
+function getPlanetColor(planetName?: string): string {
+  if (!planetName) return '#F6D99F';
+  const key = planetName.toLowerCase().replace(/\s/g, '');
+  const colors: Record<string, string> = {
+    sun: '#FDB813',
+    moon: '#C0C0C0',
+    mercury: '#87CEEB',
+    venus: '#FF69B4',
+    mars: '#DC143C',
+    jupiter: '#FF8C00',
+    saturn: '#4B0082',
+    uranus: '#00CED1',
+    neptune: '#9370DB',
+    pluto: '#8B4513',
+    northnode: '#32CD32',
+    southnode: '#228B22',
+    chiron: '#9B85AE',
+  };
+  return colors[key] || '#F6D99F';
+}
+
 // Transit Timeline Component
-function TransitTimeline({ transit }: any) {
+function TransitTimeline({ transit, timing }: any) {
   const strengthCurve = transit.timingData?.strengthCurve || [];
   if (strengthCurve.length === 0) return null;
 
@@ -530,28 +533,33 @@ function TransitTimeline({ transit }: any) {
     { hour: 18, icon: Sunset, label: '6PM', x: width * 0.75 },
   ];
 
+  const lineColor = getPlanetColor(transit.planet);
+
   return (
-    <div className="my-4">
-      <div className="flex justify-between mb-2 px-2">
-        {timeIcons.map((time) => {
-          const Icon = time.icon;
-          return (
-            <div key={time.hour} className="flex flex-col items-center">
-              <Icon className="w-4 h-4 text-primary" />
-            </div>
-          );
-        })}
-      </div>
-      <svg width="100%" height={height} viewBox={`0 0 ${width} ${height}`} className="w-full">
+    <div className="my-6">
+      <svg width="100%" height={height} viewBox={`0 0 ${width} ${height}`} className="w-full" preserveAspectRatio="none">
         <polyline
           points={points}
           fill="none"
-          stroke="#F6D99F"
+          stroke={lineColor}
           strokeWidth="2"
           opacity="1"
         />
       </svg>
-      <p className="text-xs text-secondary/50 text-center mt-2 tracking-wider">24 HOUR TRANSIT INFLUENCE</p>
+      <div className="flex justify-between px-0 mt-3">
+        {timeIcons.map((time) => {
+          const Icon = time.icon;
+          return (
+            <div key={time.hour} className="flex flex-col items-center">
+              <Icon className="w-6 h-6 text-white" />
+            </div>
+          );
+        })}
+      </div>
+      <p className="text-xs text-secondary text-center mt-4 tracking-wider uppercase">24 Hour Transit Influence</p>
+      {timing && (
+        <p className="text-sm text-secondary text-center mt-2 italic">{timing}</p>
+      )}
     </div>
   );
 }

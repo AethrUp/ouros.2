@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import RadionicSpinner from './RadionicSpinner';
 
-type LoadingContext = 'natal-chart' | 'tarot' | 'dream' | 'synastry' | 'iching' | 'dashboard' | 'general';
+type LoadingContext = 'natal-chart' | 'tarot' | 'dream' | 'synastry' | 'iching' | 'dashboard' | 'horoscope' | 'general';
 
 interface LoadingScreenProps {
   context?: LoadingContext;
@@ -51,6 +51,12 @@ const MESSAGE_SETS: Record<LoadingContext, string[]> = {
     'Preparing today\'s insights',
     'Gathering celestial data',
     'Calculating transits',
+  ],
+  'horoscope': [
+    'Analyzing current planetary transits',
+    'Interpreting cosmic influences on your chart',
+    'Generating personalized insights',
+    'Calculating daily guidance',
   ],
   'general': [
     'Loading',
@@ -102,7 +108,7 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({
       </div>
 
       {/* Rotating Messages */}
-      <div className="relative w-full max-w-md h-20 flex items-center justify-center">
+      <div className="relative w-full max-w-2xl h-20 flex items-center justify-center px-4">
         <AnimatePresence mode="wait">
           <motion.p
             key={currentMessageIndex}

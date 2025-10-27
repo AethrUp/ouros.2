@@ -20,6 +20,7 @@ export async function POST(request: NextRequest) {
       person1Name,
       person2Name,
       connectionId,
+      savedChartId,
       relationshipContext,
       detailLevel = 'detailed',
     } = body;
@@ -27,6 +28,13 @@ export async function POST(request: NextRequest) {
     if (!synastryChart || !person1Chart || !person2Chart || !person1Name || !person2Name) {
       return NextResponse.json(
         { success: false, error: 'Missing required parameters' },
+        { status: 400 }
+      );
+    }
+
+    if (!connectionId && !savedChartId) {
+      return NextResponse.json(
+        { success: false, error: 'Either connectionId or savedChartId is required' },
         { status: 400 }
       );
     }
@@ -106,7 +114,8 @@ export async function POST(request: NextRequest) {
     const reading = {
       id: `synastry_${Date.now()}_${Math.random().toString(36).substring(7)}`,
       synastryChartId: synastryChart.id,
-      connectionId,
+      connectionId: connectionId || undefined,
+      savedChartId: savedChartId || undefined,
       interpretation,
       relationshipContext,
       aiGenerated: true,

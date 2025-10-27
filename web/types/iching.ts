@@ -70,52 +70,48 @@ export interface IChingInterpretation {
  * New structured interpretation format (V2)
  */
 export interface IChingInterpretationV2 {
-  preview: {
-    title: string;
-    summary: string;
-    tone: 'Contemplative' | 'Dynamic' | 'Cautionary' | 'Auspicious';
+  title: string;
+  summary: string;
+  tone: 'Contemplative' | 'Dynamic' | 'Cautionary' | 'Auspicious';
+
+  overview: string;
+
+  presentSituation: string;
+
+  trigramDynamics: {
+    interaction: string;
+    upperMeaning: string;
+    lowerMeaning: string;
   };
 
-  fullContent: {
-    overview: string;
-
-    presentSituation: string;
-
-    trigramDynamics: {
-      interaction: string;
-      upperMeaning: string;
-      lowerMeaning: string;
-    };
-
-    changingLines: {
-      present: string;
-      significance: string;
-    };
-
-    transformation: {
-      journey: string;
-      futureState: string;
-    };
-
-    guidance: {
-      wisdom: string;
-      rightAction: string[];
-      toEmbody: string[];
-      toAvoid: string[];
-    };
-
-    timing: {
-      nature: string;
-      whenToAct: string;
-      whenToWait: string;
-    };
-
-    keyInsight: string;
-
-    reflectionPrompts: string[];
-
-    conclusion: string;
+  changingLines: {
+    present: string;
+    significance: string;
   };
+
+  transformation: {
+    journey: string;
+    futureState: string;
+  };
+
+  guidance: {
+    wisdom: string;
+    rightAction: string[];
+    toEmbody: string[];
+    toAvoid: string[];
+  };
+
+  timing: {
+    nature: string;
+    whenToAct: string;
+    whenToWait: string;
+  };
+
+  keyInsight: string;
+
+  reflectionPrompts: string[];
+
+  conclusion: string;
 }
 
 /**

@@ -3,9 +3,9 @@
  * Handles saving horoscope readings to the unified readings table for journal linking
  */
 
-import { supabase } from '../utils/supabase';
 import { DailyHoroscope } from '../types/reading';
 import { useAppStore } from '../store';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 interface SaveHoroscopeReadingData {
   horoscope: DailyHoroscope;
@@ -22,7 +22,8 @@ interface SaveHoroscopeReadingResult {
  * This allows journal entries to properly link to horoscope readings
  */
 export const saveHoroscopeReading = async (
-  data: SaveHoroscopeReadingData
+  data: SaveHoroscopeReadingData,
+  supabase: SupabaseClient
 ): Promise<SaveHoroscopeReadingResult> => {
   const store = useAppStore.getState();
   const userId = store.user?.id;
@@ -85,7 +86,9 @@ export const saveHoroscopeReading = async (
 /**
  * Load horoscope readings from the unified readings table
  */
-export const loadHoroscopeReadings = async (): Promise<any[]> => {
+export const loadHoroscopeReadings = async (
+  supabase: SupabaseClient
+): Promise<any[]> => {
   const store = useAppStore.getState();
   const userId = store.user?.id;
 

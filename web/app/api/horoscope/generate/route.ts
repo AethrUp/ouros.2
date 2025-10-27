@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateDailyHoroscope } from '@/handlers/horoscopeGeneration';
+import { createClient } from '@/lib/supabase/server';
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,8 +16,11 @@ export async function POST(request: NextRequest) {
 
     console.log('🔮 Horoscope generation API called');
 
+    // Create server-side Supabase client with authenticated session
+    const supabase = await createClient();
+
     // Generate horoscope
-    const result = await generateDailyHoroscope(natalChart, userProfile, options || {});
+    const result = await generateDailyHoroscope(natalChart, userProfile, supabase, options || {});
 
     if (!result.success) {
       return NextResponse.json(

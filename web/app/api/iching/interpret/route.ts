@@ -4,6 +4,9 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { constructIChingPromptV2, validateIChingInterpretationV2JSON } from '@/utils/ichingPromptTemplateV2';
 
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY || '',
 });
@@ -118,6 +121,8 @@ export async function POST(request: NextRequest) {
       output: response.usage.output_tokens,
       total: response.usage.input_tokens + response.usage.output_tokens,
     });
+    console.log('🔍 API - interpretationData keys:', Object.keys(interpretationData));
+    console.log('🔍 API - interpretationData structure:', JSON.stringify(interpretationData, null, 2));
 
     return NextResponse.json({
       success: true,

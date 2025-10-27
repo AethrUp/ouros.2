@@ -8,147 +8,20 @@
         "type": "tabs",
         "children": [
           {
-            "id": "c100eb6c3bb8d55f",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "tarot_interpretation_prompt.md",
-                "mode": "source",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "tarot_interpretation_prompt"
-            }
-          },
-          {
-            "id": "a9d601dc18bffb5f",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "daily_horoscope_prompt_template.md",
-                "mode": "source",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "daily_horoscope_prompt_template"
-            }
-          },
-          {
-            "id": "a1e4da2b12e692fc",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "four_astrology_prompts.md",
-                "mode": "source",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "four_astrology_prompts"
-            }
-          },
-          {
-            "id": "708c8ffef44534d2",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "tarot_implementation_plan.md",
-                "mode": "source",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "tarot_implementation_plan"
-            }
-          },
-          {
-            "id": "f5da56c8452c2f2e",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "Marketing/Avatar.md",
-                "mode": "source",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "Avatar"
-            }
-          },
-          {
-            "id": "c6234346e52dff3a",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "Marketing/high-level benefits.md",
-                "mode": "source",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "high-level benefits"
-            }
-          },
-          {
-            "id": "b391c80684495293",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "Marketing/high-level benefits.md",
-                "mode": "source",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "high-level benefits"
-            }
-          },
-          {
-            "id": "def5d8bc2e379ed8",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "astrology_component_apis.md",
-                "mode": "source",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "astrology_component_apis"
-            }
-          },
-          {
-            "id": "d46dc582026b095e",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "App Structure/Updated Reading Structures.md",
-                "mode": "source",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "Updated Reading Structures"
-            }
-          },
-          {
             "id": "ba7b3f4b8ed33a59",
             "type": "leaf",
             "state": {
               "type": "markdown",
               "state": {
-                "file": "REACT_NATIVE_TO_WEB_MIGRATION.md",
+                "file": "Setup/Stripe/STRIPE_DATABASE_MIGRATION.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "REACT_NATIVE_TO_WEB_MIGRATION"
+              "title": "STRIPE_DATABASE_MIGRATION"
             }
           }
-        ],
-        "currentTab": 9
+        ]
       }
     ],
     "direction": "vertical"
@@ -205,8 +78,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 300,
-    "collapsed": true
+    "width": 300
   },
   "right": {
     "id": "ebaf7bc534a71313",
@@ -300,41 +172,41 @@
   },
   "active": "ba7b3f4b8ed33a59",
   "lastOpenFiles": [
+    "PHASE_4_COMPLETE.md",
+    "PHASE_4_COMPLETE.md.tmp.9352.1761527334631",
+    "PHASE_3_COMPLETE.md",
+    "PHASE_3_COMPLETE.md.tmp.9352.1761515938144",
+    "WEBHOOK_TESTING_GUIDE.md",
+    "WEBHOOK_TESTING_GUIDE.md.tmp.9352.1761515851530",
+    "PHASE_2_COMPLETE.md",
+    "PHASE_2_COMPLETE.md.tmp.9352.1761513475388",
+    "Setup/Stripe/STRIPE_SETUP_QUICK_REFERENCE.md",
+    "Setup/Stripe/STRIPE_CHECKOUT_EXPLAINED.md",
+    "Setup/Stripe/STRIPE_IMPLEMENTATION_PLAN.md",
+    "Setup/Stripe",
+    "Setup/Stripe/STRIPE_DATABASE_MIGRATION.md",
+    "Setup/REACT_NATIVE_TO_WEB_MIGRATION.md",
+    "Setup/Stripe/STRIPE_PRODUCT_SETUP_GUIDE.md",
+    "STRIPE_CHECKOUT_EXPLAINED.md.tmp.9352.1761512394008",
+    "STRIPE_SETUP_QUICK_REFERENCE.md.tmp.9352.1761512146463",
+    "STRIPE_PRODUCT_SETUP_GUIDE.md.tmp.9352.1761512059318",
+    "STRIPE_DATABASE_MIGRATION.md.tmp.9352.1761511841109",
+    "STRIPE_IMPLEMENTATION_PLAN.md.tmp.17500.1761506384029",
     "Setup/REVENUECAT_DASHBOARD_SETUP.md",
-    "REACT_NATIVE_TO_WEB_MIGRATION.md",
-    "REACT_NATIVE_TO_WEB_MIGRATION.md.tmp.3976.1761311350768",
     "Implementations/Settings Outline.md",
     "App Info/tarot_oracle_method.md",
     "App Info/iching_oracle_method.md",
     "App Info/dream_interpretation_oracle_method.md",
     "App Info/Untitled.md",
-    "App Info",
     "Marketing/upgrade_modal_copy.md",
-    "Setup/REVENUECAT_DASHBOARD_SETUP.md.tmp.8988.1760996022026",
-    "Setup",
     "Marketing/Upgrade Plan Copy.md",
     "Marketing/subscription_tiers_table.md",
     "Marketing/Headlines Starters.md",
     "App Structure/Updated Reading Structures.md",
     "Prompts/Updated Daily Reading.md",
     "Marketing/APP_FEATURES_MARKETING.md",
-    "App Structure",
-    "Dev Progress",
-    "Implementations",
-    "Prompts",
     "Prompts/natal_interpretation_prompt.md",
-    "APP_FEATURES_MARKETING.md.tmp.8988.1760971310769",
     "App Structure/DAILY_READING_DATA_STRUCTURE.md",
-    "Marketing/SUBSCRIPTION_TIERS_AND_LIMITS.md",
-    "SUBSCRIPTION_TIERS_AND_LIMITS.md.tmp.22808.1760716999028",
-    "Implementations/TAROT_UI_FIXES_FINAL.md",
-    "Implementations/TAROT_UI_FIXES_CORRECTED.md",
-    "Dev Progress/TAROT_UI_FIXES_COMPLETE.md",
-    "Dev Progress/TAROT_TOKEN_FIX.md",
-    "Dev Progress/TAROT_SECTION_NAVIGATION_COMPLETE.md",
-    "Dev Progress/PHASE_2_COMPLETE_SUMMARY.md",
-    "Dev Progress/PHASE_2_PROGRESS.md",
-    "Prompts/daily_synastry_forecast_prompt_v2.md",
-    "Prompts/iching_interpretation_prompt_v2.md"
+    "Marketing/SUBSCRIPTION_TIERS_AND_LIMITS.md"
   ]
 }

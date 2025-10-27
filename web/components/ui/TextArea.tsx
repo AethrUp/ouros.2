@@ -33,22 +33,18 @@ export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
 
     return (
       <div className="w-full">
-        {label && (
-          <label className="block text-sm  text-white mb-2">
-            {label}
-            {props.required && <span className="text-error ml-1">*</span>}
-          </label>
-        )}
         <textarea
           ref={ref}
+          placeholder={label}
           className={cn(
-            'w-full px-4 py-3 rounded-lg',
-            'bg-background-secondary border border-border',
-            'text-white placeholder:text-secondary',
-            'focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent',
+            'flex min-h-[120px] w-full rounded-lg px-5 py-4',
+            'text-base text-white placeholder:text-white/50 placeholder:uppercase placeholder:tracking-wide placeholder:text-sm',
+            'bg-[#141414]',
+            'border-0',
+            'focus:outline-none focus:ring-2 focus:ring-primary/50',
+            'disabled:cursor-not-allowed disabled:opacity-50',
             'transition-all duration-200',
-            'disabled:opacity-50 disabled:cursor-not-allowed',
-            error && 'border-error focus:ring-error',
+            error && 'ring-2 ring-error focus:ring-error',
             resizeClass,
             className
           )}

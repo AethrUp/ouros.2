@@ -6,6 +6,7 @@ import { User, Mail, Calendar, MapPin, Star, LogOut, Edit, Settings } from 'luci
 import { useAppStore } from '@/store';
 import { MainLayout } from '@/components/layout';
 import { Button } from '@/components/ui';
+import { SubscriptionInfo } from '@/components/subscription/SubscriptionInfo';
 import { fadeInUp, staggerContainer, staggerItem } from '@/lib/animations';
 
 export default function ProfilePage() {
@@ -107,6 +108,11 @@ export default function ProfilePage() {
               </motion.div>
             )}
 
+            {/* Subscription */}
+            <motion.div variants={staggerItem}>
+              <SubscriptionInfo />
+            </motion.div>
+
             {/* Account Settings */}
             <motion.div
               variants={staggerItem}
@@ -129,14 +135,6 @@ export default function ProfilePage() {
                 >
                   <Calendar className="w-4 h-4 mr-2" />
                   Update Birth Data
-                </Button>
-                <Button
-                  variant="secondary"
-                  className="w-full justify-start"
-                  onClick={() => alert('Subscription management coming soon')}
-                >
-                  <Star className="w-4 h-4 mr-2" />
-                  Manage Subscription
                 </Button>
                 <Button
                   variant="secondary"

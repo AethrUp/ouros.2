@@ -10,11 +10,11 @@ import { MainLayout } from '@/components/layout';
 import { Button, LoadingScreen } from '@/components/ui';
 import { TransitEffectivenessGraph, CosmicWeatherChart } from '@/components/charts';
 import { staggerContainer, staggerItem, fadeInUp } from '@/lib/animations';
-import { Sparkles, BookOpen, Users, UserPlus } from 'lucide-react';
+import { ArrowRight, BookOpen, Users, UserPlus } from 'lucide-react';
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { user, isAuthenticated, birthData, natalChart } = useAppStore();
+  const { user, isAuthenticated, birthData, natalChart, dailyHoroscope, isGeneratingHoroscope, generateHoroscope, profile } = useAppStore();
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -29,70 +29,52 @@ export default function DashboardPage() {
     setIsLoading(false);
   }, [isAuthenticated, birthData, router]);
 
+  // Auto-generate horoscope if needed
+  useEffect(() => {
+    const checkAndGenerateHoroscope = async () => {
+      if (!natalChart || !user || !birthData) return;
+
+      const today = new Date().toISOString().split('T')[0];
+      const hasHoroscopeForToday = dailyHoroscope && dailyHoroscope.date === today;
+
+      if (!hasHoroscopeForToday && !isGeneratingHoroscope) {
+        try {
+          const userProfile = {
+            id: user.id,
+            email: user.email,
+            birthDate: birthData.birthDate,
+            birthTime: birthData.birthTime,
+            birthLocation: birthData.birthLocation,
+            selectedCategories: (profile as any)?.selectedCategories || [],
+          };
+          await generateHoroscope(natalChart, userProfile);
+        } catch (error) {
+          console.error('Failed to generate horoscope:', error);
+        }
+      }
+    };
+
+    if (!isLoading) {
+      checkAndGenerateHoroscope();
+    }
+  }, [natalChart, user, dailyHoroscope, isGeneratingHoroscope, birthData, profile, generateHoroscope, isLoading]);
+
   if (isLoading || !isAuthenticated || !user) {
     return <LoadingScreen context="dashboard" />;
   }
 
-  // Mock data for demonstration (TODO: Replace with real data from horoscope generation)
-  const mockHoroscope = {
+  // Use real horoscope data or fallback to default
+  const horoscopeData = dailyHoroscope || {
     preview: {
-      title: 'A Day of Cosmic Balance',
-      summary:
-        'Today brings harmonious energy as Venus trines your natal Jupiter. Your natural charm is amplified, making it an excellent time for social connections and creative pursuits. The Moon\'s position suggests heightened intuition - trust your instincts in decision-making.',
-      weather: {
-        moon: {
-          description: 'Emotional clarity and intuitive insights flow freely today',
-          aspects: {
-            emotions: 75,
-            intuition: 85,
-            comfort: 60,
-          },
-        },
-        venus: {
-          description: 'Love and beauty surround you with grace and ease',
-          aspects: {
-            love: 80,
-            beauty: 70,
-            pleasure: 75,
-          },
-        },
-        mercury: {
-          description: 'Communication flows smoothly, ideas come quickly',
-          aspects: {
-            communication: 65,
-            thinking: 70,
-            movement: 60,
-          },
-        },
-      },
+      title: 'Your Daily Horoscope',
+      summary: 'Generate your personalized horoscope to see today\'s cosmic insights.',
+      weather: null,
+    },
+    content: {
+      summary: 'Generate your personalized horoscope to see today\'s cosmic insights.',
     },
     fullContent: {
-      transitAnalysis: {
-        primary: {
-          planet: 'Venus',
-          natalPlanet: 'Jupiter',
-          aspectType: 'Trine',
-          timingData: {
-            strengthCurve: [
-              20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75,
-              80, 85, 80, 75, 70, 65, 60, 55, 50, 45, 40, 35,
-            ],
-          },
-        },
-        secondary: [
-          {
-            planet: 'Mercury',
-            natalPlanet: 'Sun',
-            aspectType: 'Sextile',
-            timingData: {
-              strengthCurve: [
-                30, 32, 35, 38, 42, 45, 48, 52, 55, 58, 60, 62,
-                64, 65, 63, 60, 57, 54, 50, 47, 44, 40, 37, 33,
-              ],
-            },
-          },
-        ],
-      },
+      transitAnalysis: null,
     },
   };
 
@@ -102,32 +84,36 @@ export default function DashboardPage() {
       description: 'Draw cards for guidance',
       href: '/oracle/tarot',
       iconPath: '/icons/tarotIcon.svg',
+      color: 'from-purple-500/20 to-pink-500/20',
     },
     {
       title: 'I Ching',
       description: 'Cast coins for wisdom',
       href: '/oracle/iching',
       iconPath: '/icons/ichingIcon.svg',
+      color: 'from-blue-500/20 to-cyan-500/20',
     },
     {
       title: 'Dream Journal',
       description: 'Record your dreams',
       href: '/oracle/dreams',
       iconPath: '/icons/dreamIcon.svg',
+      color: 'from-indigo-500/20 to-violet-500/20',
     },
     {
       title: 'Natal Chart',
       description: 'View your chart',
       href: '/chart',
       iconPath: '/icons/natalIcon.svg',
+      color: 'from-amber-500/20 to-orange-500/20',
     },
   ];
 
-  // Mock journal prompts
-  const journalPrompts = [
+  // Journal prompts - use from horoscope or default
+  const journalPrompts = (dailyHoroscope?.fullContent as any)?.spiritualGuidance?.journalPrompts || [
     'What intentions are you setting under today\'s cosmic energy?',
-    'How can you harness Venus\'s harmonious trine to deepen your relationships?',
-    'What creative projects feel aligned with your current planetary transits?',
+    'How are the current planetary transits influencing your daily life?',
+    'What creative projects feel aligned with your current energy?',
   ];
 
   return (
@@ -144,7 +130,7 @@ export default function DashboardPage() {
           <motion.div variants={staggerItem} className="card">
             <div className="flex items-start justify-between mb-4">
               <div>
-                <h2 className="mb-1">{mockHoroscope.preview.title}</h2>
+                <h1 className="text-2xl font-serif text-primary mb-1">{horoscopeData.preview?.title || 'Your Daily Horoscope'}</h1>
                 <p className="text-sm text-secondary">
                   {new Date().toLocaleDateString('en-US', {
                     weekday: 'long',
@@ -158,7 +144,9 @@ export default function DashboardPage() {
               )}
             </div>
 
-            <p className="text-white leading-relaxed mb-6 text-sm">{mockHoroscope.preview.summary}</p>
+            <p className="text-white leading-relaxed mb-6 text-sm">
+              {horoscopeData.preview?.summary || horoscopeData.content?.summary || 'Loading your personalized horoscope...'}
+            </p>
 
             <Button variant="primary" onClick={() => router.push('/horoscope')} className="w-full">
               Read Full Horoscope
@@ -166,20 +154,20 @@ export default function DashboardPage() {
           </motion.div>
 
           {/* Transits & Cosmic Weather - Side by side on desktop */}
-          {(mockHoroscope.fullContent?.transitAnalysis || mockHoroscope.preview?.weather) && (
+          {(horoscopeData.fullContent?.transitAnalysis || horoscopeData.preview?.weather) && (
             <motion.div variants={staggerItem}>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
                 {/* Today's Transits */}
-                {mockHoroscope.fullContent?.transitAnalysis && (
+                {horoscopeData.fullContent?.transitAnalysis && (
                   <div className="flex flex-col">
-                    <h3 className="mb-3">Today's Transits</h3>
+                    <h3 className="section-title mb-3">Today's Transits</h3>
                     <div className="flex-1">
                       <TransitEffectivenessGraph
                         transits={[
-                          mockHoroscope.fullContent.transitAnalysis.primary,
-                          ...(mockHoroscope.fullContent.transitAnalysis.secondary || []),
-                        ]}
+                          horoscopeData.fullContent.transitAnalysis.primary,
+                          ...(horoscopeData.fullContent.transitAnalysis.secondary || []),
+                        ].filter(Boolean)}
                         maxTransits={3}
                       />
                     </div>
@@ -187,11 +175,11 @@ export default function DashboardPage() {
                 )}
 
                 {/* Cosmic Weather Chart */}
-                {mockHoroscope.preview?.weather && (
+                {horoscopeData.preview?.weather && (
                   <div className="flex flex-col">
-                    <h3 className="mb-3">Cosmic Weather</h3>
+                    <h3 className="section-title mb-3">Cosmic Weather</h3>
                     <div className="flex-1">
-                      <CosmicWeatherChart weather={mockHoroscope.preview.weather} />
+                      <CosmicWeatherChart weather={horoscopeData.preview.weather} />
                     </div>
                   </div>
                 )}
@@ -202,24 +190,29 @@ export default function DashboardPage() {
 
           {/* Journal Prompts */}
           <motion.div variants={staggerItem}>
-            <h3 className="mb-3">Journal Prompts</h3>
+            <h3 className="section-title mb-3">Journal Prompts</h3>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-              {journalPrompts.map((prompt, index) => (
-                <div key={index} className="card p-4 flex flex-col">
-                  <div className="flex items-start gap-3 mb-4 flex-1">
-                    <Sparkles className="w-4 h-4 text-primary mt-1 flex-shrink-0" />
-                    <p className="text-sm text-white">
-                      {prompt}
-                    </p>
-                  </div>
-                  <Button
-                    variant="primary"
-                    size="small"
-                    onClick={() => router.push(`/journal?prompt=${encodeURIComponent(prompt)}`)}
-                    className="w-full"
+              {journalPrompts.map((prompt: string, index: number) => (
+                <div key={index} className="journal-card flex flex-col">
+                  <p className="text-sm text-white mb-4 flex-1">
+                    {prompt}
+                  </p>
+                  <button
+                    onClick={() => {
+                      const today = new Date().toISOString().split('T')[0];
+                      const params = new URLSearchParams({
+                        prompt,
+                        type: 'horoscope',
+                        readingId: `horoscope-${today}`,
+                        title: 'Horoscope Reflection',
+                      });
+                      router.push(`/journal?${params.toString()}`);
+                    }}
+                    className="flex items-center gap-2 text-white text-xs font-normal uppercase tracking-wider underline hover:text-primary transition-colors self-start"
                   >
                     START WRITING
-                  </Button>
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
                 </div>
               ))}
             </div>
@@ -227,27 +220,31 @@ export default function DashboardPage() {
 
           {/* Quick Actions */}
           <motion.div variants={staggerItem}>
-            <h3 className="mb-3">Quick Actions</h3>
+            <h3 className="section-title mb-3">Quick Actions</h3>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {quickActions.map((action) => (
                 <Link
                   key={action.href}
                   href={action.href}
-                  className="card p-4 hover:border-primary transition-colors group text-center"
+                  className="card p-4 transition-all group text-center relative overflow-hidden"
                 >
-                  <div className="flex items-center justify-center mb-3">
-                    <Image
-                      src={action.iconPath}
-                      alt={action.title}
-                      width={48}
-                      height={48}
-                      className="group-hover:scale-110 transition-transform"
-                    />
+                  <div
+                    className={`absolute inset-0 bg-gradient-to-br ${action.color} opacity-0 group-hover:opacity-100 transition-opacity duration-300`}
+                  />
+                  <div className="relative z-10">
+                    <div className="flex items-center justify-center mb-3 transform group-hover:scale-110 transition-transform duration-300">
+                      <Image
+                        src={action.iconPath}
+                        alt={action.title}
+                        width={48}
+                        height={48}
+                      />
+                    </div>
+                    <h4 className="font-serif mb-1 transition-colors">
+                      {action.title}
+                    </h4>
+                    <p className="text-xs text-secondary">{action.description}</p>
                   </div>
-                  <p className="text-sm mb-1 group-hover:text-primary transition-colors">
-                    {action.title}
-                  </p>
-                  <p className="text-xs text-secondary">{action.description}</p>
                 </Link>
               ))}
             </div>
@@ -258,7 +255,7 @@ export default function DashboardPage() {
             <div className="card">
               <div className="flex items-center gap-3 mb-4">
                 <Users className="w-5 h-5 text-primary" />
-                <h3>Synastry Readings</h3>
+                <h3 className="section-title">Synastry Readings</h3>
               </div>
               <p className="text-sm text-secondary mb-4">
                 Connect with friends to explore your astrological compatibility

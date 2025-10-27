@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BookOpen, Plus, Filter, Search, Link as LinkIcon } from 'lucide-react';
 import { MainLayout } from '@/components/layout';
@@ -15,9 +16,34 @@ import { cn } from '@/lib/utils';
 type TabType = 'all' | JournalEntryType;
 
 export default function JournalPage() {
+  const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<TabType>('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [initialModalData, setInitialModalData] = useState<{
+    prompt?: string;
+    title?: string;
+    type?: JournalEntryType;
+    readingId?: string;
+  }>({});
+
+  // Handle query parameters
+  useEffect(() => {
+    const prompt = searchParams.get('prompt');
+    const readingId = searchParams.get('readingId');
+    const type = searchParams.get('type') as JournalEntryType | null;
+    const title = searchParams.get('title');
+
+    if (prompt) {
+      setInitialModalData({
+        prompt: prompt,
+        title: title || undefined,
+        type: type || 'horoscope',
+        readingId: readingId || undefined,
+      });
+      setIsModalOpen(true);
+    }
+  }, [searchParams]);
 
   // Memoize filters object to prevent infinite loop
   const filters = useMemo(
@@ -239,8 +265,16 @@ export default function JournalPage() {
       {/* Journal Entry Modal */}
       <JournalEntryModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={() => {
+          setIsModalOpen(false);
+          setInitialModalData({});
+        }}
         onSave={handleCreateEntry}
+        linkedReadingId={initialModalData.readingId}
+        initialPrompt={initialModalData.prompt}
+        initialTitle={initialModalData.title}
+        initialType={initialModalData.type}
+        lockType={!!initialModalData.type}
       />
     </MainLayout>
   );

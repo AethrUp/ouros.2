@@ -24,6 +24,15 @@ export const typography = {
     letterSpacing: 1.26, // +90% tracking of 14pt
   },
 
+  sectionTitle: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 14,
+    fontWeight: '400',
+    color: '#FFFFFF',
+    textTransform: 'uppercase',
+    letterSpacing: 2.1, // +150% tracking of 14pt
+  },
+
   h4: {
     fontFamily: 'Inter_400Regular',
     fontSize: 16,

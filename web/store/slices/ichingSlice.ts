@@ -214,6 +214,10 @@ export const createIChingSlice: StateCreator<IChingSlice> = (set, get) => ({
         throw new Error(data.error || 'Failed to generate interpretation');
       }
 
+      console.log('🔍 Store - Received interpretation from API:', data.interpretation);
+      console.log('🔍 Store - interpretation type:', typeof data.interpretation);
+      console.log('🔍 Store - interpretation keys:', data.interpretation ? Object.keys(data.interpretation) : 'null');
+
       set({
         ichingInterpretation: data.interpretation,
         isGeneratingIChingInterpretation: false,

@@ -126,35 +126,9 @@ const CustomLegend = ({ transits }: { transits: TransitAnalysisItem[] }) => {
   );
 };
 
-// Custom Y-axis tick component
-const CustomYAxisTick = ({ x, y, payload }: any) => {
-  const labels: Record<number, string> = {
-    0: 'Low',
-    25: '',
-    50: 'Medium',
-    75: '',
-    100: 'High',
-  };
-
-  const label = labels[payload.value] || '';
-
-  if (!label) return null;
-
-  return (
-    <g transform={`translate(${x},${y})`}>
-      <text
-        x={0}
-        y={0}
-        dy={4}
-        textAnchor="end"
-        fill="#FFFFFF"
-        fontSize={12}
-        opacity={0.8}
-      >
-        {label}
-      </text>
-    </g>
-  );
+// Custom Y-axis tick component (hidden for cleaner look)
+const CustomYAxisTick = () => {
+  return null;
 };
 
 export const TransitEffectivenessGraph: React.FC<TransitEffectivenessGraphProps> = ({
@@ -180,6 +154,17 @@ export const TransitEffectivenessGraph: React.FC<TransitEffectivenessGraphProps>
     return dataPoint;
   });
 
+  // Calculate dynamic min and max values from all transit data
+  const allValues: number[] = [];
+  validTransits.forEach((transit) => {
+    if (transit.timingData?.strengthCurve) {
+      allValues.push(...transit.timingData.strengthCurve);
+    }
+  });
+
+  const minValue = Math.min(...allValues);
+  const maxValue = Math.max(...allValues);
+
   return (
     <div className={cn('h-full p-4 bg-card border border-border rounded-lg flex flex-col', className)}>
       {/* Graph */}
@@ -189,7 +174,6 @@ export const TransitEffectivenessGraph: React.FC<TransitEffectivenessGraphProps>
             <CartesianGrid
               strokeDasharray="3 3"
               stroke="rgba(255, 255, 255, 0.1)"
-              horizontalPoints={[0, 25, 50, 75, 100]}
             />
             <XAxis
               dataKey="hour"
@@ -201,8 +185,8 @@ export const TransitEffectivenessGraph: React.FC<TransitEffectivenessGraphProps>
               stroke="#FFFFFF"
               tick={<CustomYAxisTick />}
               axisLine={{ stroke: 'rgba(255, 255, 255, 0.3)' }}
-              domain={[0, 100]}
-              ticks={[0, 25, 50, 75, 100]}
+              domain={[minValue, maxValue]}
+              hide={true}
             />
             {validTransits.map((transit, index) => {
               const planetKey = transit.planet?.toLowerCase().replace(/\s/g, '') || '';

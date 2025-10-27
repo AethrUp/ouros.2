@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Save } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Button } from '@/components/ui';
+import { Button, Input, TextArea } from '@/components/ui';
 import { CreateJournalEntryInput, JournalEntryType } from '@/types/journal';
 
 interface JournalEntryModalProps {
@@ -11,6 +11,11 @@ interface JournalEntryModalProps {
   onClose: () => void;
   onSave: (data: CreateJournalEntryInput) => Promise<void>;
   linkedReadingId?: string;
+  initialContent?: string;
+  initialPrompt?: string; // The prompt text to display above content
+  initialTitle?: string;
+  initialType?: JournalEntryType;
+  lockType?: boolean; // If true, entry type is locked and hidden
 }
 
 const entryTypes: { value: JournalEntryType; label: string }[] = [
@@ -27,11 +32,16 @@ export function JournalEntryModal({
   onClose,
   onSave,
   linkedReadingId,
+  initialContent,
+  initialPrompt,
+  initialTitle,
+  initialType,
+  lockType = false,
 }: JournalEntryModalProps) {
   const [formData, setFormData] = useState<CreateJournalEntryInput>({
-    entry_type: 'journal',
-    content: '',
-    title: '',
+    entry_type: initialType || 'journal',
+    content: initialContent || '',
+    title: initialTitle || '',
     mood: undefined,
     energy: undefined,
     tags: [],
@@ -42,6 +52,22 @@ export function JournalEntryModal({
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Update form data when initial values change
+  useEffect(() => {
+    if (isOpen) {
+      setFormData({
+        entry_type: initialType || 'journal',
+        content: initialContent || '',
+        title: initialTitle || '',
+        mood: undefined,
+        energy: undefined,
+        tags: [],
+        is_private: true,
+        linked_reading_id: linkedReadingId,
+      });
+    }
+  }, [isOpen, initialContent, initialTitle, initialType, linkedReadingId]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -51,9 +77,22 @@ export function JournalEntryModal({
       return;
     }
 
+    // Prepend today's date to title in "Month date" format
+    const today = new Date();
+    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'];
+    const datePrefix = `${monthNames[today.getMonth()]} ${today.getDate()}`;
+
+    const finalTitle = formData.title
+      ? `${datePrefix} - ${formData.title}`
+      : datePrefix;
+
     try {
       setIsSaving(true);
-      await onSave(formData);
+      await onSave({
+        ...formData,
+        title: finalTitle,
+      });
       // Reset form
       setFormData({
         entry_type: 'journal',
@@ -138,181 +177,64 @@ export function JournalEntryModal({
                     </div>
                   )}
 
-                  {/* Entry Type */}
-                  <div>
-                    <label className="block text-sm  text-white mb-2">
-                      Entry Type
-                    </label>
-                    <div className="grid grid-cols-2 gap-2">
-                      {entryTypes.map((type) => (
-                        <button
-                          key={type.value}
-                          type="button"
-                          onClick={() =>
-                            setFormData({ ...formData, entry_type: type.value })
-                          }
-                          className={`px-4 py-2 rounded-lg text-sm transition-colors ${
-                            formData.entry_type === type.value
-                              ? 'bg-primary text-white'
-                              : 'bg-surface text-secondary hover:text-white border border-border'
-                          }`}
-                        >
-                          {type.label}
-                        </button>
-                      ))}
+                  {/* Entry Type - Only show if not locked */}
+                  {!lockType && (
+                    <div>
+                      <label className="block text-sm  text-white mb-2">
+                        Entry Type
+                      </label>
+                      <div className="grid grid-cols-2 gap-2">
+                        {entryTypes.map((type) => (
+                          <button
+                            key={type.value}
+                            type="button"
+                            onClick={() =>
+                              setFormData({ ...formData, entry_type: type.value })
+                            }
+                            className={`px-4 py-2 rounded-lg text-sm transition-colors ${
+                              formData.entry_type === type.value
+                                ? 'bg-primary text-white'
+                                : 'bg-surface text-secondary hover:text-white border border-border'
+                            }`}
+                          >
+                            {type.label}
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  )}
+
+                  {/* Prompt Display (if provided) */}
+                  {initialPrompt && (
+                    <div className="bg-primary/10 border border-primary/20 rounded-lg p-4 mb-6">
+                      <p className="text-sm text-white/80 italic">"{initialPrompt}"</p>
+                    </div>
+                  )}
 
                   {/* Title */}
-                  <div>
-                    <label className="block text-sm  text-white mb-2">
-                      Title (Optional)
-                    </label>
-                    <input
+                  <div className="mb-6">
+                    <Input
                       type="text"
                       value={formData.title}
                       onChange={(e) =>
                         setFormData({ ...formData, title: e.target.value })
                       }
-                      placeholder="Give your entry a title..."
-                      className="w-full px-4 py-3 bg-surface border border-border rounded-lg text-white placeholder-secondary focus:outline-none focus:border-primary transition-colors"
+                      placeholder="title (optional)"
                     />
                   </div>
 
                   {/* Content */}
                   <div>
-                    <label className="block text-sm  text-white mb-2">
-                      Content *
-                    </label>
-                    <textarea
+                    <TextArea
                       value={formData.content}
                       onChange={(e) =>
                         setFormData({ ...formData, content: e.target.value })
                       }
-                      placeholder="Write your thoughts, insights, and reflections..."
+                      label="your thoughts"
                       rows={8}
-                      className="w-full px-4 py-3 bg-surface border border-border rounded-lg text-white placeholder-secondary focus:outline-none focus:border-primary transition-colors resize-none"
+                      resize="none"
                       required
                     />
-                  </div>
-
-                  {/* Mood & Energy */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm  text-white mb-2">
-                        Mood
-                      </label>
-                      <div className="flex gap-2">
-                        {[1, 2, 3, 4, 5].map((value) => (
-                          <button
-                            key={value}
-                            type="button"
-                            onClick={() =>
-                              setFormData({
-                                ...formData,
-                                mood: formData.mood === value ? undefined : value,
-                              })
-                            }
-                            className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${
-                              formData.mood && formData.mood >= value
-                                ? 'bg-primary text-white'
-                                : 'bg-surface text-secondary hover:bg-surface/80'
-                            }`}
-                          >
-                            ⭐
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm  text-white mb-2">
-                        Energy
-                      </label>
-                      <div className="flex gap-2">
-                        {[1, 2, 3, 4, 5].map((value) => (
-                          <button
-                            key={value}
-                            type="button"
-                            onClick={() =>
-                              setFormData({
-                                ...formData,
-                                energy: formData.energy === value ? undefined : value,
-                              })
-                            }
-                            className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${
-                              formData.energy && formData.energy >= value
-                                ? 'bg-primary text-white'
-                                : 'bg-surface text-secondary hover:bg-surface/80'
-                            }`}
-                          >
-                            ⚡
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Tags */}
-                  <div>
-                    <label className="block text-sm  text-white mb-2">
-                      Tags
-                    </label>
-                    <div className="space-y-2">
-                      <div className="flex gap-2">
-                        <input
-                          type="text"
-                          value={tagInput}
-                          onChange={(e) => setTagInput(e.target.value)}
-                          onKeyPress={handleKeyPress}
-                          placeholder="Add a tag..."
-                          className="flex-1 px-4 py-2 bg-surface border border-border rounded-lg text-white placeholder-secondary focus:outline-none focus:border-primary transition-colors"
-                        />
-                        <Button
-                          type="button"
-                          onClick={handleAddTag}
-                          variant="ghost"
-                          disabled={!tagInput.trim()}
-                        >
-                          Add
-                        </Button>
-                      </div>
-                      {formData.tags && formData.tags.length > 0 && (
-                        <div className="flex flex-wrap gap-2">
-                          {formData.tags.map((tag, i) => (
-                            <span
-                              key={i}
-                              className="px-3 py-1 rounded-full text-sm bg-primary/20 text-primary flex items-center gap-2"
-                            >
-                              #{tag}
-                              <button
-                                type="button"
-                                onClick={() => handleRemoveTag(tag)}
-                                className="hover:text-white transition-colors"
-                              >
-                                <X className="w-3 h-3" />
-                              </button>
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Privacy */}
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="checkbox"
-                      id="is_private"
-                      checked={formData.is_private}
-                      onChange={(e) =>
-                        setFormData({ ...formData, is_private: e.target.checked })
-                      }
-                      className="w-4 h-4 rounded border-border text-primary focus:ring-primary focus:ring-offset-0"
-                    />
-                    <label htmlFor="is_private" className="text-sm text-secondary">
-                      Keep this entry private
-                    </label>
                   </div>
                 </div>
 

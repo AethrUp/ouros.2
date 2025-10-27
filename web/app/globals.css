@@ -26,12 +26,12 @@
   --font-serif: var(--font-pt-serif), serif;
 
   /* Spacing - Mobile Design System */
-  --spacing-xs: 4px;
-  --spacing-sm: 8px;
-  --spacing-md: 16px;
-  --spacing-lg: 24px;
-  --spacing-xl: 32px;
-  --spacing-xxl: 48px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 16px;
+  --space-4: 24px;
+  --space-5: 32px;
+  --space-6: 48px;
 
   /* Border Radius */
   --radius-sm: 4px;
@@ -174,4 +174,44 @@ select:disabled {
   .container-responsive {
     padding: 2rem;
   }
+}
+
+/* Section Title - Inter all caps with 150% letter spacing */
+.section-title {
+  font-family: var(--font-sans);
+  font-size: 0.875rem; /* 14px */
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.15em; /* 150% */
+  color: white;
+}
+
+/* Card utility class */
+.card {
+  background-color: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+}
+
+/* Journal prompt card with purple background */
+.journal-card {
+  background-color: rgba(129, 96, 151, 0.5); /* #816097 at 50% opacity */
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 1rem;
+}
+
+/* 3D Transform utilities for coin animation */
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+.preserve-3d {
+  transform-style: preserve-3d;
+}
+
+.backface-hidden {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }

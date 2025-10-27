@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, PT_Serif } from "next/font/google";
 import "./globals.css";
 
@@ -21,7 +21,12 @@ export const metadata: Metadata = {
   description: "Explore your cosmic path with personalized astrology, tarot readings, and I Ching wisdom",
   keywords: ["astrology", "tarot", "i ching", "oracle", "horoscope", "natal chart"],
   authors: [{ name: "Aethrup" }],
-  viewport: "width=device-width, initial-scale=1, maximum-scale=1",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
   themeColor: "#81B8B5",
 };
 

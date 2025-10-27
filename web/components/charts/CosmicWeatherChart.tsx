@@ -66,9 +66,9 @@ export const CosmicWeatherChart: React.FC<CosmicWeatherChartProps> = ({
     return (
       <div key={planetKey} className="space-y-4">
         {/* Planet symbol and description */}
-        <div className="flex flex-col items-center text-center">
-          <div className="text-4xl text-white mb-2">{config.symbol}</div>
-          <p className="text-sm text-white leading-relaxed text-justify">
+        <div className="flex items-start gap-3">
+          <div className="text-4xl text-white flex-shrink-0">{config.symbol}</div>
+          <p className="text-sm text-white leading-relaxed">
             {planetData.description}
           </p>
         </div>

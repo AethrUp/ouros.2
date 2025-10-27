@@ -10,7 +10,7 @@ export type SubscriptionStatus =
   | 'grace_period'     // In grace period (payment issue)
   | 'paused';          // Subscription paused
 
-export type SubscriptionPlatform = 'ios' | 'android' | 'manual';
+export type SubscriptionPlatform = 'ios' | 'android' | 'manual' | 'web';
 
 export interface SubscriptionState {
   userId: string;
@@ -22,6 +22,14 @@ export interface SubscriptionState {
   isSandbox: boolean;
   isDebugOverride: boolean;
   updatedAt: string;
+  // Stripe-specific fields
+  stripeSubscriptionId?: string | null;
+  stripeCustomerId?: string | null;
+  stripePriceId?: string | null;
+  stripePaymentMethodId?: string | null;
+  currentPeriodStart?: string | null;
+  currentPeriodEnd?: string | null;
+  cancelAtPeriodEnd?: boolean;
 }
 
 export interface UsageTracking {
@@ -198,4 +206,42 @@ export interface SubscriptionPackage {
   period: 'monthly' | 'yearly';
   tier: Exclude<SubscriptionTier, 'free'>;
   savings?: string;
+}
+
+// Stripe-specific types
+
+export interface StripeSubscriptionData {
+  stripeSubscriptionId: string;
+  stripeCustomerId: string;
+  stripePriceId: string;
+  stripePaymentMethodId?: string;
+  currentPeriodStart: string;
+  currentPeriodEnd: string;
+  cancelAtPeriodEnd: boolean;
+}
+
+export interface SubscriptionStateWithStripe extends SubscriptionState {
+  stripeData?: StripeSubscriptionData;
+}
+
+export type WebhookEventType =
+  | 'customer.subscription.created'
+  | 'customer.subscription.updated'
+  | 'customer.subscription.deleted'
+  | 'customer.subscription.trial_will_end'
+  | 'invoice.payment_succeeded'
+  | 'invoice.payment_failed'
+  | 'invoice.upcoming'
+  | 'payment_method.attached'
+  | 'payment_method.detached';
+
+export interface WebhookEvent {
+  id: string;
+  stripeEventId: string;
+  eventType: WebhookEventType;
+  payload: any;
+  processed: boolean;
+  processedAt?: string;
+  error?: string;
+  createdAt: string;
 }

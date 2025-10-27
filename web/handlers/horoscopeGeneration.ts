@@ -17,7 +17,7 @@ import {
   validateCosmicWeatherResponse,
 } from '../utils/aiPromptTemplates';
 import { getNatalTransits, getTropicalTransits } from '../utils/transitCalculation';
-import { supabase } from '../utils/supabase';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 // Initialize Anthropic client
 const anthropic = new Anthropic({
@@ -69,6 +69,7 @@ const isCacheValid = (
 export const generateDailyHoroscope = async (
   natalChart: NatalChartData,
   userProfile: any,
+  supabase: SupabaseClient,
   options: HoroscopeGenerationOptions = {}
 ): Promise<HoroscopeGenerationResult> => {
   const {
@@ -447,7 +448,8 @@ export const generateDailyHoroscope = async (
  */
 const loadHoroscopeFromSupabase = async (
   userId: string,
-  date: string
+  date: string,
+  supabase: SupabaseClient
 ): Promise<DailyHoroscope | null> => {
   try {
     console.log('🔍 Checking Supabase for horoscope:', { userId, date });
@@ -547,6 +549,7 @@ const loadHoroscopeFromSupabase = async (
 export const getDailyHoroscope = async (
   natalChart: NatalChartData,
   userProfile: any,
+  supabase: SupabaseClient,
   cachedHoroscope: DailyHoroscope | null,
   options: HoroscopeGenerationOptions = {}
 ): Promise<HoroscopeGenerationResult> => {
@@ -565,7 +568,7 @@ export const getDailyHoroscope = async (
 
   // Step 2: Check Supabase database (before generating new)
   if (!forceRegenerate && userProfile.id) {
-    const dbHoroscope = await loadHoroscopeFromSupabase(userProfile.id, today);
+    const dbHoroscope = await loadHoroscopeFromSupabase(userProfile.id, today, supabase);
     if (dbHoroscope) {
       console.log('✅ Using horoscope from Supabase for', today);
       return {
@@ -578,7 +581,7 @@ export const getDailyHoroscope = async (
 
   // Step 3: Generate new horoscope
   console.log('🔄 No valid horoscope found, generating new one for', today);
-  return await generateDailyHoroscope(natalChart, userProfile, options);
+  return await generateDailyHoroscope(natalChart, userProfile, supabase, options);
 };
 
 /**
