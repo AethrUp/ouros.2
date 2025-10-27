@@ -166,21 +166,22 @@ async function handleSubscriptionUpdate(subscription: Stripe.Subscription) {
       break;
   }
 
-  // Get the price ID from the subscription
-  const priceId = subscription.items.data[0]?.price.id || null;
+  // Get the price ID and billing period from the first subscription item
+  const firstItem = subscription.items.data[0];
+  const priceId = firstItem?.price.id || null;
 
-  // Safely convert timestamps, handling null/undefined values
-  const periodStart = subscription.current_period_start
-    ? new Date(subscription.current_period_start * 1000).toISOString()
+  // In Stripe API v2025-09-30, billing periods are on subscription items, not subscriptions
+  const periodStart = firstItem?.current_period_start
+    ? new Date(firstItem.current_period_start * 1000).toISOString()
     : new Date().toISOString();
 
-  const periodEnd = subscription.current_period_end
-    ? new Date(subscription.current_period_end * 1000).toISOString()
+  const periodEnd = firstItem?.current_period_end
+    ? new Date(firstItem.current_period_end * 1000).toISOString()
     : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(); // Default to 30 days from now
 
   // Log if we're using fallback values
-  if (!subscription.current_period_start || !subscription.current_period_end) {
-    console.warn(`[Webhook] Using fallback dates for subscription ${subscription.id} - start: ${subscription.current_period_start}, end: ${subscription.current_period_end}`);
+  if (!firstItem?.current_period_start || !firstItem?.current_period_end) {
+    console.warn(`[Webhook] Using fallback dates for subscription ${subscription.id} - start: ${firstItem?.current_period_start}, end: ${firstItem?.current_period_end}`);
   }
 
   // Update subscription_state
@@ -274,8 +275,8 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
 async function handlePaymentSucceeded(invoice: Stripe.Invoice) {
   const supabase = createAdminClient();
 
-  // Get subscription from invoice
-  const subscriptionId = invoice.subscription as string;
+  // Get subscription from invoice (in API v2025-09-30, it's in parent.subscription_details)
+  const subscriptionId = invoice.parent?.subscription_details?.subscription as string;
   if (!subscriptionId) {
     console.log('[Webhook] Invoice not related to subscription, skipping');
     return;
@@ -313,7 +314,8 @@ async function handlePaymentSucceeded(invoice: Stripe.Invoice) {
 async function handlePaymentFailed(invoice: Stripe.Invoice) {
   const supabase = createAdminClient();
 
-  const subscriptionId = invoice.subscription as string;
+  // Get subscription from invoice (in API v2025-09-30, it's in parent.subscription_details)
+  const subscriptionId = invoice.parent?.subscription_details?.subscription as string;
   if (!subscriptionId) {
     console.log('[Webhook] Invoice not related to subscription, skipping');
     return;

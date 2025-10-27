@@ -50,26 +50,26 @@ export const PRICING_INFO = {
       amount: 999, // $9.99 in cents
       currency: 'usd',
       display: '$9.99/month',
-    },
+    } as const,
     yearly: {
       amount: 9900, // $99/year in cents
       currency: 'usd',
       display: '$99/year',
       savings: '2 months free',
-    },
+    } as const,
   },
   pro: {
     monthly: {
       amount: 1999, // $19.99 in cents
       currency: 'usd',
       display: '$19.99/month',
-    },
+    } as const,
     yearly: {
       amount: 19900, // $199/year in cents
       currency: 'usd',
       display: '$199/year',
       savings: '2 months free',
-    },
+    } as const,
   },
 } as const;
 

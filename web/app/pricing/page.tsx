@@ -106,7 +106,7 @@ export default function PricingPage() {
         <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
           {tiers.map((tier) => {
             const price = tier.price[interval];
-            const savings = interval === 'yearly' ? tier.price.yearly.savings : null;
+            const savings = interval === 'yearly' && tier.tier && 'savings' in tier.price.yearly ? tier.price.yearly.savings : null;
 
             return (
               <div
