@@ -14,6 +14,8 @@ import { SynastryChart, SynastryReading as SynastryReadingType } from '@/types/s
 import { savedChartsAPI } from '@/handlers/savedChartsAPI';
 import { supabase } from '@/utils/supabase';
 
+export const dynamic = 'force-dynamic';
+
 export default function SynastryDetailPage() {
   const params = useParams();
   const router = useRouter();
