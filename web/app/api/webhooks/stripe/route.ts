@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import { stripe } from '@/lib/stripe/server';
-import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import type { SubscriptionTier, SubscriptionStatus } from '@/types/subscription';
 import Stripe from 'stripe';
 
@@ -47,7 +47,8 @@ export async function POST(request: NextRequest) {
   // 2. Log the event
   console.log(`[Webhook] Received event: ${event.type} (${event.id})`);
 
-  const supabase = await createClient();
+  // Use admin client to bypass RLS policies (webhooks have no user session)
+  const supabase = createAdminClient();
 
   // 3. Check for idempotency - have we processed this event before?
   const { data: existingEvent } = await supabase
@@ -128,7 +129,7 @@ export async function POST(request: NextRequest) {
  * Handle subscription created or updated
  */
 async function handleSubscriptionUpdate(subscription: Stripe.Subscription) {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const userId = subscription.metadata.user_id;
   const tier = subscription.metadata.tier as SubscriptionTier;
@@ -138,7 +139,7 @@ async function handleSubscriptionUpdate(subscription: Stripe.Subscription) {
     throw new Error('Missing user_id or tier in subscription metadata');
   }
 
-  console.log(`[Webhook] Updating subscription for user ${userId} to ${tier}`);
+  console.log(`[Webhook] Updating subscription for user ${userId} to ${tier} (status: ${subscription.status})`);
 
   // Map Stripe status to our status enum
   let status: SubscriptionStatus = 'active';
@@ -168,6 +169,20 @@ async function handleSubscriptionUpdate(subscription: Stripe.Subscription) {
   // Get the price ID from the subscription
   const priceId = subscription.items.data[0]?.price.id || null;
 
+  // Safely convert timestamps, handling null/undefined values
+  const periodStart = subscription.current_period_start
+    ? new Date(subscription.current_period_start * 1000).toISOString()
+    : new Date().toISOString();
+
+  const periodEnd = subscription.current_period_end
+    ? new Date(subscription.current_period_end * 1000).toISOString()
+    : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(); // Default to 30 days from now
+
+  // Log if we're using fallback values
+  if (!subscription.current_period_start || !subscription.current_period_end) {
+    console.warn(`[Webhook] Using fallback dates for subscription ${subscription.id} - start: ${subscription.current_period_start}, end: ${subscription.current_period_end}`);
+  }
+
   // Update subscription_state
   const { error: upsertError } = await supabase
     .from('subscription_state')
@@ -180,10 +195,10 @@ async function handleSubscriptionUpdate(subscription: Stripe.Subscription) {
         stripe_subscription_id: subscription.id,
         stripe_customer_id: subscription.customer as string,
         stripe_price_id: priceId,
-        current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-        current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+        current_period_start: periodStart,
+        current_period_end: periodEnd,
         cancel_at_period_end: subscription.cancel_at_period_end,
-        expires_at: new Date(subscription.current_period_end * 1000).toISOString(),
+        expires_at: periodEnd,
         updated_at: new Date().toISOString(),
       },
       {
@@ -214,7 +229,7 @@ async function handleSubscriptionUpdate(subscription: Stripe.Subscription) {
  * Handle subscription deleted/cancelled
  */
 async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const userId = subscription.metadata.user_id;
 
@@ -257,7 +272,7 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
  * Handle successful payment
  */
 async function handlePaymentSucceeded(invoice: Stripe.Invoice) {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   // Get subscription from invoice
   const subscriptionId = invoice.subscription as string;
@@ -296,7 +311,7 @@ async function handlePaymentSucceeded(invoice: Stripe.Invoice) {
  * Handle failed payment
  */
 async function handlePaymentFailed(invoice: Stripe.Invoice) {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const subscriptionId = invoice.subscription as string;
   if (!subscriptionId) {
