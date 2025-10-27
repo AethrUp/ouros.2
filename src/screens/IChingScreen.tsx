@@ -3,7 +3,7 @@
  * Main coordinator for I Ching consultation flow
  */
 
-import React, { useEffect, useCallback, useRef } from 'react';
+import React, { useEffect, useCallback, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -20,6 +20,9 @@ import {
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { useFocusEffect } from '@react-navigation/native';
 import { useAppStore } from '../store';
+import { useFeatureUsage } from '../hooks/useFeatureAccess';
+import { UpgradePrompt } from '../components/UpgradePrompt';
+import { PaywallModal } from '../components/PaywallModal';
 import { CoinCastingView } from '../components/iching/CoinCastingView';
 import { InterpretationView } from '../components/iching/InterpretationView';
 import { Button, HeaderBar, LoadingScreen } from '../components';
@@ -52,11 +55,36 @@ export const IChingScreen: React.FC<NavigationProps> = ({ navigation }) => {
     setIChingSessionStep,
   } = useAppStore();
 
+  // Feature usage tracking
+  const { canUse, currentUsage, limit, tier, useFeature } = useFeatureUsage('iching');
+  const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
+  const [showPaywall, setShowPaywall] = useState(false);
+  const [hasCheckedUsage, setHasCheckedUsage] = useState(false);
+
   // Handle question submitted
-  const handleQuestionSubmit = () => {
+  const handleQuestionSubmit = async () => {
     if (question.trim().length < 3) {
       return;
     }
+
+    // Only check usage once at session start to prevent repeated checks
+    // and re-renders during the active session
+    if (!hasCheckedUsage) {
+      // Check if user can use this feature
+      if (!canUse) {
+        setShowUpgradePrompt(true);
+        return;
+      }
+
+      // Increment usage counter
+      try {
+        await useFeature();
+        setHasCheckedUsage(true);
+      } catch (error) {
+        console.error('Failed to track usage:', error);
+      }
+    }
+
     // Call fetchCoinTosses which will move to 'loading' step
     fetchCoinTosses();
   };
@@ -193,6 +221,13 @@ export const IChingScreen: React.FC<NavigationProps> = ({ navigation }) => {
     navigation.navigate('OracleMain');
   };
 
+  // Reset usage check flag when session clears
+  useEffect(() => {
+    if (!currentIChingSession) {
+      setHasCheckedUsage(false);
+    }
+  }, [currentIChingSession]);
+
   // Initialize session on mount if needed
   useEffect(() => {
     if (!currentIChingSession && ichingSessionStep === 'question') {
@@ -295,6 +330,29 @@ export const IChingScreen: React.FC<NavigationProps> = ({ navigation }) => {
   return (
     <View style={styles.container}>
       {renderContent()}
+
+      {/* Upgrade Prompts */}
+      <UpgradePrompt
+        visible={showUpgradePrompt}
+        onClose={() => setShowUpgradePrompt(false)}
+        onUpgrade={() => {
+          setShowUpgradePrompt(false);
+          setShowPaywall(true);
+        }}
+        feature="iching"
+        currentTier={tier}
+        currentUsage={currentUsage}
+      />
+
+      <PaywallModal
+        visible={showPaywall}
+        onClose={() => setShowPaywall(false)}
+        onSuccess={() => {
+          setShowPaywall(false);
+          // Recheck access after successful upgrade
+          setHasCheckedUsage(false);
+        }}
+      />
     </View>
   );
 };

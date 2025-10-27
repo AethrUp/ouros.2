@@ -15,6 +15,9 @@ import { colors, spacing, typography } from '../styles';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useAppStore } from '../store';
+import { useFeatureUsage } from '../hooks/useFeatureAccess';
+import { UpgradePrompt } from '../components/UpgradePrompt';
+import { PaywallModal } from '../components/PaywallModal';
 
 interface JournalEntryScreenProps extends NavigationProps {
   route: {
@@ -28,6 +31,12 @@ interface JournalEntryScreenProps extends NavigationProps {
 
 export const JournalEntryScreen: React.FC<JournalEntryScreenProps> = ({ navigation, route }) => {
   const { createEntry, updateEntry, getEntry, currentEntry, isSavingEntry } = useAppStore();
+
+  // Feature usage tracking
+  const { canUse, currentUsage, limit, tier, useFeature } = useFeatureUsage('journal');
+  const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
+  const [showPaywall, setShowPaywall] = useState(false);
+  const [hasTrackedUsage, setHasTrackedUsage] = useState(false);
 
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
@@ -102,7 +111,7 @@ export const JournalEntryScreen: React.FC<JournalEntryScreenProps> = ({ navigati
 
     try {
       if (entryId) {
-        // Update existing entry
+        // Update existing entry - no usage check needed
         await updateEntry(entryId, {
           title: title.trim() || undefined,
           content: content.trim(),
@@ -110,7 +119,24 @@ export const JournalEntryScreen: React.FC<JournalEntryScreenProps> = ({ navigati
           date: date.toISOString(),
         });
       } else {
-        // Create new entry
+        // Create new entry - check usage limit first
+        if (!hasTrackedUsage) {
+          // Check if user can use this feature
+          if (!canUse) {
+            setShowUpgradePrompt(true);
+            return;
+          }
+
+          // Increment usage counter
+          try {
+            await useFeature();
+            setHasTrackedUsage(true);
+          } catch (error) {
+            console.error('Failed to track usage:', error);
+            // Continue anyway - don't block if tracking fails
+          }
+        }
+
         await createEntry({
           title: title.trim() || undefined,
           content: content.trim(),
@@ -322,6 +348,29 @@ export const JournalEntryScreen: React.FC<JournalEntryScreenProps> = ({ navigati
           textAlignVertical="top"
         />
       </ScrollView>
+
+      {/* Upgrade Prompts */}
+      <UpgradePrompt
+        visible={showUpgradePrompt}
+        onClose={() => setShowUpgradePrompt(false)}
+        onUpgrade={() => {
+          setShowUpgradePrompt(false);
+          setShowPaywall(true);
+        }}
+        feature="journal"
+        currentTier={tier}
+        currentUsage={currentUsage}
+      />
+
+      <PaywallModal
+        visible={showPaywall}
+        onClose={() => setShowPaywall(false)}
+        onSuccess={() => {
+          setShowPaywall(false);
+          // Recheck access after successful upgrade
+          setHasTrackedUsage(false);
+        }}
+      />
     </View>
   );
 };

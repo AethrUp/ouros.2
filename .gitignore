@@ -24,3 +24,8 @@ web-build/
 nul
 
 .vercel
+
+# Documentation and planning files
+*.md
+!web/README.md
+ouros2_vault/

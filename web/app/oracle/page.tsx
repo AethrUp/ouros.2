@@ -1,14 +1,43 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { Info } from 'lucide-react';
 import { MainLayout } from '@/components/layout';
-import { Card, Badge } from '@/components/ui';
+import { Card, Badge, UsageIndicator } from '@/components/ui';
 import { staggerContainer, staggerItem } from '@/lib/animations';
+import { useAppStore } from '@/store';
+import { getRemainingUsage } from '@/utils/featureGates';
+import type { UsageFeature } from '@/types/subscription';
 
 export default function OraclePage() {
+  const { subscriptionState, usageTracking, loadSubscriptionState, loadUsageTracking } = useAppStore();
+  const [remainingUsage, setRemainingUsage] = useState<Record<string, number | 'unlimited'>>({});
+
+  useEffect(() => {
+    // Load subscription and usage data
+    const loadData = async () => {
+      await loadSubscriptionState();
+      await loadUsageTracking();
+    };
+    loadData();
+  }, [loadSubscriptionState, loadUsageTracking]);
+
+  useEffect(() => {
+    // Calculate remaining usage for each oracle method
+    if (subscriptionState) {
+      const tier = subscriptionState.tier;
+      const remaining: Record<string, number | 'unlimited'> = {
+        tarot: getRemainingUsage(tier, 'tarot', usageTracking.tarot?.count || 0),
+        iching: getRemainingUsage(tier, 'iching', usageTracking.iching?.count || 0),
+        dream: getRemainingUsage(tier, 'dream', usageTracking.dream?.count || 0),
+      };
+      setRemainingUsage(remaining);
+    }
+  }, [subscriptionState, usageTracking]);
+
   const oracles = [
     {
       title: 'Tarot',
@@ -17,6 +46,7 @@ export default function OraclePage() {
       icon: '/icons/tarotIcon.svg',
       color: 'from-purple-500/20 to-pink-500/20',
       premium: false,
+      feature: 'tarot' as UsageFeature,
     },
     {
       title: 'I Ching',
@@ -25,6 +55,7 @@ export default function OraclePage() {
       icon: '/icons/ichingIcon.svg',
       color: 'from-blue-500/20 to-cyan-500/20',
       premium: false,
+      feature: 'iching' as UsageFeature,
     },
     {
       title: 'Dream Interpretation',
@@ -32,7 +63,8 @@ export default function OraclePage() {
       href: '/oracle/dreams',
       icon: '/icons/dreamIcon.svg',
       color: 'from-indigo-500/20 to-violet-500/20',
-      premium: true,
+      premium: false,
+      feature: 'dream' as UsageFeature,
     },
   ];
 
@@ -66,11 +98,16 @@ export default function OraclePage() {
                       variant="outlined"
                       className="p-8 transition-all cursor-pointer h-full group relative overflow-hidden"
                     >
-                      {oracle.premium && (
-                        <div className="absolute top-4 right-4 z-20">
-                          <Badge variant="warning">Premium</Badge>
-                        </div>
-                      )}
+                      {/* Top-right indicators */}
+                      <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
+                        {oracle.premium && <Badge variant="warning">Premium</Badge>}
+                        {subscriptionState && remainingUsage[oracle.feature] !== undefined && (
+                          <UsageIndicator
+                            remaining={remainingUsage[oracle.feature]}
+                            feature={oracle.title}
+                          />
+                        )}
+                      </div>
 
                       <div
                         className={`absolute inset-0 bg-gradient-to-br ${oracle.color} opacity-0 group-hover:opacity-100 transition-opacity duration-300`}

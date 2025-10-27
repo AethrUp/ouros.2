@@ -3,7 +3,7 @@
  * Main coordinator for dream interpretation flow
  */
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -18,6 +18,9 @@ import {
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useAppStore } from '../store';
+import { useFeatureUsage } from '../hooks/useFeatureAccess';
+import { UpgradePrompt } from '../components/UpgradePrompt';
+import { PaywallModal } from '../components/PaywallModal';
 import { Button, HeaderBar, LoadingScreen } from '../components';
 import { colors, typography, spacing, theme } from '../styles';
 import { NavigationProps } from '../types';
@@ -38,11 +41,36 @@ export const DreamInterpretationScreen: React.FC<NavigationProps> = ({
     clearDreamSession,
   } = useAppStore();
 
+  // Feature usage tracking
+  const { canUse, currentUsage, limit, tier, useFeature } = useFeatureUsage('dream');
+  const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
+  const [showPaywall, setShowPaywall] = useState(false);
+  const [hasCheckedUsage, setHasCheckedUsage] = useState(false);
+
   // Handle submit
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (dreamDescription.trim().length < 10) {
       return;
     }
+
+    // Only check usage once at session start to prevent repeated checks
+    // and re-renders during the active session
+    if (!hasCheckedUsage) {
+      // Check if user can use this feature
+      if (!canUse) {
+        setShowUpgradePrompt(true);
+        return;
+      }
+
+      // Increment usage counter
+      try {
+        await useFeature();
+        setHasCheckedUsage(true);
+      } catch (error) {
+        console.error('Failed to track usage:', error);
+      }
+    }
+
     generateDreamInterpretation();
   };
 
@@ -86,6 +114,13 @@ export const DreamInterpretationScreen: React.FC<NavigationProps> = ({
     clearDreamSession();
     navigation.navigate('OracleMain');
   };
+
+  // Reset usage check flag when session clears
+  useEffect(() => {
+    if (!dreamDescription && dreamSessionStep === 'input') {
+      setHasCheckedUsage(false);
+    }
+  }, [dreamDescription, dreamSessionStep]);
 
   // Initialize session on mount if needed
   useEffect(() => {
@@ -150,7 +185,34 @@ export const DreamInterpretationScreen: React.FC<NavigationProps> = ({
     }
   };
 
-  return <View style={styles.container}>{renderContent()}</View>;
+  return (
+    <View style={styles.container}>
+      {renderContent()}
+
+      {/* Upgrade Prompts */}
+      <UpgradePrompt
+        visible={showUpgradePrompt}
+        onClose={() => setShowUpgradePrompt(false)}
+        onUpgrade={() => {
+          setShowUpgradePrompt(false);
+          setShowPaywall(true);
+        }}
+        feature="dream"
+        currentTier={tier}
+        currentUsage={currentUsage}
+      />
+
+      <PaywallModal
+        visible={showPaywall}
+        onClose={() => setShowPaywall(false)}
+        onSuccess={() => {
+          setShowPaywall(false);
+          // Recheck access after successful upgrade
+          setHasCheckedUsage(false);
+        }}
+      />
+    </View>
+  );
 };
 
 /**

@@ -1,22 +1,46 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { User, Mail, Calendar, MapPin, Star, LogOut, Edit, Settings } from 'lucide-react';
+import { User, Mail, Calendar, MapPin, Star, LogOut, Edit, Settings, Code, Wrench } from 'lucide-react';
 import { useAppStore } from '@/store';
 import { MainLayout } from '@/components/layout';
 import { Button } from '@/components/ui';
 import { SubscriptionInfo } from '@/components/subscription/SubscriptionInfo';
 import { fadeInUp, staggerContainer, staggerItem } from '@/lib/animations';
+import type { SubscriptionTier } from '@/types/subscription';
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { user, profile, birthData, logout } = useAppStore();
+  const { user, profile, birthData, logout, subscriptionState, updateSubscriptionTier, loadSubscriptionState } = useAppStore();
+  const [isUpdatingTier, setIsUpdatingTier] = useState(false);
+  const [tierUpdateError, setTierUpdateError] = useState<string | null>(null);
 
   const handleLogout = async () => {
     await logout();
     router.push('/');
   };
+
+  const handleTierChange = async (tier: SubscriptionTier) => {
+    setIsUpdatingTier(true);
+    setTierUpdateError(null);
+    try {
+      await updateSubscriptionTier(tier, true); // true = isDebug flag
+      // Reload subscription state from database to update cache
+      await loadSubscriptionState();
+      console.log(`✅ Tier updated to: ${tier}`);
+      // Force page reload to ensure all components get the new tier
+      window.location.reload();
+    } catch (error: any) {
+      console.error('Failed to update tier:', error);
+      setTierUpdateError(error.message || 'Failed to update tier');
+    } finally {
+      setIsUpdatingTier(false);
+    }
+  };
+
+  const currentTier = subscriptionState?.tier || 'free';
 
   return (
     <MainLayout headerTitle="Profile" showBack>
@@ -111,6 +135,72 @@ export default function ProfilePage() {
             {/* Subscription */}
             <motion.div variants={staggerItem}>
               <SubscriptionInfo />
+            </motion.div>
+
+            {/* Dev Controls - For Testing */}
+            <motion.div
+              variants={staggerItem}
+              className="bg-amber-950/30 border-2 border-amber-600/30 rounded-lg p-6"
+            >
+              <div className="flex items-center gap-2 mb-4">
+                <Wrench className="w-5 h-5 text-amber-400" />
+                <h3 className="text-lg  text-amber-400">Developer Controls</h3>
+              </div>
+              <p className="text-sm text-amber-200/70 mb-4">
+                Switch subscription tiers for testing. Changes are marked as debug overrides.
+              </p>
+
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-sm text-secondary">Current Tier:</span>
+                  <span className="px-3 py-1 bg-primary/20 border border-primary/40 rounded-full text-sm  text-primary capitalize">
+                    {currentTier}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-3 gap-3">
+                  <Button
+                    variant={currentTier === 'free' ? 'primary' : 'secondary'}
+                    size="small"
+                    onClick={() => handleTierChange('free')}
+                    disabled={isUpdatingTier || currentTier === 'free'}
+                    className="w-full"
+                  >
+                    Free
+                  </Button>
+                  <Button
+                    variant={currentTier === 'premium' ? 'primary' : 'secondary'}
+                    size="small"
+                    onClick={() => handleTierChange('premium')}
+                    disabled={isUpdatingTier || currentTier === 'premium'}
+                    className="w-full"
+                  >
+                    Premium
+                  </Button>
+                  <Button
+                    variant={currentTier === 'pro' ? 'primary' : 'secondary'}
+                    size="small"
+                    onClick={() => handleTierChange('pro')}
+                    disabled={isUpdatingTier || currentTier === 'pro'}
+                    className="w-full"
+                  >
+                    Pro
+                  </Button>
+                </div>
+
+                {isUpdatingTier && (
+                  <p className="text-sm text-amber-400 text-center mt-2">Updating tier...</p>
+                )}
+                {tierUpdateError && (
+                  <p className="text-sm text-red-400 text-center mt-2">{tierUpdateError}</p>
+                )}
+              </div>
+
+              <div className="mt-4 pt-4 border-t border-amber-600/20">
+                <p className="text-xs text-amber-200/50 italic">
+                  Note: This is a development feature. In production, tiers are managed through Stripe subscriptions.
+                </p>
+              </div>
             </motion.div>
 
             {/* Account Settings */}

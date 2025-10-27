@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Sparkles, Calendar, RefreshCw, Loader2, Heart,
@@ -8,10 +9,11 @@ import {
   Book, Flower2
 } from 'lucide-react';
 import { MainLayout } from '@/components/layout';
-import { Button } from '@/components/ui';
+import { Button, FadedContent } from '@/components/ui';
 import { LoadingScreen } from '@/components/ui/LoadingScreen';
 import { useAppStore } from '@/store';
 import { fadeInUp, transitions, staggerContainer, staggerItem } from '@/lib/animations';
+import { tierHasFeature } from '@/utils/featureGates';
 
 // Category icon mappings
 const categoryIcons: Record<string, any> = {
@@ -30,10 +32,20 @@ const categoryIcons: Record<string, any> = {
 };
 
 export default function HoroscopePage() {
-  const { natalChart, birthData, profile, user, dailyHoroscope, isGeneratingHoroscope, generateHoroscope } = useAppStore();
+  const router = useRouter();
+  const { natalChart, birthData, profile, user, dailyHoroscope, isGeneratingHoroscope, generateHoroscope, subscriptionState } = useAppStore();
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('main');
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
+
+  // Get subscription tier
+  const tier = subscriptionState?.tier || 'free';
+  const hasEnhancedHoroscope = tierHasFeature(tier, 'enhancedHoroscope');
+
+  // Handle upgrade navigation
+  const handleUpgrade = () => {
+    router.push('/pricing');
+  };
 
   // Auto-generate horoscope on page load
   useEffect(() => {
@@ -280,10 +292,10 @@ export default function HoroscopePage() {
                 {activeTab === 'morning' && <TimeTab timeKey="morning" fullContent={fullContent} />}
                 {activeTab === 'afternoon' && <TimeTab timeKey="afternoon" fullContent={fullContent} />}
                 {activeTab === 'evening' && <TimeTab timeKey="evening" fullContent={fullContent} />}
-                {activeTab === 'transits' && <TransitsTab fullContent={fullContent} />}
-                {activeTab === 'insights' && <InsightsTab fullContent={fullContent} />}
-                {activeTab === 'guidance' && <GuidanceTab fullContent={fullContent} content={content} />}
-                {activeTab === 'spiritual' && <SpiritualTab fullContent={fullContent} />}
+                {activeTab === 'transits' && <TransitsTab fullContent={fullContent} isLocked={!hasEnhancedHoroscope} onUnlock={handleUpgrade} />}
+                {activeTab === 'insights' && <InsightsTab fullContent={fullContent} isLocked={!hasEnhancedHoroscope} onUnlock={handleUpgrade} />}
+                {activeTab === 'guidance' && <GuidanceTab fullContent={fullContent} content={content} isLocked={!hasEnhancedHoroscope} onUnlock={handleUpgrade} />}
+                {activeTab === 'spiritual' && <SpiritualTab fullContent={fullContent} isLocked={!hasEnhancedHoroscope} onUnlock={handleUpgrade} />}
                 {activeTab === 'categories' && (
                   <CategoriesTab
                     dailyHoroscope={dailyHoroscope}
@@ -435,7 +447,7 @@ function TimeTab({ timeKey, fullContent }: { timeKey: 'morning' | 'afternoon' | 
 }
 
 // Transits Tab
-function TransitsTab({ fullContent }: any) {
+function TransitsTab({ fullContent, isLocked = false, onUnlock }: any) {
   const transitAnalysis = fullContent?.transitAnalysis;
   const allTransits = [];
 
@@ -456,7 +468,7 @@ function TransitsTab({ fullContent }: any) {
     );
   }
 
-  return (
+  const content = (
     <div className="space-y-6">
       {allTransits.map(({ transit, number }) => (
         <div key={number} className="bg-card border border-border rounded-lg p-6">
@@ -479,6 +491,12 @@ function TransitsTab({ fullContent }: any) {
       ))}
     </div>
   );
+
+  if (isLocked) {
+    return <FadedContent onUnlock={onUnlock} maxHeight={250}>{content}</FadedContent>;
+  }
+
+  return content;
 }
 
 // Get planet color
@@ -565,7 +583,7 @@ function TransitTimeline({ transit, timing }: any) {
 }
 
 // Insights Tab
-function InsightsTab({ fullContent }: any) {
+function InsightsTab({ fullContent, isLocked = false, onUnlock }: any) {
   const transitInsights = fullContent?.transitInsights || [];
   const categories = ['Energy', 'Influence', 'Emotion', 'Opportunities', 'Challenges'];
   const icons = [TrendingUp, Target, Smile, Sparkles, AlertCircle];
@@ -578,7 +596,7 @@ function InsightsTab({ fullContent }: any) {
     );
   }
 
-  return (
+  const content = (
     <div className="space-y-4">
       {transitInsights.map((insight: string, index: number) => {
         const Icon = icons[index] || Brain;
@@ -591,15 +609,21 @@ function InsightsTab({ fullContent }: any) {
       })}
     </div>
   );
+
+  if (isLocked) {
+    return <FadedContent onUnlock={onUnlock} maxHeight={250}>{content}</FadedContent>;
+  }
+
+  return content;
 }
 
 // Guidance Tab
-function GuidanceTab({ fullContent, content }: any) {
+function GuidanceTab({ fullContent, content, isLocked = false, onUnlock }: any) {
   const explore = fullContent?.explore || content?.explore || [];
   const limit = fullContent?.limit || content?.limit || [];
   const dailyFocus = fullContent?.dailyFocus || content?.dailyFocus;
 
-  return (
+  const guideContent = (
     <div className="space-y-6">
       {dailyFocus && (
         <div className="bg-card border border-border rounded-lg p-6">
@@ -638,10 +662,16 @@ function GuidanceTab({ fullContent, content }: any) {
       </div>
     </div>
   );
+
+  if (isLocked) {
+    return <FadedContent onUnlock={onUnlock} maxHeight={250}>{guideContent}</FadedContent>;
+  }
+
+  return guideContent;
 }
 
 // Spiritual Tab
-function SpiritualTab({ fullContent }: any) {
+function SpiritualTab({ fullContent, isLocked = false, onUnlock }: any) {
   const spiritualGuidance = fullContent?.spiritualGuidance;
 
   if (!spiritualGuidance) {
@@ -652,7 +682,7 @@ function SpiritualTab({ fullContent }: any) {
     );
   }
 
-  return (
+  const spiritualContent = (
     <div className="space-y-6">
       {spiritualGuidance.meditation && (
         <div className="bg-card border border-border rounded-lg p-6">
@@ -684,6 +714,12 @@ function SpiritualTab({ fullContent }: any) {
       )}
     </div>
   );
+
+  if (isLocked) {
+    return <FadedContent onUnlock={onUnlock} maxHeight={250}>{spiritualContent}</FadedContent>;
+  }
+
+  return spiritualContent;
 }
 
 // Categories Tab

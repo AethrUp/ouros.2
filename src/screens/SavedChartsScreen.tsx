@@ -12,6 +12,10 @@ import { NavigationProps } from '../types';
 import { HeaderBar, SwipeableChartCard, LoadingScreen } from '../components';
 import { colors, spacing, typography } from '../styles';
 import { useAppStore } from '../store';
+import { useSubscriptionTier } from '../hooks/useFeatureAccess';
+import { getTierLimit } from '../utils/featureGates';
+import { UpgradePrompt } from '../components/UpgradePrompt';
+import { PaywallModal } from '../components/PaywallModal';
 import { SavedChartForm } from '../components/synastry/SavedChartForm';
 import { SavedChart } from '../types/synastry';
 
@@ -24,11 +28,32 @@ export const SavedChartsScreen: React.FC<NavigationProps> = ({ navigation }) => 
     deleteSavedChart,
   } = useAppStore();
 
+  const { tier } = useSubscriptionTier();
   const [showForm, setShowForm] = useState(false);
+  const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
+  const [showPaywall, setShowPaywall] = useState(false);
 
   useEffect(() => {
     loadSavedCharts();
   }, []);
+
+  const canAddChart = (): boolean => {
+    const limit = getTierLimit(tier, 'savedCharts');
+
+    if (limit === 'unlimited') return true;
+    if (limit === 0) return false;
+
+    return savedCharts.length < limit;
+  };
+
+  const handleAddChartPress = () => {
+    if (!canAddChart()) {
+      setShowUpgradePrompt(true);
+      return;
+    }
+
+    setShowForm(true);
+  };
 
   const handleCreateChart = async (
     name: string,
@@ -37,6 +62,13 @@ export const SavedChartsScreen: React.FC<NavigationProps> = ({ navigation }) => 
     options?: { relationship?: string; notes?: string }
   ) => {
     try {
+      // Double-check limit before saving
+      if (!canAddChart()) {
+        setShowForm(false);
+        setShowUpgradePrompt(true);
+        return;
+      }
+
       await createSavedChart(name, birthData, natalChart, options);
       setShowForm(false);
     } catch (error: any) {
@@ -94,7 +126,7 @@ export const SavedChartsScreen: React.FC<NavigationProps> = ({ navigation }) => 
           {
             icon: 'add-circle-outline',
             label: 'Add Chart',
-            onPress: () => setShowForm(true),
+            onPress: handleAddChartPress,
           },
         ]}
       />
@@ -110,7 +142,7 @@ export const SavedChartsScreen: React.FC<NavigationProps> = ({ navigation }) => 
           <Text style={styles.emptyDescription}>
             Create charts for people who aren't app users to use in synastry readings
           </Text>
-          <TouchableOpacity style={styles.primaryButton} onPress={() => setShowForm(true)}>
+          <TouchableOpacity style={styles.primaryButton} onPress={handleAddChartPress}>
             <Ionicons name="add-circle" size={20} color="#FFF" />
             <Text style={styles.primaryButtonText}>Create Your First Chart</Text>
           </TouchableOpacity>
@@ -189,6 +221,27 @@ export const SavedChartsScreen: React.FC<NavigationProps> = ({ navigation }) => 
         visible={showForm}
         onClose={() => setShowForm(false)}
         onSave={handleCreateChart}
+      />
+
+      {/* Upgrade Prompts */}
+      <UpgradePrompt
+        visible={showUpgradePrompt}
+        onClose={() => setShowUpgradePrompt(false)}
+        onUpgrade={() => {
+          setShowUpgradePrompt(false);
+          setShowPaywall(true);
+        }}
+        feature="synastry"
+        currentTier={tier}
+        currentUsage={savedCharts.length}
+      />
+
+      <PaywallModal
+        visible={showPaywall}
+        onClose={() => setShowPaywall(false)}
+        onSuccess={() => {
+          setShowPaywall(false);
+        }}
       />
     </View>
   );

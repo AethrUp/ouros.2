@@ -18,3 +18,5 @@ export { PasswordStrength } from './PasswordStrength';
 export { DatePicker, type DatePickerProps } from './DatePicker';
 export { TimePicker, type TimePickerProps } from './TimePicker';
 export { StepWizard, type StepWizardProps, type WizardStep } from './StepWizard';
+export { FadedContent } from './FadedContent';
+export { UsageIndicator } from './UsageIndicator';

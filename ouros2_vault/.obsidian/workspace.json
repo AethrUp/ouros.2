@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Setup/Stripe/STRIPE_DATABASE_MIGRATION.md",
+                "file": "App Structure/astrology_app_architecture.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "STRIPE_DATABASE_MIGRATION"
+              "title": "astrology_app_architecture"
             }
           }
         ]
@@ -170,21 +170,21 @@
       "table-editor-obsidian:Advanced Tables Toolbar": false
     }
   },
-  "active": "ba7b3f4b8ed33a59",
+  "active": "09e45096c5d2a3c3",
   "lastOpenFiles": [
-    "PHASE_4_COMPLETE.md",
+    "Setup/Stripe/STRIPE_DATABASE_MIGRATION.md",
+    "Dev Progress/PHASE_4_COMPLETE.md",
     "PHASE_4_COMPLETE.md.tmp.9352.1761527334631",
-    "PHASE_3_COMPLETE.md",
+    "Dev Progress/PHASE_3_COMPLETE.md",
     "PHASE_3_COMPLETE.md.tmp.9352.1761515938144",
-    "WEBHOOK_TESTING_GUIDE.md",
+    "Setup/WEBHOOK_TESTING_GUIDE.md",
     "WEBHOOK_TESTING_GUIDE.md.tmp.9352.1761515851530",
-    "PHASE_2_COMPLETE.md",
+    "Dev Progress/PHASE_2_COMPLETE.md",
     "PHASE_2_COMPLETE.md.tmp.9352.1761513475388",
     "Setup/Stripe/STRIPE_SETUP_QUICK_REFERENCE.md",
     "Setup/Stripe/STRIPE_CHECKOUT_EXPLAINED.md",
     "Setup/Stripe/STRIPE_IMPLEMENTATION_PLAN.md",
     "Setup/Stripe",
-    "Setup/Stripe/STRIPE_DATABASE_MIGRATION.md",
     "Setup/REACT_NATIVE_TO_WEB_MIGRATION.md",
     "Setup/Stripe/STRIPE_PRODUCT_SETUP_GUIDE.md",
     "STRIPE_CHECKOUT_EXPLAINED.md.tmp.9352.1761512394008",

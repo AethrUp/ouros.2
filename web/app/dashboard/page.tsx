@@ -7,15 +7,25 @@ import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { useAppStore } from '@/store';
 import { MainLayout } from '@/components/layout';
-import { Button, LoadingScreen } from '@/components/ui';
+import { Button, LoadingScreen, FadedContent } from '@/components/ui';
 import { TransitEffectivenessGraph, CosmicWeatherChart } from '@/components/charts';
 import { staggerContainer, staggerItem, fadeInUp } from '@/lib/animations';
 import { ArrowRight, BookOpen, Users, UserPlus } from 'lucide-react';
+import { tierHasFeature } from '@/utils/featureGates';
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { user, isAuthenticated, birthData, natalChart, dailyHoroscope, isGeneratingHoroscope, generateHoroscope, profile } = useAppStore();
+  const { user, isAuthenticated, birthData, natalChart, dailyHoroscope, isGeneratingHoroscope, generateHoroscope, profile, subscriptionState } = useAppStore();
   const [isLoading, setIsLoading] = useState(true);
+
+  // Get subscription tier
+  const tier = subscriptionState?.tier || 'free';
+  const hasEnhancedHoroscope = tierHasFeature(tier, 'enhancedHoroscope');
+
+  // Handle upgrade navigation
+  const handleUpgrade = () => {
+    router.push('/pricing');
+  };
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -156,66 +166,70 @@ export default function DashboardPage() {
           {/* Transits & Cosmic Weather - Side by side on desktop */}
           {(horoscopeData.fullContent?.transitAnalysis || horoscopeData.preview?.weather) && (
             <motion.div variants={staggerItem}>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <FadedContent isLocked={!hasEnhancedHoroscope} onUnlock={handleUpgrade}>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-                {/* Today's Transits */}
-                {horoscopeData.fullContent?.transitAnalysis && (
-                  <div className="flex flex-col">
-                    <h3 className="section-title mb-3">Today's Transits</h3>
-                    <div className="flex-1">
-                      <TransitEffectivenessGraph
-                        transits={[
-                          horoscopeData.fullContent.transitAnalysis.primary,
-                          ...(horoscopeData.fullContent.transitAnalysis.secondary || []),
-                        ].filter(Boolean)}
-                        maxTransits={3}
-                      />
+                  {/* Today's Transits */}
+                  {horoscopeData.fullContent?.transitAnalysis && (
+                    <div className="flex flex-col">
+                      <h3 className="section-title mb-3">Today's Transits</h3>
+                      <div className="flex-1">
+                        <TransitEffectivenessGraph
+                          transits={[
+                            horoscopeData.fullContent.transitAnalysis.primary,
+                            ...(horoscopeData.fullContent.transitAnalysis.secondary || []),
+                          ].filter(Boolean)}
+                          maxTransits={3}
+                        />
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {/* Cosmic Weather Chart */}
-                {horoscopeData.preview?.weather && (
-                  <div className="flex flex-col">
-                    <h3 className="section-title mb-3">Cosmic Weather</h3>
-                    <div className="flex-1">
-                      <CosmicWeatherChart weather={horoscopeData.preview.weather} />
+                  {/* Cosmic Weather Chart */}
+                  {horoscopeData.preview?.weather && (
+                    <div className="flex flex-col">
+                      <h3 className="section-title mb-3">Cosmic Weather</h3>
+                      <div className="flex-1">
+                        <CosmicWeatherChart weather={horoscopeData.preview.weather} />
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
-              </div>
+                </div>
+              </FadedContent>
             </motion.div>
           )}
 
           {/* Journal Prompts */}
           <motion.div variants={staggerItem}>
             <h3 className="section-title mb-3">Journal Prompts</h3>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-              {journalPrompts.map((prompt: string, index: number) => (
-                <div key={index} className="journal-card flex flex-col">
-                  <p className="text-sm text-white mb-4 flex-1">
-                    {prompt}
-                  </p>
-                  <button
-                    onClick={() => {
-                      const today = new Date().toISOString().split('T')[0];
-                      const params = new URLSearchParams({
-                        prompt,
-                        type: 'horoscope',
-                        readingId: `horoscope-${today}`,
-                        title: 'Horoscope Reflection',
-                      });
-                      router.push(`/journal?${params.toString()}`);
-                    }}
-                    className="flex items-center gap-2 text-white text-xs font-normal uppercase tracking-wider underline hover:text-primary transition-colors self-start"
-                  >
-                    START WRITING
-                    <ArrowRight className="w-4 h-4" />
-                  </button>
-                </div>
-              ))}
-            </div>
+            <FadedContent isLocked={!hasEnhancedHoroscope} onUnlock={handleUpgrade}>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+                {journalPrompts.map((prompt: string, index: number) => (
+                  <div key={index} className="journal-card flex flex-col">
+                    <p className="text-sm text-white mb-4 flex-1">
+                      {prompt}
+                    </p>
+                    <button
+                      onClick={() => {
+                        const today = new Date().toISOString().split('T')[0];
+                        const params = new URLSearchParams({
+                          prompt,
+                          type: 'horoscope',
+                          readingId: `horoscope-${today}`,
+                          title: 'Horoscope Reflection',
+                        });
+                        router.push(`/journal?${params.toString()}`);
+                      }}
+                      className="flex items-center gap-2 text-white text-xs font-normal uppercase tracking-wider underline hover:text-primary transition-colors self-start"
+                    >
+                      START WRITING
+                      <ArrowRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </FadedContent>
           </motion.div>
 
           {/* Quick Actions */}
