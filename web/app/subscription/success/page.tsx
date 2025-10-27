@@ -24,7 +24,7 @@ export default function SubscriptionSuccessPage() {
   }, []);
 
   if (loading) {
-    return <LoadingScreen message="Activating your subscription..." />;
+    return <LoadingScreen messages={["Activating your subscription..."]} />;
   }
 
   if (error) {
