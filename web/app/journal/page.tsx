@@ -15,8 +15,6 @@ import { cn } from '@/lib/utils';
 
 type TabType = 'all' | JournalEntryType;
 
-export const dynamic = 'force-dynamic';
-
 export default function JournalPage() {
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<TabType>('all');
