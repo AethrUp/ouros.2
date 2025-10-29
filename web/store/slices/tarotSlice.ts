@@ -1,4 +1,5 @@
 import { StateCreator } from 'zustand';
+import { toast } from 'sonner';
 import {
   TarotCard,
   TarotReading,
@@ -7,6 +8,7 @@ import {
   SpreadLayout,
   SessionStep
 } from '../../types/tarot';
+import { fetchWithTimeout } from '../../lib/fetchWithTimeout';
 
 export interface TarotSlice {
   // Session state
@@ -104,7 +106,7 @@ export const createTarotSlice: StateCreator<TarotSlice> = (set, get) => ({
 
     try {
       // Call API route to draw cards
-      const response = await fetch('/api/tarot/draw', {
+      const response = await fetchWithTimeout('/api/tarot/draw', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ spread: selectedSpread }),
@@ -133,12 +135,14 @@ export const createTarotSlice: StateCreator<TarotSlice> = (set, get) => ({
       });
     } catch (error) {
       console.error('❌ Failed to draw cards:', error);
+      const message = error instanceof Error ? error.message : 'Failed to draw cards';
       set({
         isDrawing: false,
-        tarotError: error instanceof Error ? error.message : 'Failed to draw cards',
+        tarotError: message,
         sessionStep: 'intention', // Go back to intention instead of setup
         drawnCards: [] // Clear any partial draws
       });
+      toast.error(message);
     }
   },
 
@@ -158,7 +162,7 @@ export const createTarotSlice: StateCreator<TarotSlice> = (set, get) => ({
 
     try {
       // Call API route for interpretation
-      const response = await fetch('/api/tarot/interpret', {
+      const response = await fetchWithTimeout('/api/tarot/interpret', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -199,7 +203,7 @@ export const createTarotSlice: StateCreator<TarotSlice> = (set, get) => ({
 
     try {
       // Call API route to save reading
-      const response = await fetch('/api/tarot/save', {
+      const response = await fetchWithTimeout('/api/tarot/save', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

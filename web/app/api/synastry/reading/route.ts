@@ -2,6 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
+import { checkCachedSynastryReading, cacheSynastryReading } from '@/handlers/synastryReading';
+import {
+  checkFeatureAccess,
+  checkSaveChartLimit,
+  incrementUsage,
+  createRateLimitResponse,
+  createTierRestrictionResponse,
+} from '@/lib/usageEnforcement';
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY || '',
@@ -77,6 +85,83 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // ====================================================================
+    // USAGE ENFORCEMENT: Check if user can use synastry feature
+    // CRITICAL: Free tier has 0 access to synastry - must be premium or pro
+    // Premium tier has limit of 3 saved charts, Pro is unlimited
+    // ====================================================================
+    console.log('🔒 Checking synastry access for user:', user.id);
+    const accessCheck = await checkFeatureAccess(user.id, 'synastry', 'daily');
+
+    if (!accessCheck.allowed) {
+      console.log('❌ Synastry access denied:', accessCheck.reason);
+
+      if (accessCheck.reason?.includes('not available')) {
+        // Feature not available on this tier (FREE users get blocked here)
+        return NextResponse.json(
+          createTierRestrictionResponse(accessCheck),
+          { status: 403 }
+        );
+      } else {
+        // Usage limit exceeded (shouldn't happen for synastry with current limits)
+        return NextResponse.json(
+          createRateLimitResponse(accessCheck),
+          { status: 429 }
+        );
+      }
+    }
+
+    console.log('✅ Synastry access granted for tier:', accessCheck.tier);
+
+    // Check if user can save another synastry chart (limit enforcement)
+    // Note: This checks the count BEFORE saving, preventing excess saves
+    const saveCheck = await checkSaveChartLimit(user.id, 'synastry');
+    if (!saveCheck.allowed) {
+      console.log('❌ Synastry chart save limit reached:', saveCheck.reason);
+      return NextResponse.json(
+        {
+          success: false,
+          error: saveCheck.reason,
+          tier: saveCheck.tier,
+          currentUsage: saveCheck.currentUsage,
+          limit: saveCheck.limit,
+          upgradeRequired: saveCheck.tier !== 'pro',
+        },
+        { status: 429 }
+      );
+    }
+
+    console.log('✅ Synastry save allowed:', {
+      tier: saveCheck.tier,
+      current: saveCheck.currentUsage,
+      limit: saveCheck.limit,
+    });
+
+    // Check cache first to avoid unnecessary API calls
+    console.log('🔍 Checking for cached reading...');
+    const cachedReading = await checkCachedSynastryReading(
+      synastryChart.id,
+      relationshipContext,
+      connectionId,
+      savedChartId,
+      168 // 7 days cache
+    );
+
+    if (cachedReading) {
+      console.log('✅ Returning cached reading');
+      return NextResponse.json({
+        success: true,
+        reading: {
+          ...cachedReading,
+          synastryChart, // Add the chart data to the response
+        },
+        message: 'Synastry reading retrieved from cache',
+        fromCache: true,
+      });
+    }
+
+    console.log('💨 No cache hit, generating new reading...');
+
     // Create prompt (simplified version - you may need to import the full prompt template)
     const prompt = createSimplifiedSynastryPrompt(
       synastryChart,
@@ -127,6 +212,26 @@ export async function POST(request: NextRequest) {
     };
 
     console.log('✅ Synastry reading generated successfully');
+
+    // ====================================================================
+    // USAGE ENFORCEMENT: Increment synastry usage after successful generation
+    // Note: Synastry doesn't have daily usage limits in current tier config,
+    // but we track it for analytics and potential future limits
+    // ====================================================================
+    console.log('📈 Incrementing synastry usage counter for user:', user.id);
+    const incrementResult = await incrementUsage(user.id, 'synastry', 'daily');
+
+    if (!incrementResult.success) {
+      console.error('⚠️ Failed to increment usage counter:', incrementResult.error);
+      // Don't fail the request, but log the error for monitoring
+    } else {
+      console.log('✅ Usage counter incremented successfully');
+    }
+
+    // Cache the reading asynchronously (don't wait for it)
+    cacheSynastryReading(reading).catch((error) => {
+      console.error('⚠️ Failed to cache reading (non-critical):', error);
+    });
 
     return NextResponse.json({
       success: true,

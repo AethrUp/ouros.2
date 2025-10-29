@@ -3,6 +3,12 @@ import Anthropic from '@anthropic-ai/sdk';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { constructIChingPromptV2, validateIChingInterpretationV2JSON } from '@/utils/ichingPromptTemplateV2';
+import {
+  checkFeatureAccess,
+  incrementUsage,
+  createRateLimitResponse,
+  createTierRestrictionResponse,
+} from '@/lib/usageEnforcement';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -48,15 +54,46 @@ export async function POST(request: NextRequest) {
 
     const { data: { user } } = await supabase.auth.getUser();
 
-    let birthData = null;
-    if (user) {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('birth_data')
-        .eq('id', user.id)
-        .single();
-      birthData = profile?.birth_data;
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'Authentication required' },
+        { status: 401 }
+      );
     }
+
+    // ====================================================================
+    // USAGE ENFORCEMENT: Check if user can use I Ching feature
+    // ====================================================================
+    console.log('🔒 Checking I Ching usage limits for user:', user.id);
+    const accessCheck = await checkFeatureAccess(user.id, 'iching', 'daily');
+
+    if (!accessCheck.allowed) {
+      console.log('❌ I Ching access denied:', accessCheck.reason);
+
+      if (accessCheck.reason?.includes('not available')) {
+        // Feature not available on this tier
+        return NextResponse.json(
+          createTierRestrictionResponse(accessCheck),
+          { status: 403 }
+        );
+      } else {
+        // Usage limit exceeded
+        return NextResponse.json(
+          createRateLimitResponse(accessCheck),
+          { status: 429 }
+        );
+      }
+    }
+
+    console.log('✅ I Ching access granted for tier:', accessCheck.tier);
+
+    let birthData = null;
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('birth_data')
+      .eq('id', user.id)
+      .single();
+    birthData = profile?.birth_data;
 
     // Build context
     const context = {
@@ -123,6 +160,19 @@ export async function POST(request: NextRequest) {
     });
     console.log('🔍 API - interpretationData keys:', Object.keys(interpretationData));
     console.log('🔍 API - interpretationData structure:', JSON.stringify(interpretationData, null, 2));
+
+    // ====================================================================
+    // USAGE ENFORCEMENT: Increment usage counter after successful generation
+    // ====================================================================
+    console.log('📈 Incrementing I Ching usage counter for user:', user.id);
+    const incrementResult = await incrementUsage(user.id, 'iching', 'daily');
+
+    if (!incrementResult.success) {
+      console.error('⚠️ Failed to increment usage counter:', incrementResult.error);
+      // Don't fail the request, but log the error for monitoring
+    } else {
+      console.log('✅ Usage counter incremented successfully');
+    }
 
     return NextResponse.json({
       success: true,

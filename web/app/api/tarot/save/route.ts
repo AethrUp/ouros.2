@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
+import { getUserTier } from '@/lib/usageEnforcement';
 
 export async function POST(request: NextRequest) {
   try {
@@ -40,6 +41,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { success: false, error: 'Not authenticated' },
         { status: 401 }
+      );
+    }
+
+    // ====================================================================
+    // USAGE ENFORCEMENT: Verify user has valid subscription
+    // Note: Tarot readings are limited at generation time (1/day for free).
+    // Saving is allowed for all generated readings regardless of tier.
+    // ====================================================================
+    console.log('💾 Saving tarot reading for user:', user.id);
+    const tier = await getUserTier(user.id);
+
+    if (!tier) {
+      return NextResponse.json(
+        { success: false, error: 'Unable to verify subscription status' },
+        { status: 500 }
       );
     }
 

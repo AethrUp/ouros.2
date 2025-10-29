@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
+import {
+  checkFeatureAccess,
+  incrementUsage,
+  createRateLimitResponse,
+  createTierRestrictionResponse,
+} from '@/lib/usageEnforcement';
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY || '',
@@ -44,16 +50,48 @@ export async function POST(request: NextRequest) {
 
     const { data: { user } } = await supabase.auth.getUser();
 
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    // ====================================================================
+    // USAGE ENFORCEMENT: Check if user can use dream interpretation feature
+    // CRITICAL: Free tier has 0 access to dreams - must be premium or pro
+    // ====================================================================
+    console.log('🔒 Checking dream interpretation access for user:', user.id);
+    const accessCheck = await checkFeatureAccess(user.id, 'dream', 'daily');
+
+    if (!accessCheck.allowed) {
+      console.log('❌ Dream interpretation access denied:', accessCheck.reason);
+
+      if (accessCheck.reason?.includes('not available')) {
+        // Feature not available on this tier (FREE users get blocked here)
+        return NextResponse.json(
+          createTierRestrictionResponse(accessCheck),
+          { status: 403 }
+        );
+      } else {
+        // Usage limit exceeded (for premium/pro with limits)
+        return NextResponse.json(
+          createRateLimitResponse(accessCheck),
+          { status: 429 }
+        );
+      }
+    }
+
+    console.log('✅ Dream interpretation access granted for tier:', accessCheck.tier);
+
     // Get user's birth data if available
     let birthData = null;
-    if (user) {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('birth_data')
-        .eq('id', user.id)
-        .single();
-      birthData = profile?.birth_data;
-    }
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('birth_data')
+      .eq('id', user.id)
+      .single();
+    birthData = profile?.birth_data;
 
     // Construct prompt
     const prompt = constructDreamPrompt({
@@ -89,12 +127,25 @@ export async function POST(request: NextRequest) {
       throw new Error('Empty response from AI');
     }
 
-    console.log('✅ AI interpretation generated successfully');
+    console.log('✅ Dream interpretation generated successfully');
     console.log('📊 Token usage:', {
       input: response.usage.input_tokens,
       output: response.usage.output_tokens,
       total: response.usage.input_tokens + response.usage.output_tokens,
     });
+
+    // ====================================================================
+    // USAGE ENFORCEMENT: Increment usage counter after successful generation
+    // ====================================================================
+    console.log('📈 Incrementing dream usage counter for user:', user.id);
+    const incrementResult = await incrementUsage(user.id, 'dream', 'daily');
+
+    if (!incrementResult.success) {
+      console.error('⚠️ Failed to increment usage counter:', incrementResult.error);
+      // Don't fail the request, but log the error for monitoring
+    } else {
+      console.log('✅ Usage counter incremented successfully');
+    }
 
     return NextResponse.json({
       success: true,

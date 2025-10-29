@@ -4,6 +4,7 @@
  */
 
 import Anthropic from '@anthropic-ai/sdk';
+import { createClient } from '@supabase/supabase-js';
 import {
   SynastryChart,
   SynastryReading,
@@ -11,6 +12,11 @@ import {
 } from '../types/synastry';
 import { NatalChartData } from '../types/user';
 import { createSynastryPrompt, validateSynastryResponse } from '../utils/synastryPromptTemplate';
+
+// Initialize Supabase client for server-side operations
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 // Initialize Anthropic client
 const anthropic = new Anthropic({
@@ -178,31 +184,142 @@ function generateFallbackSummary(
 
 /**
  * Check for cached reading
- * TODO: Implement caching logic with Supabase
+ * Queries Supabase for existing synastry readings matching the chart and context
  */
 export const checkCachedSynastryReading = async (
   synastryChartId: string,
-  focusArea: string
+  relationshipContext?: string,
+  connectionId?: string,
+  savedChartId?: string,
+  maxAgeHours: number = 168 // Default: 7 days
 ): Promise<SynastryReading | null> => {
   try {
-    // TODO: Query Supabase for cached reading
-    // For now, return null (no cache)
-    return null;
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.warn('Supabase not configured, skipping cache check');
+      return null;
+    }
+
+    console.log('🔍 Checking cache for synastry reading...', {
+      synastryChartId,
+      relationshipContext,
+      connectionId,
+      savedChartId,
+    });
+
+    // Calculate the cutoff time for cache validity
+    const cutoffTime = new Date();
+    cutoffTime.setHours(cutoffTime.getHours() - maxAgeHours);
+
+    // Build the query
+    let query = supabase
+      .from('synastry_readings')
+      .select('*')
+      .eq('synastry_chart_id', synastryChartId)
+      .gte('created_at', cutoffTime.toISOString())
+      .order('created_at', { ascending: false })
+      .limit(1);
+
+    // Add relationship context filter if provided
+    if (relationshipContext) {
+      query = query.eq('relationship_context', relationshipContext);
+    }
+
+    // Add connection or saved chart filter
+    if (connectionId) {
+      query = query.eq('connection_id', connectionId);
+    } else if (savedChartId) {
+      query = query.eq('saved_chart_id', savedChartId);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error('❌ Error querying cache:', error);
+      return null;
+    }
+
+    if (!data || data.length === 0) {
+      console.log('💨 No cached reading found');
+      return null;
+    }
+
+    const cachedReading = data[0];
+    console.log('✅ Found cached reading:', {
+      id: cachedReading.id,
+      age: Math.round((Date.now() - new Date(cachedReading.created_at).getTime()) / 1000 / 60 / 60) + ' hours',
+    });
+
+    // Transform database row to SynastryReading type
+    return {
+      id: cachedReading.id,
+      synastryChartId: cachedReading.synastry_chart_id,
+      connectionId: cachedReading.connection_id,
+      savedChartId: cachedReading.saved_chart_id,
+      interpretation: cachedReading.interpretation,
+      relationshipContext: cachedReading.relationship_context,
+      aiGenerated: cachedReading.ai_generated,
+      model: cachedReading.model,
+      promptVersion: cachedReading.prompt_version,
+      savedByUserId: cachedReading.saved_by_user_id,
+      createdAt: cachedReading.created_at,
+    };
   } catch (error) {
-    console.error('Error checking cache:', error);
+    console.error('❌ Error checking cache:', error);
     return null;
   }
 };
 
 /**
  * Save reading to cache
- * TODO: Implement with Supabase
+ * Stores the synastry reading in Supabase for future retrieval
  */
-export const cacheSynastryReading = async (reading: SynastryReading): Promise<void> => {
+export const cacheSynastryReading = async (reading: SynastryReading): Promise<boolean> => {
   try {
-    // TODO: Save to Supabase synastry_readings table
-    console.log('TODO: Cache synastry reading', reading.id);
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.warn('Supabase not configured, skipping cache save');
+      return false;
+    }
+
+    console.log('💾 Caching synastry reading...', {
+      id: reading.id,
+      synastryChartId: reading.synastryChartId,
+      connectionId: reading.connectionId,
+      savedChartId: reading.savedChartId,
+    });
+
+    // Prepare the data for insertion
+    const dataToInsert = {
+      id: reading.id,
+      synastry_chart_id: reading.synastryChartId,
+      connection_id: reading.connectionId || null,
+      saved_chart_id: reading.savedChartId || null,
+      interpretation: reading.interpretation,
+      relationship_context: reading.relationshipContext || null,
+      ai_generated: reading.aiGenerated,
+      model: reading.model || null,
+      prompt_version: reading.promptVersion || null,
+      saved_by_user_id: reading.savedByUserId,
+      created_at: reading.createdAt,
+    };
+
+    // Insert into Supabase
+    const { data, error } = await supabase
+      .from('synastry_readings')
+      .insert(dataToInsert)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('❌ Error caching reading:', error);
+      // Log the error but don't throw - caching is non-critical
+      return false;
+    }
+
+    console.log('✅ Successfully cached reading:', data.id);
+    return true;
   } catch (error) {
-    console.error('Error caching reading:', error);
+    console.error('❌ Error caching reading:', error);
+    // Don't throw - caching failure shouldn't break the main flow
+    return false;
   }
 };

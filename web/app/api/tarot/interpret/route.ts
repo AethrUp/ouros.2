@@ -11,6 +11,12 @@ import {
   constructStaticInterpretation,
   validateTarotResponse
 } from '@/lib/tarotPromptTemplate';
+import {
+  checkFeatureAccess,
+  incrementUsage,
+  createRateLimitResponse,
+  createTierRestrictionResponse,
+} from '@/lib/usageEnforcement';
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY || '',
@@ -53,15 +59,46 @@ export async function POST(request: NextRequest) {
 
     const { data: { user } } = await supabase.auth.getUser();
 
-    let birthData = null;
-    if (user) {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('birth_data')
-        .eq('id', user.id)
-        .single();
-      birthData = profile?.birth_data;
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'Authentication required' },
+        { status: 401 }
+      );
     }
+
+    // ====================================================================
+    // USAGE ENFORCEMENT: Check if user can use tarot feature
+    // ====================================================================
+    console.log('🔒 Checking tarot usage limits for user:', user.id);
+    const accessCheck = await checkFeatureAccess(user.id, 'tarot', 'daily');
+
+    if (!accessCheck.allowed) {
+      console.log('❌ Tarot access denied:', accessCheck.reason);
+
+      if (accessCheck.reason?.includes('not available')) {
+        // Feature not available on this tier
+        return NextResponse.json(
+          createTierRestrictionResponse(accessCheck),
+          { status: 403 }
+        );
+      } else {
+        // Usage limit exceeded
+        return NextResponse.json(
+          createRateLimitResponse(accessCheck),
+          { status: 429 }
+        );
+      }
+    }
+
+    console.log('✅ Tarot access granted for tier:', accessCheck.tier);
+
+    let birthData = null;
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('birth_data')
+      .eq('id', user.id)
+      .single();
+    birthData = profile?.birth_data;
 
     // Build context
     const context = {
@@ -106,6 +143,19 @@ export async function POST(request: NextRequest) {
       output: response.usage.output_tokens,
       total: response.usage.input_tokens + response.usage.output_tokens,
     });
+
+    // ====================================================================
+    // USAGE ENFORCEMENT: Increment usage counter after successful generation
+    // ====================================================================
+    console.log('📈 Incrementing tarot usage counter for user:', user.id);
+    const incrementResult = await incrementUsage(user.id, 'tarot', 'daily');
+
+    if (!incrementResult.success) {
+      console.error('⚠️ Failed to increment usage counter:', incrementResult.error);
+      // Don't fail the request, but log the error for monitoring
+    } else {
+      console.log('✅ Usage counter incremented successfully');
+    }
 
     return NextResponse.json({
       success: true,

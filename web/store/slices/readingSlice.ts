@@ -1,15 +1,17 @@
 import { StateCreator } from 'zustand';
+import { toast } from 'sonner';
 import {
   ReadingState,
   DailyHoroscope,
   CosmicWeather,
   HoroscopeGenerationMetadata,
 } from '../../types/reading';
+import { fetchWithTimeout } from '../../lib/fetchWithTimeout';
 
 export interface ReadingSlice extends ReadingState {
   // Actions
   generateHoroscope: (natalChart: any, userProfile: any, options?: any) => Promise<DailyHoroscope>;
-  setDailyHoroscope: (horoscope: DailyHoroscope) => void;
+  setDailyHoroscope: (horoscope: DailyHoroscope | null) => void;
   setCosmicWeather: (weather: CosmicWeather) => void;
   setLoadingDailyReading: (loading: boolean) => void;
   setDailyReadingError: (error: string | null) => void;
@@ -33,22 +35,24 @@ export const createReadingSlice: StateCreator<ReadingSlice> = (set, get) => ({
     set({ isGeneratingHoroscope: true, dailyReadingError: null });
 
     try {
-      console.log('🔮 Generating daily horoscope...');
+      const state = get();
+      console.log('🔮 Loading daily horoscope (checks cache, DB, then generates if needed)...');
 
-      const response = await fetch('/api/horoscope/generate', {
+      const response = await fetchWithTimeout('/api/horoscope/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           natalChart,
           userProfile,
+          cachedHoroscope: state.dailyHoroscope,
           options,
         }),
-      });
+      }, 60000);
 
       const result = await response.json();
 
       if (!result.success) {
-        throw new Error(result.error || 'Failed to generate horoscope');
+        throw new Error(result.error || 'Failed to load horoscope');
       }
 
       const { horoscope, metadata, fromCache } = result;
@@ -62,14 +66,16 @@ export const createReadingSlice: StateCreator<ReadingSlice> = (set, get) => ({
         dailyReadingError: null,
       });
 
-      console.log(fromCache ? '✅ Horoscope loaded from cache' : '✅ Horoscope generated successfully');
+      console.log(fromCache ? '✅ Horoscope loaded from cache/database' : '✅ Horoscope generated successfully');
       return horoscope;
     } catch (error: any) {
-      console.error('❌ Failed to generate horoscope:', error);
+      console.error('❌ Failed to load horoscope:', error);
+      const message = error.message || 'Failed to load horoscope';
       set({
-        dailyReadingError: error.message || 'Failed to generate horoscope',
+        dailyReadingError: message,
         isGeneratingHoroscope: false,
       });
+      toast.error(message);
       throw error;
     }
   },
@@ -77,7 +83,7 @@ export const createReadingSlice: StateCreator<ReadingSlice> = (set, get) => ({
   setDailyHoroscope: (horoscope) =>
     set({
       dailyHoroscope: horoscope,
-      lastHoroscopeDate: horoscope.date,
+      lastHoroscopeDate: horoscope?.date ?? null,
       dailyReadingError: null,
     }),
 

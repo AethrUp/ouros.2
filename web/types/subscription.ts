@@ -49,6 +49,24 @@ export type UsageFeature =
 
 export type UsagePeriod = 'daily' | 'monthly';
 
+// Birth data modification tracking
+export interface BirthDataModificationStatus {
+  allowed: boolean;
+  reason: string;
+  daysRemaining: number;
+  modificationCount: number;
+  lastModifiedAt: string | null;
+  canModifyAt: string | null;
+  totalAllowed: number | 'unlimited';
+  remainingChanges: number | 'unlimited';
+  cooldownDays: number;
+}
+
+export interface BirthDataModificationLimits {
+  totalChanges: number | 'unlimited';
+  cooldownDays: number;
+}
+
 // Feature limits per tier
 export interface FeatureLimits {
   tarot: number | 'unlimited';
@@ -57,6 +75,7 @@ export interface FeatureLimits {
   synastry: number | 'unlimited';
   journal: number | 'unlimited';
   savedCharts: number | 'unlimited';
+  birthDataChanges: number | 'unlimited';
 }
 
 export const TIER_LIMITS: Record<SubscriptionTier, FeatureLimits> = {
@@ -67,6 +86,7 @@ export const TIER_LIMITS: Record<SubscriptionTier, FeatureLimits> = {
     synastry: 0,     // Not available
     journal: 5,      // 5 per month
     savedCharts: 0,  // Not available
+    birthDataChanges: 2,  // 2 total changes
   },
   premium: {
     tarot: 'unlimited',
@@ -75,6 +95,7 @@ export const TIER_LIMITS: Record<SubscriptionTier, FeatureLimits> = {
     synastry: 3,     // Up to 3 saved charts
     journal: 'unlimited',
     savedCharts: 3,
+    birthDataChanges: 5,  // 5 total changes
   },
   pro: {
     tarot: 'unlimited',
@@ -83,6 +104,23 @@ export const TIER_LIMITS: Record<SubscriptionTier, FeatureLimits> = {
     synastry: 'unlimited',
     journal: 'unlimited',
     savedCharts: 'unlimited',
+    birthDataChanges: 'unlimited',
+  },
+};
+
+// Birth data modification limits per tier
+export const BIRTH_DATA_MODIFICATION_LIMITS: Record<SubscriptionTier, BirthDataModificationLimits> = {
+  free: {
+    totalChanges: 2,
+    cooldownDays: 30,
+  },
+  premium: {
+    totalChanges: 5,
+    cooldownDays: 14,
+  },
+  pro: {
+    totalChanges: 'unlimited',
+    cooldownDays: 7,
   },
 };
 

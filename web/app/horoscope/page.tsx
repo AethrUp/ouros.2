@@ -252,7 +252,7 @@ export default function HoroscopePage() {
 
             {/* Tab Navigation */}
             <motion.div variants={staggerItem} className="mb-6">
-              <div className="flex items-center gap-6 overflow-x-auto pb-2 border-b border-border/30">
+              <div className="flex items-center gap-6 overflow-x-auto pb-2 border-b border-border/30 min-w-0">
                 {tabs.map((tab) => {
                   return (
                     <button

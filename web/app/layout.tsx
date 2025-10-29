@@ -1,5 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, PT_Serif } from "next/font/google";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { SentryInit } from "./sentry-init";
+import { Toaster } from "sonner";
 import "./globals.css";
 
 const inter = Inter({
@@ -38,7 +41,11 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${ptSerif.variable}`}>
       <body className="antialiased">
-        {children}
+        <SentryInit />
+        <ErrorBoundary>
+          {children}
+        </ErrorBoundary>
+        <Toaster theme="dark" position="bottom-center" />
       </body>
     </html>
   );

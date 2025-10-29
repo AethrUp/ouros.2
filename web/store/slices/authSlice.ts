@@ -18,25 +18,12 @@ export interface AuthSlice {
   login: (credentials: LoginCredentials) => Promise<void>;
   logout: () => Promise<void>;
   register: (userData: RegisterData) => Promise<void>;
+  signInWithProvider: (provider: 'apple' | 'google') => Promise<void>;
   refreshSession: () => Promise<void>;
+  resendVerificationEmail: () => Promise<void>;
   clearError: () => void;
   setLoading: (loading: boolean) => void;
 }
-
-/**
- * Check if horoscope is up to date (today's date)
- */
-const isHoroscopeCurrent = (lastHoroscopeDate: string | null): boolean => {
-  if (!lastHoroscopeDate) return false;
-
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = String(today.getMonth() + 1).padStart(2, '0');
-  const day = String(today.getDate()).padStart(2, '0');
-  const todayStr = `${year}-${month}-${day}`;
-
-  return lastHoroscopeDate === todayStr;
-};
 
 /**
  * Fetch user profile and related data from Supabase
@@ -184,23 +171,8 @@ export const createAuthSlice: StateCreator<AuthSlice> = (set, get) => ({
         state.setNatalChart?.(userData.natalChart);
       }
 
-      // Check if horoscope needs to be generated
-      if (userData.natalChart && userData.birthData) {
-        const lastHoroscopeDate = state.lastHoroscopeDate;
-        if (!isHoroscopeCurrent(lastHoroscopeDate)) {
-          console.log('🌟 Horoscope is not current, generating new horoscope...');
-          try {
-            // Generate horoscope in the background (don't block login)
-            state.generateHoroscope?.(userData.natalChart, userData.profile).catch((error: any) => {
-              console.error('Failed to auto-generate horoscope on login:', error);
-            });
-          } catch (error) {
-            console.error('Error initiating horoscope generation:', error);
-          }
-        } else {
-          console.log('✅ Horoscope is current, no need to regenerate');
-        }
-      }
+      // Note: Horoscope loading is handled by individual pages on-demand
+      // This prevents unnecessary regeneration on login from new devices
     } catch (error: any) {
       set({
         isLoading: false,
@@ -240,27 +212,28 @@ export const createAuthSlice: StateCreator<AuthSlice> = (set, get) => ({
         state.setNatalChart?.(userDataFromDb.natalChart);
       }
 
-      // Check if horoscope needs to be generated (same as login)
-      if (userDataFromDb.natalChart && userDataFromDb.birthData) {
-        const lastHoroscopeDate = state.lastHoroscopeDate;
-        if (!isHoroscopeCurrent(lastHoroscopeDate)) {
-          console.log('🌟 Horoscope is not current, generating new horoscope...');
-          try {
-            // Generate horoscope in the background (don't block registration)
-            state.generateHoroscope?.(userDataFromDb.natalChart, userDataFromDb.profile).catch((error: any) => {
-              console.error('Failed to auto-generate horoscope on registration:', error);
-            });
-          } catch (error) {
-            console.error('Error initiating horoscope generation:', error);
-          }
-        } else {
-          console.log('✅ Horoscope is current, no need to regenerate');
-        }
-      }
+      // Note: Horoscope loading is handled by individual pages on-demand
+      // This prevents unnecessary regeneration on registration from new devices
     } catch (error: any) {
       set({
         isLoading: false,
         error: error.message || 'Registration failed',
+      });
+      throw error;
+    }
+  },
+
+  signInWithProvider: async (provider) => {
+    set({ isLoading: true, error: null });
+    try {
+      const { authAPI } = await import('../../handlers/auth');
+      await authAPI.signInWithProvider(provider);
+      // OAuth flow will redirect to callback URL
+      // The session will be established when user returns
+    } catch (error: any) {
+      set({
+        isLoading: false,
+        error: error.message || `Failed to sign in with ${provider}`,
       });
       throw error;
     }
@@ -323,41 +296,8 @@ export const createAuthSlice: StateCreator<AuthSlice> = (set, get) => ({
           state.setNatalChart?.(userData.natalChart);
         }
 
-        // Check if horoscope needs to be generated (same as login)
-        if (userData.natalChart && userData.birthData) {
-          const lastHoroscopeDate = state.lastHoroscopeDate;
-          if (!isHoroscopeCurrent(lastHoroscopeDate)) {
-            console.log('🌟 Horoscope is not current, generating new horoscope...');
-            try {
-              // Generate horoscope in the background (don't block session refresh)
-              state.generateHoroscope?.(userData.natalChart, userData.profile).catch((error: any) => {
-                console.error('Failed to auto-generate horoscope on session refresh:', error);
-              });
-            } catch (error) {
-              console.error('Error initiating horoscope generation:', error);
-            }
-          } else {
-            console.log('✅ Horoscope is current, no need to regenerate');
-          }
-        }
-      } else {
-        // Profile already exists in state, check horoscope anyway
-        if (state.natalChart && state.birthData) {
-          const lastHoroscopeDate = state.lastHoroscopeDate;
-          if (!isHoroscopeCurrent(lastHoroscopeDate)) {
-            console.log('🌟 Horoscope is not current, generating new horoscope...');
-            try {
-              // Generate horoscope in the background (don't block session refresh)
-              state.generateHoroscope?.(state.natalChart, state.profile).catch((error: any) => {
-                console.error('Failed to auto-generate horoscope on session refresh:', error);
-              });
-            } catch (error) {
-              console.error('Error initiating horoscope generation:', error);
-            }
-          } else {
-            console.log('✅ Horoscope is current, no need to regenerate');
-          }
-        }
+        // Note: Horoscope loading is handled by individual pages on-demand
+        // This prevents unnecessary regeneration on session refresh from new devices
       }
     } catch (error: any) {
       set({
@@ -367,6 +307,26 @@ export const createAuthSlice: StateCreator<AuthSlice> = (set, get) => ({
         expiresAt: null,
         user: null,
         error: error.message || 'Session refresh failed',
+      });
+      throw error;
+    }
+  },
+
+  resendVerificationEmail: async () => {
+    const { user } = get();
+    if (!user?.email) {
+      throw new Error('No user email available');
+    }
+
+    set({ isLoading: true, error: null });
+    try {
+      const { authAPI } = await import('../../handlers/auth');
+      await authAPI.resendVerificationEmail(user.email);
+      set({ isLoading: false });
+    } catch (error: any) {
+      set({
+        isLoading: false,
+        error: error.message || 'Failed to resend verification email',
       });
       throw error;
     }

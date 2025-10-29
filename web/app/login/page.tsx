@@ -71,8 +71,17 @@ export default function LoginPage() {
   };
 
   const handleSocialLogin = async (provider: 'apple' | 'google') => {
-    console.log(`Social login with ${provider} (not yet implemented)`);
-    // TODO: Implement social login with Supabase
+    setLoading(true);
+    setError(null);
+
+    try {
+      const { signInWithProvider } = useAppStore.getState();
+      await signInWithProvider(provider);
+      // OAuth will redirect to callback URL, no need to manually navigate
+    } catch (err: any) {
+      setError(err.message || `Failed to sign in with ${provider}`);
+      setLoading(false);
+    }
   };
 
   return (
@@ -146,7 +155,7 @@ export default function LoginPage() {
           </div>
 
           {/* Password Input */}
-          <div className="mb-12">
+          <div className="mb-4">
             <Input
               id="password"
               type="password"
@@ -166,6 +175,16 @@ export default function LoginPage() {
             />
           </div>
 
+          {/* Forgot Password Link */}
+          <div className="mb-12 text-right">
+            <Link
+              href="/forgot-password"
+              className="text-sm text-secondary/70 hover:text-primary transition-colors"
+            >
+              Forgot password?
+            </Link>
+          </div>
+
           {/* Submit Button */}
           <div className="mb-10">
             <Button
@@ -180,6 +199,7 @@ export default function LoginPage() {
           </div>
 
           {/* Divider */}
+          {/* Temporarily hidden - social login not yet configured
           <div className="relative mb-10">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-border"></div>
@@ -189,7 +209,7 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {/* Social Login Buttons */}
+          Social Login Buttons
           <div className="grid grid-cols-2 gap-4">
             <Button
               type="button"
@@ -230,6 +250,7 @@ export default function LoginPage() {
               </svg>
             </Button>
           </div>
+          */}
         </motion.form>
       </motion.div>
     </div>

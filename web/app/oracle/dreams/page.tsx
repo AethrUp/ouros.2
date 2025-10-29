@@ -4,10 +4,12 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, Moon, BookOpen, Save } from 'lucide-react';
+import { toast } from 'sonner';
 import { MainLayout } from '@/components/layout';
 import { Button, TextArea, LoadingScreen } from '@/components/ui';
 import { fadeInUp, transitions } from '@/lib/animations';
 import { useAppStore } from '@/store';
+import { fetchWithTimeout } from '@/lib/fetchWithTimeout';
 
 type SessionStep = 'input' | 'interpreting' | 'complete';
 
@@ -20,6 +22,8 @@ export default function DreamsPage() {
   const [interpretation, setInterpretation] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState('');
+  const [savedReadingId, setSavedReadingId] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Handle dream submission
   const handleSubmit = async () => {
@@ -33,35 +37,33 @@ export default function DreamsPage() {
     setIsGenerating(true);
 
     try {
-      // TODO: Integrate with actual AI dream interpretation
-      // For now, simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 3000));
+      // Call the dream interpretation API
+      const response = await fetchWithTimeout('/api/dream/interpret', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          dreamDescription,
+          style: 'psychological', // Can be made configurable later
+          detailLevel: 'detailed',
+        }),
+      }, 60000); // 60 second timeout for AI generation
 
-      // Mock interpretation
-      const mockInterpretation = `Your dream reveals deep insights into your subconscious mind. The symbols and imagery you described suggest a time of transition and personal growth.
+      const data = await response.json();
 
-**Key Themes:**
-• Transformation and change
-• Hidden emotions seeking expression
-• A call to trust your intuition
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to generate interpretation');
+      }
 
-The presence of ${dreamDescription.includes('water') ? 'water' : 'these elements'} in your dream often symbolizes the flow of emotions and the unconscious mind. This suggests you may be processing feelings or experiences that haven't fully surfaced to your conscious awareness.
-
-**Guidance:**
-Pay attention to your dreams over the coming days. They may continue to reveal important messages about your inner journey. Consider journaling about any recurring symbols or feelings that emerge.
-
-**Reflection Prompts:**
-• What emotions did you feel during the dream?
-• Are there any current life situations that mirror these dream elements?
-• What might your subconscious be trying to communicate?
-
-Trust that your dreams are guiding you toward greater self-understanding and wholeness.`;
-
-      setInterpretation(mockInterpretation);
+      setInterpretation(data.interpretation);
       setSessionStep('complete');
+      toast.success('Dream interpreted successfully');
     } catch (err: any) {
-      setError(err.message || 'Failed to generate interpretation');
+      const message = err.message || 'Failed to generate interpretation';
+      setError(message);
       setSessionStep('input');
+      toast.error(message);
     } finally {
       setIsGenerating(false);
     }
@@ -69,15 +71,60 @@ Trust that your dreams are guiding you toward greater self-understanding and who
 
   // Handle save reading
   const handleSaveReading = async () => {
-    // TODO: Save to Supabase
-    console.log('💾 Saving dream reading...');
-    alert('Dream reading saved! (TODO: Implement Supabase save)');
+    if (isSaving || savedReadingId) return; // Already saving or saved
+
+    setIsSaving(true);
+    setError('');
+
+    try {
+      const response = await fetchWithTimeout('/api/dream/save', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          dreamDescription,
+          interpretation,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to save dream reading');
+      }
+
+      setSavedReadingId(data.reading.id);
+      toast.success('Reading saved');
+    } catch (err: any) {
+      const message = err.message || 'Failed to save dream reading';
+      setError(message);
+      toast.error(message);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   // Handle journal
-  const handleJournal = () => {
-    // TODO: Navigate to journal with linked reading
-    router.push(`/journal?prompt=${encodeURIComponent(`Reflection on dream: ${dreamDescription.substring(0, 50)}...`)}`);
+  const handleJournal = async () => {
+    // Save first if not already saved
+    if (!savedReadingId && !isSaving) {
+      await handleSaveReading();
+    }
+
+    // Navigate to journal with dream content
+    const journalPrompt = `Dream Reflection\n\nDream: ${dreamDescription}\n\nInterpretation highlights: ${interpretation.substring(0, 200)}...`;
+    const params = new URLSearchParams({
+      type: 'dream',
+      prompt: journalPrompt,
+      title: 'Dream Journal Entry',
+    });
+
+    if (savedReadingId) {
+      params.append('readingId', savedReadingId);
+    }
+
+    router.push(`/journal?${params.toString()}`);
   };
 
   // Handle new reading
@@ -86,6 +133,8 @@ Trust that your dreams are guiding you toward greater self-understanding and who
     setDreamDescription('');
     setInterpretation('');
     setError('');
+    setSavedReadingId(null);
+    setIsSaving(false);
   };
 
   // Render input view
@@ -203,10 +252,11 @@ Trust that your dreams are guiding you toward greater self-understanding and who
         <Button
           onClick={handleSaveReading}
           variant="secondary"
+          disabled={isSaving || !!savedReadingId}
           className="flex items-center justify-center gap-2"
         >
           <Save className="w-4 h-4" />
-          Save Reading
+          {isSaving ? 'Saving...' : savedReadingId ? 'Saved' : 'Save Reading'}
         </Button>
         <Button
           onClick={handleJournal}

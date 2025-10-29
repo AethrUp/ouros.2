@@ -20,6 +20,7 @@ export interface AuthResponse {
 export interface User {
   id: string;
   email: string;
+  emailVerified: boolean;
   displayName: string;
   avatar?: string;
   createdAt: string;

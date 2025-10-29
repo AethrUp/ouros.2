@@ -6,8 +6,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { BookOpen, Plus, Filter, Search, Link as LinkIcon } from 'lucide-react';
 import { MainLayout } from '@/components/layout';
 import { Button, LoadingScreen } from '@/components/ui';
+import { EmailVerificationModal } from '@/components/ui/EmailVerificationModal';
 import { fadeInUp, transitions } from '@/lib/animations';
 import { useJournal } from '@/lib/hooks/useJournal';
+import { useEmailVerification } from '@/hooks/useEmailVerification';
 import { JournalEntryType } from '@/types/journal';
 import { format } from 'date-fns';
 import { JournalEntryModal } from '@/components/journal/JournalEntryModal';
@@ -17,8 +19,10 @@ type TabType = 'all' | JournalEntryType;
 
 export default function JournalPage() {
   const searchParams = useSearchParams();
+  const { canAccessFeature, getVerificationMessage } = useEmailVerification();
   const [activeTab, setActiveTab] = useState<TabType>('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showVerificationModal, setShowVerificationModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [initialModalData, setInitialModalData] = useState<{
     prompt?: string;
@@ -83,6 +87,14 @@ export default function JournalPage() {
     }
   };
 
+  const handleNewEntry = () => {
+    if (!canAccessFeature('journal')) {
+      setShowVerificationModal(true);
+      return;
+    }
+    setIsModalOpen(true);
+  };
+
   return (
     <MainLayout headerTitle="Journal">
       <div className="min-h-screen bg-background pb-20 lg:pb-8">
@@ -110,7 +122,7 @@ export default function JournalPage() {
                 </div>
               </div>
               <Button
-                onClick={() => setIsModalOpen(true)}
+                onClick={handleNewEntry}
                 className="flex items-center gap-2"
               >
                 <Plus className="w-4 h-4" />
@@ -133,7 +145,7 @@ export default function JournalPage() {
             </div>
 
             {/* Tab Navigation */}
-            <div className="flex gap-8 border-b-2 border-border mb-8 overflow-x-auto">
+            <div className="flex gap-8 border-b-2 border-border mb-8 overflow-x-auto min-w-0">
               {tabs.map((tab) => (
                 <button
                   key={tab.value}
@@ -275,6 +287,13 @@ export default function JournalPage() {
         initialTitle={initialModalData.title}
         initialType={initialModalData.type}
         lockType={!!initialModalData.type}
+      />
+
+      {/* Email Verification Modal */}
+      <EmailVerificationModal
+        isOpen={showVerificationModal}
+        onClose={() => setShowVerificationModal(false)}
+        message={getVerificationMessage('journal')}
       />
     </MainLayout>
   );

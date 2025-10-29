@@ -82,7 +82,7 @@ export default function ChartPage() {
             {/* Tab Navigation */}
             {natalChart && (
               <>
-                <div className="flex gap-8 border-b-2 border-border mb-8">
+                <div className="flex gap-8 border-b-2 border-border mb-8 min-w-0">
                   {TABS.map((tab) => (
                     <button
                       key={tab.id}

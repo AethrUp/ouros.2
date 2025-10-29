@@ -29,3 +29,6 @@ nul
 *.md
 !web/README.md
 ouros2_vault/
+
+# Sentry Config File
+.env.sentry-build-plugin

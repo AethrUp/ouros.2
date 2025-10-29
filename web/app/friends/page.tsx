@@ -19,7 +19,9 @@ import {
 } from 'lucide-react';
 import { MainLayout } from '@/components/layout';
 import { Button, LoadingScreen, Modal, ConfirmModal, Input } from '@/components/ui';
+import { EmailVerificationModal } from '@/components/ui/EmailVerificationModal';
 import { fadeInUp, transitions } from '@/lib/animations';
+import { useEmailVerification } from '@/hooks/useEmailVerification';
 import { useAppStore } from '@/store';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
@@ -29,9 +31,11 @@ type TabType = 'connections' | 'invitations' | 'saved';
 
 export default function FriendsPage() {
   const router = useRouter();
+  const { canAccessFeature, getVerificationMessage } = useEmailVerification();
   const [activeTab, setActiveTab] = useState<TabType>('connections');
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [isSavedChartModalOpen, setIsSavedChartModalOpen] = useState(false);
+  const [showVerificationModal, setShowVerificationModal] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [deleteType, setDeleteType] = useState<'connection' | 'invitation' | 'saved'>('connection');
 
@@ -127,6 +131,22 @@ export default function FriendsPage() {
     router.push(`/synastry/${chartId}?type=saved`);
   };
 
+  const handleAddFriend = () => {
+    if (!canAccessFeature('friends')) {
+      setShowVerificationModal(true);
+      return;
+    }
+    setIsInviteModalOpen(true);
+  };
+
+  const handleAddSavedChart = () => {
+    if (!canAccessFeature('friends')) {
+      setShowVerificationModal(true);
+      return;
+    }
+    setIsSavedChartModalOpen(true);
+  };
+
   const isLoading =
     (activeTab === 'connections' && isLoadingConnections) ||
     (activeTab === 'invitations' && isLoadingInvitations) ||
@@ -162,7 +182,7 @@ export default function FriendsPage() {
               </div>
               <div className="flex gap-2">
                 <Button
-                  onClick={() => setIsSavedChartModalOpen(true)}
+                  onClick={handleAddSavedChart}
                   variant="ghost"
                   className="flex items-center gap-2"
                 >
@@ -170,7 +190,7 @@ export default function FriendsPage() {
                   <span className="hidden sm:inline">Add Chart</span>
                 </Button>
                 <Button
-                  onClick={() => setIsInviteModalOpen(true)}
+                  onClick={handleAddFriend}
                   className="flex items-center gap-2"
                 >
                   <UserPlus className="w-4 h-4" />
@@ -180,7 +200,7 @@ export default function FriendsPage() {
             </div>
 
             {/* Tab Navigation */}
-            <div className="flex gap-8 border-b-2 border-border mb-8 overflow-x-auto">
+            <div className="flex gap-8 border-b-2 border-border mb-8 overflow-x-auto min-w-0">
               {tabs.map((tab) => (
                 <button
                   key={tab.value}
@@ -235,7 +255,7 @@ export default function FriendsPage() {
                         Add friends to explore your astrological compatibility and relationship
                         dynamics
                       </p>
-                      <Button onClick={() => setIsInviteModalOpen(true)}>
+                      <Button onClick={handleAddFriend}>
                         <UserPlus className="w-4 h-4 mr-2" />
                         Add Your First Friend
                       </Button>
@@ -458,7 +478,7 @@ export default function FriendsPage() {
                       <p className="text-secondary mb-6 max-w-md mx-auto">
                         Create charts for people who don't use the app to explore synastry
                       </p>
-                      <Button onClick={() => setIsSavedChartModalOpen(true)}>
+                      <Button onClick={handleAddSavedChart}>
                         <Plus className="w-4 h-4 mr-2" />
                         Create Your First Chart
                       </Button>
@@ -558,6 +578,13 @@ export default function FriendsPage() {
         }? This action cannot be undone.`}
         confirmText="Delete"
         variant="danger"
+      />
+
+      {/* Email Verification Modal */}
+      <EmailVerificationModal
+        isOpen={showVerificationModal}
+        onClose={() => setShowVerificationModal(false)}
+        message={getVerificationMessage('friends')}
       />
     </MainLayout>
   );

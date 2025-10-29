@@ -118,8 +118,17 @@ export default function RegisterPage() {
   };
 
   const handleSocialSignup = async (provider: 'apple' | 'google') => {
-    console.log(`Social signup with ${provider} (not yet implemented)`);
-    // TODO: Implement social signup with Supabase
+    setLoading(true);
+    setError(null);
+
+    try {
+      const { signInWithProvider } = useAppStore.getState();
+      await signInWithProvider(provider);
+      // OAuth will redirect to callback URL, no need to manually navigate
+    } catch (err: any) {
+      setError(err.message || `Failed to sign up with ${provider}`);
+      setLoading(false);
+    }
   };
 
   return (
@@ -326,6 +335,7 @@ export default function RegisterPage() {
           </motion.div>
 
           {/* Divider */}
+          {/* Temporarily hidden - social login not yet configured
           <motion.div variants={staggerItem} className="relative">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-border"></div>
@@ -335,7 +345,7 @@ export default function RegisterPage() {
             </div>
           </motion.div>
 
-          {/* Social Signup Buttons */}
+          Social Signup Buttons
           <motion.div variants={staggerItem} className="grid grid-cols-2 gap-3">
             <Button
               type="button"
@@ -376,6 +386,7 @@ export default function RegisterPage() {
               Apple
             </Button>
           </motion.div>
+          */}
         </motion.form>
       </motion.div>
     </div>

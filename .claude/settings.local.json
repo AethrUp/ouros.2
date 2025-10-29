@@ -51,7 +51,14 @@
       "Bash(git restore:*)",
       "Bash(taskkill:*)",
       "Bash(vercel --version:*)",
-      "Bash(vercel --prod:*)"
+      "Bash(vercel --prod:*)",
+      "Bash(wait:*)",
+      "Bash(del \"D:\\AppsBuild\\ouros2\\run-dream-migration.js\")",
+      "Bash(del \"D:\\AppsBuild\\ouros2\\supabase_migration_dream_readings.sql\")",
+      "Bash(move sentry.server.config.ts web )",
+      "Bash(move:*)",
+      "Bash(cmd.exe /c \"taskkill /F /PID 11816\")",
+      "Bash(cmd.exe /c \"tasklist | findstr node\")"
     ],
     "deny": [],
     "ask": []

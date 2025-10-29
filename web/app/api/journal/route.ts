@@ -5,6 +5,12 @@ import {
   CreateJournalEntryInput,
   JournalEntryFilters,
 } from '@/types/journal';
+import {
+  checkFeatureAccess,
+  incrementUsage,
+  createRateLimitResponse,
+  createTierRestrictionResponse,
+} from '@/lib/usageEnforcement';
 
 /**
  * GET /api/journal - Get all journal entries for the current user
@@ -142,6 +148,34 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // ====================================================================
+    // USAGE ENFORCEMENT: Check journal entry limits for free tier
+    // Free tier: 5 entries per month
+    // Premium/Pro: Unlimited
+    // ====================================================================
+    console.log('🔒 Checking journal entry limits for user:', user.id);
+    const accessCheck = await checkFeatureAccess(user.id, 'journal', 'monthly');
+
+    if (!accessCheck.allowed) {
+      console.log('❌ Journal access denied:', accessCheck.reason);
+
+      if (accessCheck.reason?.includes('not available')) {
+        // Feature not available on this tier
+        return NextResponse.json(
+          createTierRestrictionResponse(accessCheck),
+          { status: 403 }
+        );
+      } else {
+        // Usage limit exceeded (free tier hit 5 entries this month)
+        return NextResponse.json(
+          createRateLimitResponse(accessCheck),
+          { status: 429 }
+        );
+      }
+    }
+
+    console.log('✅ Journal entry allowed for tier:', accessCheck.tier);
+
     // Parse request body
     const input: CreateJournalEntryInput = await request.json();
 
@@ -186,6 +220,20 @@ export async function POST(request: NextRequest) {
         { error: 'Failed to create journal entry' },
         { status: 500 }
       );
+    }
+
+    // ====================================================================
+    // USAGE ENFORCEMENT: Increment monthly journal usage counter
+    // ====================================================================
+    console.log('📈 Incrementing journal usage counter for user:', user.id);
+    const incrementResult = await incrementUsage(user.id, 'journal', 'monthly');
+
+    if (!incrementResult.success) {
+      console.error('⚠️ Failed to increment journal usage counter:', incrementResult.error);
+      // Don't fail the request since entry was already created
+      // But this is a data integrity issue that should be monitored
+    } else {
+      console.log('✅ Journal usage counter incremented successfully');
     }
 
     return NextResponse.json({ entry: data }, { status: 201 });

@@ -8,6 +8,7 @@ import { useAppStore } from '@/store';
 import { MainLayout } from '@/components/layout';
 import { Button } from '@/components/ui';
 import { SubscriptionInfo } from '@/components/subscription/SubscriptionInfo';
+import { ProfileEditModal, BirthDataEditModal } from '@/components/profile';
 import { fadeInUp, staggerContainer, staggerItem } from '@/lib/animations';
 import type { SubscriptionTier } from '@/types/subscription';
 
@@ -16,6 +17,8 @@ export default function ProfilePage() {
   const { user, profile, birthData, logout, subscriptionState, updateSubscriptionTier, loadSubscriptionState } = useAppStore();
   const [isUpdatingTier, setIsUpdatingTier] = useState(false);
   const [tierUpdateError, setTierUpdateError] = useState<string | null>(null);
+  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
+  const [isBirthDataEditOpen, setIsBirthDataEditOpen] = useState(false);
 
   const handleLogout = async () => {
     await logout();
@@ -213,7 +216,7 @@ export default function ProfilePage() {
                 <Button
                   variant="secondary"
                   className="w-full justify-start"
-                  onClick={() => alert('Edit profile coming soon')}
+                  onClick={() => setIsEditProfileOpen(true)}
                 >
                   <Edit className="w-4 h-4 mr-2" />
                   Edit Display Name
@@ -221,7 +224,7 @@ export default function ProfilePage() {
                 <Button
                   variant="secondary"
                   className="w-full justify-start"
-                  onClick={() => router.push('/onboarding')}
+                  onClick={() => setIsBirthDataEditOpen(true)}
                 >
                   <Calendar className="w-4 h-4 mr-2" />
                   Update Birth Data
@@ -267,6 +270,18 @@ export default function ProfilePage() {
           </motion.div>
         </div>
       </div>
+
+      {/* Profile Edit Modal */}
+      <ProfileEditModal
+        isOpen={isEditProfileOpen}
+        onClose={() => setIsEditProfileOpen(false)}
+      />
+
+      {/* Birth Data Edit Modal */}
+      <BirthDataEditModal
+        isOpen={isBirthDataEditOpen}
+        onClose={() => setIsBirthDataEditOpen(false)}
+      />
     </MainLayout>
   );
 }

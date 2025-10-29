@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
+import { getUserTier } from '@/lib/usageEnforcement';
+import { TIER_FEATURES } from '@/types/subscription';
 
 export async function POST(request: NextRequest) {
   try {
@@ -40,6 +42,34 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { success: false, error: 'Not authenticated' },
         { status: 401 }
+      );
+    }
+
+    // ====================================================================
+    // USAGE ENFORCEMENT: Verify user has access to dream interpretation
+    // CRITICAL: Free tier should not be able to save dreams (they can't generate them)
+    // ====================================================================
+    console.log('💾 Saving dream reading for user:', user.id);
+    const tier = await getUserTier(user.id);
+
+    if (!tier) {
+      return NextResponse.json(
+        { success: false, error: 'Unable to verify subscription status' },
+        { status: 500 }
+      );
+    }
+
+    // Verify user has dream interpretation feature access
+    const hasDreamAccess = TIER_FEATURES[tier].dreamInterpretation;
+    if (!hasDreamAccess) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Dream interpretation is not available on your current plan',
+          tier,
+          upgradeRequired: true,
+        },
+        { status: 403 }
       );
     }
 

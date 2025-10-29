@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "App Structure/astrology_app_architecture.md",
+                "file": "PRODUCTION_READINESS_ASSESSMENT.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "astrology_app_architecture"
+              "title": "PRODUCTION_READINESS_ASSESSMENT"
             }
           }
         ]
@@ -170,8 +170,11 @@
       "table-editor-obsidian:Advanced Tables Toolbar": false
     }
   },
-  "active": "09e45096c5d2a3c3",
+  "active": "ba7b3f4b8ed33a59",
   "lastOpenFiles": [
+    "App Structure/astrology_app_architecture.md",
+    "PRODUCTION_READINESS_ASSESSMENT.md",
+    "PRODUCTION_READINESS_ASSESSMENT.md.tmp.29860.1761607000604",
     "Setup/Stripe/STRIPE_DATABASE_MIGRATION.md",
     "Dev Progress/PHASE_4_COMPLETE.md",
     "PHASE_4_COMPLETE.md.tmp.9352.1761527334631",
@@ -191,7 +194,6 @@
     "STRIPE_SETUP_QUICK_REFERENCE.md.tmp.9352.1761512146463",
     "STRIPE_PRODUCT_SETUP_GUIDE.md.tmp.9352.1761512059318",
     "STRIPE_DATABASE_MIGRATION.md.tmp.9352.1761511841109",
-    "STRIPE_IMPLEMENTATION_PLAN.md.tmp.17500.1761506384029",
     "Setup/REVENUECAT_DASHBOARD_SETUP.md",
     "Implementations/Settings Outline.md",
     "App Info/tarot_oracle_method.md",
@@ -205,8 +207,6 @@
     "App Structure/Updated Reading Structures.md",
     "Prompts/Updated Daily Reading.md",
     "Marketing/APP_FEATURES_MARKETING.md",
-    "Prompts/natal_interpretation_prompt.md",
-    "App Structure/DAILY_READING_DATA_STRUCTURE.md",
-    "Marketing/SUBSCRIPTION_TIERS_AND_LIMITS.md"
+    "Prompts/natal_interpretation_prompt.md"
   ]
 }

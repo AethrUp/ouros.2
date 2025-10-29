@@ -1,5 +1,8 @@
 import { StateCreator } from 'zustand';
+import { toast } from 'sonner';
 import { UserProfile, BirthData, UserPreferences, NatalChartData } from '../../types/user';
+import type { BirthDataModificationStatus } from '../../types/subscription';
+import { fetchWithTimeout } from '../../lib/fetchWithTimeout';
 
 export interface UserSlice {
   // Profile data
@@ -12,12 +15,18 @@ export interface UserSlice {
   isSavingProfile: boolean;
   profileError: string | null;
 
+  // Birth data modification status
+  birthDataModificationStatus: BirthDataModificationStatus | null;
+  isLoadingModificationStatus: boolean;
+
   // Actions
   setProfile: (profile: UserProfile) => void;
   updateProfile: (updates: Partial<UserProfile>) => Promise<void>;
   setBirthData: (birthData: BirthData) => void;
   updateBirthData: (birthData: BirthData) => Promise<void>;
+  updateBirthDataWithValidation: (birthData: BirthData, confirmations: { deletesHoroscopes: boolean; dataCorrect: boolean }) => Promise<void>;
   loadBirthData: (userId: string) => Promise<void>;
+  checkBirthDataModificationStatus: () => Promise<BirthDataModificationStatus>;
   updatePreferences: (prefs: Partial<UserPreferences>) => Promise<void>;
   loadPreferences: (userId: string) => Promise<void>;
   clearProfileError: () => void;
@@ -45,6 +54,8 @@ export const createUserSlice: StateCreator<UserSlice> = (set, get) => ({
   isLoadingProfile: false,
   isSavingProfile: false,
   profileError: null,
+  birthDataModificationStatus: null,
+  isLoadingModificationStatus: false,
 
   // Actions
   setProfile: (profile) => set({ profile }),
@@ -147,6 +158,141 @@ export const createUserSlice: StateCreator<UserSlice> = (set, get) => ({
       set({
         isSavingProfile: false,
         profileError: error.message || 'Failed to update birth data',
+      });
+      throw error;
+    }
+  },
+
+  updateBirthDataWithValidation: async (birthData, confirmations) => {
+    set({ isSavingProfile: true, profileError: null });
+    try {
+      const { profile } = get();
+      if (!profile) {
+        throw new Error('No profile found');
+      }
+
+      // Call the new API endpoint with rate limiting
+      const response = await fetchWithTimeout('/api/birth-data/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          birthDate: birthData.birthDate,
+          birthTime: birthData.birthTime,
+          birthLocation: birthData.birthLocation,
+          confirmations,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        // Handle rate limiting errors
+        if (response.status === 429) {
+          throw new Error(result.error || 'Rate limit exceeded. Please try again later.');
+        }
+        throw new Error(result.error || 'Failed to update birth data');
+      }
+
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to update birth data');
+      }
+
+      console.log('✅ Birth data updated successfully with validation');
+
+      // Update local state with new birth data
+      set({
+        birthData,
+        profile: profile ? { ...profile, birthData } : null,
+        isSavingProfile: false,
+        profileError: null,
+      });
+
+      // Refresh modification status
+      const state = get();
+      await state.checkBirthDataModificationStatus();
+
+      toast.success('Birth data updated');
+
+    } catch (error: any) {
+      console.error('❌ Failed to update birth data with validation:', error);
+      const message = error.message || 'Failed to update birth data';
+      set({
+        isSavingProfile: false,
+        profileError: message,
+      });
+      toast.error(message);
+      throw error;
+    }
+  },
+
+  checkBirthDataModificationStatus: async () => {
+    set({ isLoadingModificationStatus: true });
+    try {
+      const { profile } = get();
+      if (!profile) {
+        throw new Error('No profile found');
+      }
+
+      const { supabase } = await import('../../utils/supabase');
+
+      // Get subscription tier
+      const state = get() as any;
+      const tier: 'free' | 'premium' | 'pro' = state.subscriptionState?.tier || 'free';
+
+      // Get birth data modification tracking info
+      const { data: birthDataRecord, error: fetchError } = await supabase
+        .from('birth_data')
+        .select('modification_count, last_modified_at, can_modify_at')
+        .eq('user_id', profile.id)
+        .maybeSingle();
+
+      if (fetchError && fetchError.code !== 'PGRST116') {
+        throw new Error(fetchError.message);
+      }
+
+      // Check if modification is allowed using database function
+      const { data: checkResult, error: checkError } = await supabase
+        .rpc('check_birth_data_modification_allowed', { p_user_id: profile.id });
+
+      if (checkError) {
+        throw new Error(checkError.message);
+      }
+
+      const permissionCheck = checkResult?.[0];
+
+      // Import limits
+      const { BIRTH_DATA_MODIFICATION_LIMITS } = await import('../../types/subscription');
+      const limits = BIRTH_DATA_MODIFICATION_LIMITS[tier as 'free' | 'premium' | 'pro'];
+
+      const modificationCount = birthDataRecord?.modification_count || 0;
+      const remainingChanges = limits.totalChanges === 'unlimited'
+        ? 'unlimited'
+        : Math.max(0, limits.totalChanges - modificationCount);
+
+      const status: BirthDataModificationStatus = {
+        allowed: permissionCheck?.allowed || false,
+        reason: permissionCheck?.reason || 'Unknown',
+        daysRemaining: permissionCheck?.days_remaining || 0,
+        modificationCount,
+        lastModifiedAt: birthDataRecord?.last_modified_at || null,
+        canModifyAt: birthDataRecord?.can_modify_at || null,
+        totalAllowed: limits.totalChanges,
+        remainingChanges,
+        cooldownDays: limits.cooldownDays,
+      };
+
+      set({
+        birthDataModificationStatus: status,
+        isLoadingModificationStatus: false,
+      });
+
+      console.log('✅ Birth data modification status loaded:', status);
+      return status;
+
+    } catch (error: any) {
+      console.error('❌ Failed to check birth data modification status:', error);
+      set({
+        isLoadingModificationStatus: false,
       });
       throw error;
     }

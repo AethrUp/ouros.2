@@ -38,6 +38,7 @@ export const authAPI = {
         user: {
           id: data.user.id,
           email: data.user.email || '',
+          emailVerified: data.user.email_confirmed_at ? true : false,
           displayName: data.user.user_metadata?.display_name || data.user.email?.split('@')[0] || 'User',
           avatar: data.user.user_metadata?.avatar_url,
           createdAt: data.user.created_at,
@@ -66,6 +67,7 @@ export const authAPI = {
           data: {
             display_name: userData.displayName,
           },
+          emailRedirectTo: `${typeof window !== 'undefined' ? window.location.origin : ''}/auth/confirm`,
         },
       });
 
@@ -83,22 +85,19 @@ export const authAPI = {
         } as AuthError;
       }
 
-      // If email confirmation is required, session will be null
-      if (!data.session) {
-        throw {
-          code: 'EMAIL_CONFIRMATION_REQUIRED',
-          message: 'Please check your email to confirm your account',
-        } as AuthError;
-      }
+      // Supabase may return a session even if email confirmation is pending
+      // Allow user to proceed with unverified email
+      const session = data.session;
+      const user = data.user;
 
       // Create profile in Supabase (upsert to handle trigger race condition)
       const { error: profileError } = await supabase
         .from('profiles')
         .upsert({
-          id: data.user.id,
-          email: data.user.email || '',
+          id: user.id,
+          email: user.email || '',
           display_name: userData.displayName,
-          avatar: data.user.user_metadata?.avatar_url,
+          avatar: user.user_metadata?.avatar_url,
           timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
           language: 'en',
         }, {
@@ -110,16 +109,34 @@ export const authAPI = {
         // Don't throw - profile might have been created by trigger
       }
 
+      // If no session, create a partial response indicating verification needed
+      if (!session) {
+        return {
+          accessToken: '',
+          refreshToken: '',
+          expiresAt: 0,
+          user: {
+            id: user.id,
+            email: user.email || '',
+            emailVerified: false,
+            displayName: userData.displayName,
+            avatar: user.user_metadata?.avatar_url,
+            createdAt: user.created_at,
+          },
+        };
+      }
+
       return {
-        accessToken: data.session.access_token,
-        refreshToken: data.session.refresh_token,
-        expiresAt: data.session.expires_at ? data.session.expires_at * 1000 : Date.now() + 3600000,
+        accessToken: session.access_token,
+        refreshToken: session.refresh_token,
+        expiresAt: session.expires_at ? session.expires_at * 1000 : Date.now() + 3600000,
         user: {
-          id: data.user.id,
-          email: data.user.email || '',
+          id: user.id,
+          email: user.email || '',
+          emailVerified: user.email_confirmed_at ? true : false,
           displayName: userData.displayName,
-          avatar: data.user.user_metadata?.avatar_url,
-          createdAt: data.user.created_at,
+          avatar: user.user_metadata?.avatar_url,
+          createdAt: user.created_at,
         },
       };
     } catch (error: any) {
@@ -163,11 +180,42 @@ export const authAPI = {
         user: {
           id: data.user.id,
           email: data.user.email || '',
+          emailVerified: data.user.email_confirmed_at ? true : false,
           displayName: data.user.user_metadata?.display_name || data.user.email?.split('@')[0] || 'User',
           avatar: data.user.user_metadata?.avatar_url,
           createdAt: data.user.created_at,
         },
       };
+    } catch (error: any) {
+      if (error.code && error.message) {
+        throw error;
+      }
+      throw {
+        code: 'UNKNOWN_ERROR',
+        message: error.message || 'An unknown error occurred',
+      } as AuthError;
+    }
+  },
+
+  /**
+   * Resend verification email
+   */
+  resendVerificationEmail: async (email: string): Promise<void> => {
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/confirm`,
+        },
+      });
+
+      if (error) {
+        throw {
+          code: error.name || 'AUTH_ERROR',
+          message: error.message,
+        } as AuthError;
+      }
     } catch (error: any) {
       if (error.code && error.message) {
         throw error;
@@ -209,6 +257,10 @@ export const authAPI = {
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: provider,
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+          skipBrowserRedirect: false,
+        },
       });
 
       if (error) {
@@ -233,7 +285,35 @@ export const authAPI = {
    */
   resetPassword: async (email: string): Promise<void> => {
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email);
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+
+      if (error) {
+        throw {
+          code: error.name || 'AUTH_ERROR',
+          message: error.message,
+        } as AuthError;
+      }
+    } catch (error: any) {
+      if (error.code && error.message) {
+        throw error;
+      }
+      throw {
+        code: 'UNKNOWN_ERROR',
+        message: error.message || 'An unknown error occurred',
+      } as AuthError;
+    }
+  },
+
+  /**
+   * Update user password (for password reset flow)
+   */
+  updatePassword: async (newPassword: string): Promise<void> => {
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
 
       if (error) {
         throw {
